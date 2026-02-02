@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Search, FolderOpen, ArrowLeft, FileText, CheckCircle, Clock, Settings, Shield, UserPlus, UserX, UserCheck, LogOut, Database, Upload, XCircle, Send, MessageSquare, Building, File, Trash2, Download } from 'lucide-react';
-import { read, utils } from 'xlsx';
+import { Users, Search, FolderOpen, ArrowLeft, FileText, CheckCircle, Clock, Settings, Shield, UserPlus, UserX, UserCheck, LogOut, Database, Upload, XCircle, Send, MessageSquare, Building, File, Trash2, Download, PieChart as PieChartIcon, RefreshCw } from 'lucide-react';
+import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { read, utils, writeFile } from 'xlsx';
 import logoUt from '../assets/logo-ut.png';
 import Modal from '../components/Modal';
 
@@ -42,7 +43,7 @@ export default function AdminDashboard() {
 
     // Configuración del Usuario Actual
     const currentUser = JSON.parse(localStorage.getItem('ut_admin_session') || '{}');
-    const isRoot = currentUser.username === 'root';
+    const isRoot = (currentUser.username?.toLowerCase() === 'root' || currentUser.role === 'ROOT');
 
     // --- Estado para la Base de Datos de Estudiantes ---
     const [localStudents, setLocalStudents] = useState([]);
@@ -143,6 +144,58 @@ export default function AdminDashboard() {
     const [companies, setCompanies] = useState([]);
     const [isCreatingCompany, setIsCreatingCompany] = useState(false);
     const [newCompany, setNewCompany] = useState({ name: '', address: '', contact: '', email: '', fileName: '', careerId: '' });
+
+    // --- State para Reasignación (Estadías) ---
+    const [reasignSearch, setReasignSearch] = useState('');
+    const [reasignStudent, setReasignStudent] = useState(null);
+    const [reasignNewCompanyId, setReasignNewCompanyId] = useState('');
+
+    const handleSearchForReasign = () => {
+        if (!reasignSearch.trim()) return;
+
+        // Búsqueda flexible (matricula o nombre)
+        const term = reasignSearch.toLowerCase();
+        const found = localStudents.find(s =>
+            String(s.matricula).includes(term) ||
+            s.name.toLowerCase().includes(term)
+        );
+
+        if (found) {
+            setReasignStudent(found);
+            setReasignNewCompanyId('');
+        } else {
+            setReasignStudent(null);
+            setModalConfig({
+                isOpen: true,
+                title: 'No encontrado',
+                type: 'info',
+                content: <p>No se encontró ningún estudiante con "<strong>{reasignSearch}</strong>". Intenta con otro nombre o matrícula.</p>,
+                footer: <button onClick={() => setModalConfig({ ...modalConfig, isOpen: false })} className="btn btn-primary">Aceptar</button>
+            });
+        }
+    };
+
+    const handleReasignSubmit = () => {
+        if (!reasignStudent || !reasignNewCompanyId) return;
+
+        // 1. Actualizar estudiante en localStudents
+        const updatedStudents = localStudents.map(s =>
+            s.id === reasignStudent.id ? { ...s, companyId: reasignNewCompanyId, status: 'Pendiente', comment: 'Reasignación de Estadía realizada por Root.' } : s
+        );
+        setLocalStudents(updatedStudents);
+        localStorage.setItem('ut_students_db', JSON.stringify(updatedStudents));
+
+        // 2. Feedback
+        const companyName = companies.find(c => c.id == reasignNewCompanyId)?.name;
+
+        setModalConfig({
+            isOpen: true,
+            title: 'Reasignación Exitosa',
+            type: 'success',
+            content: <p>El estudiante <strong>{reasignStudent.name}</strong> ha sido reasignado a la empresa <strong>{companyName}</strong>. Su estatus ha pasado a "Pendiente" para reiniciar el proceso.</p>,
+            footer: <button onClick={() => { setModalConfig({ ...modalConfig, isOpen: false }); setReasignStudent(null); setReasignSearch(''); }} className="btn btn-primary">Aceptar</button>
+        });
+    };
 
     // Modal State
     const [modalConfig, setModalConfig] = useState({ isOpen: false, title: '', content: null, footer: null, type: 'info' });
@@ -246,12 +299,54 @@ export default function AdminDashboard() {
     // Guarda los datos importados en la base de datos local
     const handleSaveDatabase = () => {
         if (previewData.length === 0) return;
-        if (previewData.length === 0) return;
         setLocalStudents(previewData.map(s => ({ ...s, id: s.matricula, status: 'En Revisión', docsCount: 0 })));
         localStorage.setItem('ut_students_db', JSON.stringify(previewData));
         setPreviewData([]);
         alert(`Se han importado exitosamente ${previewData.length} alumnos.`);
         setActiveTab('supervision');
+    };
+
+    // Exporta la base de datos a Excel
+    const handleExportExcel = () => {
+        const ws = utils.json_to_sheet(localStudents);
+        const wb = utils.book_new();
+        utils.book_append_sheet(wb, ws, "Base de Datos Completa");
+        writeFile(wb, `BD_Alumnos_UT_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    };
+
+    // Simula descarga de Documentos (ZIP)
+    const handleDownloadDocuments = () => {
+        // En un entorno real, esto llamaría a un endpoint del backend que genera un ZIP
+        setTimeout(() => {
+            setModalConfig({
+                isOpen: true,
+                title: 'Descarga Iniciada',
+                type: 'success',
+                content: (
+                    <div style={{ textAlign: 'center' }}>
+                        <div style={{ margin: '0 auto 1rem', width: 48, height: 48, background: '#D1FAE5', color: '#059669', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <FolderOpen size={24} />
+                        </div>
+                        <p style={{ fontSize: '1rem', fontWeight: 600, color: '#1f2937' }}>Generando paquete ZIP...</p>
+                        <p style={{ color: '#6b7280', marginTop: '0.5rem' }}>
+                            Se ha iniciado la descarga del archivo comprimido con los expedientes de todos los alumnos.
+                        </p>
+                        <p style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '1rem' }}>
+                            (Simulación: En producción esto descargará un .zip real)
+                        </p>
+                    </div>
+                ),
+                footer: (
+                    <button
+                        onClick={() => setModalConfig({ ...modalConfig, isOpen: false })}
+                        className="btn"
+                        style={{ background: '#10B981', color: 'white', width: '100%', justifyContent: 'center' }}
+                    >
+                        Entendido
+                    </button>
+                )
+            });
+        }, 500);
     };
 
     // Crea un nuevo administrador
@@ -321,6 +416,14 @@ export default function AdminDashboard() {
                     </button>
 
                     <button
+                        onClick={() => setActiveTab('companies')}
+                        className={`nav-item ${activeTab === 'companies' ? 'active' : ''}`}
+                        style={{ border: 'none', background: activeTab === 'companies' ? undefined : 'transparent', width: '100%', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
+                    >
+                        <Building size={18} /> Empresas
+                    </button>
+
+                    <button
                         onClick={() => setActiveTab('database')}
                         className={`nav-item ${activeTab === 'database' ? 'active' : ''}`}
                         style={{ border: 'none', background: activeTab === 'database' ? undefined : 'transparent', width: '100%', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
@@ -329,21 +432,31 @@ export default function AdminDashboard() {
                     </button>
 
                     <button
-                        onClick={() => setActiveTab('companies')}
-                        className={`nav-item ${activeTab === 'companies' ? 'active' : ''}`}
-                        style={{ border: 'none', background: activeTab === 'companies' ? undefined : 'transparent', width: '100%', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
+                        onClick={() => setActiveTab('statistics')}
+                        className={`nav-item ${activeTab === 'statistics' ? 'active' : ''}`}
+                        style={{ border: 'none', background: activeTab === 'statistics' ? undefined : 'transparent', width: '100%', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
                     >
-                        <Building size={18} /> Empresas
+                        <PieChartIcon size={18} /> Estadísticas
                     </button>
 
                     {isRoot && (
-                        <button
-                            onClick={() => setActiveTab('admins')}
-                            className={`nav-item ${activeTab === 'admins' ? 'active' : ''}`}
-                            style={{ border: 'none', background: activeTab === 'admins' ? undefined : 'transparent', width: '100%', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
-                        >
-                            <Users size={18} /> Administradores
-                        </button>
+                        <>
+                            <button
+                                onClick={() => setActiveTab('admins')}
+                                className={`nav-item ${activeTab === 'admins' ? 'active' : ''}`}
+                                style={{ border: 'none', background: activeTab === 'admins' ? undefined : 'transparent', width: '100%', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
+                            >
+                                <Users size={18} /> Administradores
+                            </button>
+
+                            <button
+                                onClick={() => setActiveTab('reasignment')}
+                                className={`nav-item ${activeTab === 'reasignment' ? 'active' : ''}`}
+                                style={{ border: 'none', background: activeTab === 'reasignment' ? undefined : 'transparent', width: '100%', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
+                            >
+                                <RefreshCw size={18} /> Reasignar Estadía
+                            </button>
+                        </>
                     )}
 
                     <button
@@ -588,12 +701,44 @@ export default function AdminDashboard() {
                         <div className="flex-between mb-6">
                             <div>
                                 <h2 style={{ fontSize: '1.5rem', fontWeight: 700 }}>Base de Datos de Alumnos</h2>
-                                <p style={{ color: '#6b7280' }}>Carga masiva de estudiantes mediante Excel</p>
+                                <p style={{ color: '#6b7280' }}>Carga masiva de estudiantes mediante un archivo de Excel</p>
                             </div>
                             <div className="tag" style={{ background: '#E6F5EC', color: '#009B4D', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                 <Database size={16} />
                                 <Database size={16} />
                                 {localStudents.length} Registros actuales
+                            </div>
+                        </div>
+
+                        
+
+
+
+                        {/* Nueva Sección de Descarga / Exportación */}
+                        <div className="process-card mb-6" style={{ background: '#EFF6FF', border: '1px solid #BFDBFE' }}>
+                            <div className="flex-between">
+                                <div>
+                                    <h3 style={{ fontSize: '1.125rem', fontWeight: 600, color: '#1E40AF' }}>Exportar Información</h3>
+                                    <p style={{ color: '#60A5FA', fontSize: '0.875rem' }}>Descarga la base de datos actual o el respaldo de documentos.</p>
+                                </div>
+                                <div style={{ display: 'flex', gap: '1rem' }}>
+                                    <button
+                                        onClick={handleExportExcel}
+                                        className="btn"
+                                        style={{ background: '#10B981', color: 'white', display: 'flex', alignItems: 'center', gap: '0.5rem', boxShadow: '0 4px 6px -1px rgba(16, 185, 129, 0.2)' }}
+                                    >
+                                        <FileText size={18} />
+                                        Descargar Excel
+                                    </button>
+                                    <button
+                                        onClick={handleDownloadDocuments}
+                                        className="btn"
+                                        style={{ background: '#059669', color: 'white', display: 'flex', alignItems: 'center', gap: '0.5rem', boxShadow: '0 4px 6px -1px rgba(5, 150, 105, 0.2)' }}
+                                    >
+                                        <FolderOpen size={18} />
+                                        Descargar Docs (ZIP)
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
@@ -669,246 +814,400 @@ export default function AdminDashboard() {
                                 </div>
                             )}
                         </div>
-                    </div>
+                    </div >
                 )}
 
-                {activeTab === 'companies' && (
-                    <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+                {activeTab === 'reasignment' && isRoot && (
+                    <div style={{ maxWidth: '800px', margin: '0 auto' }}>
                         <div className="flex-between mb-6">
                             <div>
-                                <h2 style={{ fontSize: '1.5rem', fontWeight: 700 }}>Catálogo de Empresas</h2>
-                                <p style={{ color: '#6b7280' }}>Gestión de convenios y datos de empresas vinculadas</p>
+                                <h2 style={{ fontSize: '1.5rem', fontWeight: 700 }}>Reasignación de Estadía</h2>
+                                <p style={{ color: '#6b7280' }}>Herramienta de emergencia para cambiar la empresa de un alumno.</p>
                             </div>
-                            <button onClick={() => setIsCreatingCompany(!isCreatingCompany)} className="btn btn-primary">
-                                <Building size={18} />
-                                {isCreatingCompany ? 'Cancelar' : 'Nueva Empresa'}
-                            </button>
                         </div>
 
-                        {isCreatingCompany && (
-                            <div className="process-card mb-6" style={{ background: '#f9fafb', border: '1px solid #e5e7eb' }}>
-                                <h3 style={{ marginBottom: '1.5rem', fontWeight: 600 }}>Registrar Nueva Empresa</h3>
-                                <form onSubmit={handleCreateCompany}>
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-                                        <div>
-                                            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>Nombre de la Empresa</label>
-                                            <input required type="text" className="input" placeholder="Ej. Volkswagen de México" value={newCompany.name} onChange={e => setNewCompany({ ...newCompany, name: e.target.value })} />
+                        <div className="process-card" style={{ marginTop: 0 }}>
+                            <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '1.5rem' }}>Buscar Alumno</h3>
+                            <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
+                                <input
+                                    type="text"
+                                    className="input"
+                                    placeholder="Ingrese Matrícula o Nombre..."
+                                    value={reasignSearch}
+                                    onChange={(e) => setReasignSearch(e.target.value)}
+                                />
+                                <button onClick={handleSearchForReasign} className="btn btn-primary">
+                                    <Search size={18} /> Buscar
+                                </button>
+                            </div>
+
+                            {reasignStudent && (
+                                <div style={{ background: '#F9FAFB', padding: '1.5rem', borderRadius: '0.75rem', border: '1px solid #E5E7EB' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+                                        <div style={{ width: 48, height: 48, background: 'var(--ut-orange)', color: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem', fontWeight: 'bold' }}>
+                                            {reasignStudent.name.charAt(0)}
                                         </div>
                                         <div>
-                                            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>Dirección</label>
-                                            <input type="text" className="input" placeholder="Calle, Número, Colonia, Ciudad" value={newCompany.address} onChange={e => setNewCompany({ ...newCompany, address: e.target.value })} />
-                                        </div>
-                                        <div>
-                                            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>Nombre del Contacto / RRHH</label>
-                                            <input type="text" className="input" placeholder="Lic. Juan Pérez" value={newCompany.contact} onChange={e => setNewCompany({ ...newCompany, contact: e.target.value })} />
-                                        </div>
-                                        <div>
-                                            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>Correo / Teléfono</label>
-                                            <input type="text" className="input" placeholder="contacto@empresa.com" value={newCompany.email} onChange={e => setNewCompany({ ...newCompany, email: e.target.value })} />
+                                            <h4 style={{ fontSize: '1.125rem', fontWeight: 600 }}>{reasignStudent.name}</h4>
+                                            <p style={{ color: '#6b7280' }}>{reasignStudent.matricula} • {reasignStudent.careerName}</p>
                                         </div>
                                     </div>
 
-                                    <div style={{ marginBottom: '1rem', gridColumn: '1 / -1' }}>
-                                        <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>Carrera de Enfoque (Para filtrado)</label>
+                                    <div style={{ marginBottom: '1.5rem' }}>
+                                        <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>Seleccionar Nueva Empresa</label>
                                         <select
                                             className="input"
-                                            value={newCompany.careerId}
-                                            onChange={e => setNewCompany({ ...newCompany, careerId: e.target.value })}
+                                            value={reasignNewCompanyId}
+                                            onChange={(e) => setReasignNewCompanyId(e.target.value)}
                                         >
-                                            <option value="">-- Todas / General --</option>
-                                            {CAREERS.map(c => (
-                                                <option key={c.id} value={c.id}>{c.name}</option>
+                                            <option value="">-- Seleccionar Empresa del Catálogo --</option>
+                                            {companies.sort((a, b) => a.name.localeCompare(b.name)).map(c => (
+                                                <option key={c.id} value={c.id}>{c.name} ({CAREERS.find(k => k.id === c.careerId)?.name || 'General'})</option>
                                             ))}
                                         </select>
                                     </div>
 
-                                    <div style={{ marginBottom: '1.5rem', gridColumn: '1 / -1' }}>
-                                        <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>Documento / Convenio (PDF o Word)</label>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                            <input
-                                                type="file"
-                                                accept=".pdf,.doc,.docx"
-                                                className="input"
-                                                style={{ padding: '0.5rem' }}
-                                                onChange={handleCompanyFileChange}
-                                            />
-                                            {newCompany.fileName && <span style={{ color: 'var(--ut-green)', fontSize: '0.875rem' }}><CheckCircle size={14} style={{ display: 'inline', marginRight: 4 }} /> Archivo seleccionado</span>}
-                                        </div>
-                                    </div>
-
-                                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
-                                        <button type="button" onClick={() => setIsCreatingCompany(false)} className="btn" style={{ background: '#f3f4f6' }}>Cancelar</button>
-                                        <button type="submit" className="btn btn-primary">Guardar Empresa</button>
-                                    </div>
-                                </form>
-                            </div>
-                        )}
-
-                        <div className="card-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '1.5rem' }}>
-                            {companies.map(company => (
-                                <div key={company.id} className="process-card" style={{ marginTop: 0, position: 'relative' }}>
-                                    <div style={{ position: 'absolute', top: '1rem', right: '1rem' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+                                        <button onClick={() => setReasignStudent(null)} className="btn" style={{ background: '#f3f4f6' }}>Cancelar</button>
                                         <button
-                                            onClick={() => handleDeleteCompany(company.id)}
-                                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#EF4444', padding: '0.25rem' }}
-                                            title="Eliminar Empresa"
+                                            onClick={handleReasignSubmit}
+                                            disabled={!reasignNewCompanyId}
+                                            className="btn"
+                                            style={{ background: '#F59E0B', color: 'white', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                                         >
-                                            <Trash2 size={16} />
+                                            <RefreshCw size={18} /> Confirmar Cambio
                                         </button>
                                     </div>
-
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
-                                        <div style={{ width: 40, height: 40, background: '#EFF6FF', color: '#2563EB', borderRadius: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                            <Building size={20} />
-                                        </div>
-                                        <div>
-                                            <h3 style={{ fontSize: '1.125rem', fontWeight: 600, color: '#1f2937' }}>{company.name}</h3>
-                                            <p style={{ fontSize: '0.75rem', color: '#6b7280' }}>ID: {company.id}</p>
-                                        </div>
-                                    </div>
-
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.875rem', color: '#4b5563', marginBottom: '1.5rem' }}>
-                                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                            <span style={{ fontWeight: 500, minWidth: '70px' }}>Carrera:</span>
-                                            <span className="tag" style={{ fontSize: '0.75rem', background: '#f3f4f6' }}>
-                                                {CAREERS.find(c => c.id === company.careerId)?.name || 'General / Todas'}
-                                            </span>
-                                        </div>
-                                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                            <span style={{ fontWeight: 500, minWidth: '70px' }}>Contacto:</span>
-                                            <span>{company.contact || 'N/A'}</span>
-                                        </div>
-                                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                            <span style={{ fontWeight: 500, minWidth: '70px' }}>Datos:</span>
-                                            <span>{company.email || 'N/A'}</span>
-                                        </div>
-                                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                            <span style={{ fontWeight: 500, minWidth: '70px' }}>Dirección:</span>
-                                            <span style={{ fontSize: '0.8rem' }}>{company.address || 'N/A'}</span>
-                                        </div>
-                                    </div>
-
-                                    <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                            <FileText size={16} color={company.fileName ? 'var(--ut-green)' : '#9ca3af'} />
-                                            <span style={{ fontSize: '0.875rem', color: company.fileName ? '#1f2937' : '#9ca3af' }}>
-                                                {company.fileName || 'Sin documento'}
-                                            </span>
-                                        </div>
-                                        {company.fileName && (
-                                            <button className="btn" style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', background: '#f3f4f6', color: '#374151' }}>
-                                                <Download size={14} style={{ marginRight: 4 }} /> Descargar
-                                            </button>
-                                        )}
-                                    </div>
                                 </div>
-                            ))}
+                            )}
                         </div>
-                        {companies.length === 0 && !isCreatingCompany && (
-                            <div style={{ textAlign: 'center', padding: '3rem', color: '#9ca3af' }}>
-                                <Building size={48} style={{ opacity: 0.3, marginBottom: '1rem' }} />
-                                <p>No hay empresas registradas aún.</p>
-                            </div>
-                        )}
                     </div>
                 )}
 
-                {activeTab === 'admins' && isRoot && (
-                    <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
-                        <div className="flex-between mb-6">
-                            <div>
-                                <h2 style={{ fontSize: '1.5rem', fontWeight: 700 }}>Gestión de Administradores</h2>
-                                <p style={{ color: '#6b7280' }}>Control de acceso al panel administrativo</p>
-                            </div>
-                            <button onClick={() => setIsCreating(!isCreating)} className="btn btn-primary">
-                                <UserPlus size={18} />
-                                {isCreating ? 'Cancelar' : 'Nuevo Admin'}
-                            </button>
-                        </div>
+                {
+                    activeTab === 'statistics' && (
+                        <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+                            <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '2rem' }}>Estadísticas de Procesos</h2>
 
-                        {isCreating && (
-                            <div className="process-card mb-6" style={{ background: '#f9fafb', border: '1px solid #e5e7eb' }}>
-                                <h3 style={{ marginBottom: '1rem', fontWeight: 600 }}>Crear Nuevo Administrador</h3>
-                                <form onSubmit={handleCreateAdmin} style={{ display: 'grid', gap: '1rem', gridTemplateColumns: '1fr 1fr auto' }}>
-                                    <input type="text" placeholder="Usuario" className="input" value={newAdmin.username} onChange={(e) => setNewAdmin({ ...newAdmin, username: e.target.value })} />
-                                    <input type="password" placeholder="Contraseña" className="input" value={newAdmin.password} onChange={(e) => setNewAdmin({ ...newAdmin, password: e.target.value })} />
-                                    <button type="submit" className="btn btn-primary">Guardar</button>
+                            <div className="card-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '2rem' }}>
+                                {/* Gráfica de Estatus Global */}
+                                <div className="process-card" style={{ marginTop: 0 }}>
+                                    <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '1rem', textAlign: 'center' }}>Estatus de Estudiantes</h3>
+                                    <div style={{ height: '300px' }}>
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <PieChart>
+                                                <Pie
+                                                    data={[
+                                                        { name: 'Aprobado', value: localStudents.filter(s => s.status === 'Aprobado').length },
+                                                        { name: 'En Revisión', value: localStudents.filter(s => s.status === 'En Revisión').length },
+                                                        { name: 'Pendiente', value: localStudents.filter(s => s.status === 'Pendiente').length },
+                                                        { name: 'Corrección', value: localStudents.filter(s => s.status === 'Corrección Solicitada').length },
+                                                    ].filter(d => d.value > 0)}
+                                                    cx="50%"
+                                                    cy="50%"
+                                                    labelLine={false}
+                                                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                                                    outerRadius={100}
+                                                    fill="#8884d8"
+                                                    dataKey="value"
+                                                >
+                                                    {[
+                                                        { name: 'Aprobado', color: '#00C49F' },
+                                                        { name: 'En Revisión', color: '#FFBB28' },
+                                                        { name: 'Pendiente', color: '#9CA3AF' },
+                                                        { name: 'Corrección', color: '#EF4444' },
+                                                    ].map((entry, index) => (
+                                                        <Cell key={`cell-${index}`} fill={entry.color} />
+                                                    ))}
+                                                </Pie>
+                                                <Tooltip />
+                                                <Legend />
+                                            </PieChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </div>
+
+                                {/* Gráfica de Distribución por Carrera (Top 5) */}
+                                <div className="process-card" style={{ marginTop: 0 }}>
+                                    <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '1rem', textAlign: 'center' }}>Top Carreras con Estudiantes</h3>
+                                    <div style={{ height: '300px' }}>
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <PieChart>
+                                                <Pie
+                                                    data={Object.entries(localStudents.reduce((acc, curr) => {
+                                                        acc[curr.careerName] = (acc[curr.careerName] || 0) + 1;
+                                                        return acc;
+                                                    }, {}))
+                                                        .map(([name, value]) => ({ name, value }))
+                                                        .sort((a, b) => b.value - a.value)
+                                                        .slice(0, 5)} // Top 5
+                                                    cx="50%"
+                                                    cy="50%"
+                                                    innerRadius={60}
+                                                    outerRadius={100}
+                                                    paddingAngle={5}
+                                                    dataKey="value"
+                                                >
+                                                    {[
+                                                        '#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#A28CDA'
+                                                    ].map((color, index) => (
+                                                        <Cell key={`cell-${index}`} fill={color} />
+                                                    ))}
+                                                </Pie>
+                                                <Tooltip />
+                                                <Legend layout="vertical" align="right" verticalAlign="middle" />
+                                            </PieChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )
+                }
+
+                {
+                    activeTab === 'companies' && (
+                        <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+                            <div className="flex-between mb-6">
+                                <div>
+                                    <h2 style={{ fontSize: '1.5rem', fontWeight: 700 }}>Catálogo de Empresas</h2>
+                                    <p style={{ color: '#6b7280' }}>Gestión de convenios y datos de empresas vinculadas</p>
+                                </div>
+                                <button onClick={() => setIsCreatingCompany(!isCreatingCompany)} className="btn btn-primary">
+                                    <Building size={18} />
+                                    {isCreatingCompany ? 'Cancelar' : 'Nueva Empresa'}
+                                </button>
+                            </div>
+
+                            {isCreatingCompany && (
+                                <div className="process-card mb-6" style={{ background: '#f9fafb', border: '1px solid #e5e7eb' }}>
+                                    <h3 style={{ marginBottom: '1.5rem', fontWeight: 600 }}>Registrar Nueva Empresa</h3>
+                                    <form onSubmit={handleCreateCompany}>
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                                            <div>
+                                                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>Nombre de la Empresa</label>
+                                                <input required type="text" className="input" placeholder="Ej. Volkswagen de México" value={newCompany.name} onChange={e => setNewCompany({ ...newCompany, name: e.target.value })} />
+                                            </div>
+                                            <div>
+                                                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>Dirección</label>
+                                                <input type="text" className="input" placeholder="Calle, Número, Colonia, Ciudad" value={newCompany.address} onChange={e => setNewCompany({ ...newCompany, address: e.target.value })} />
+                                            </div>
+                                            <div>
+                                                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>Nombre del Contacto / RRHH</label>
+                                                <input type="text" className="input" placeholder="Lic. Juan Pérez" value={newCompany.contact} onChange={e => setNewCompany({ ...newCompany, contact: e.target.value })} />
+                                            </div>
+                                            <div>
+                                                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>Correo / Teléfono</label>
+                                                <input type="text" className="input" placeholder="contacto@empresa.com" value={newCompany.email} onChange={e => setNewCompany({ ...newCompany, email: e.target.value })} />
+                                            </div>
+                                        </div>
+
+                                        <div style={{ marginBottom: '1rem', gridColumn: '1 / -1' }}>
+                                            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>Carrera de Enfoque (Para filtrado)</label>
+                                            <select
+                                                className="input"
+                                                value={newCompany.careerId}
+                                                onChange={e => setNewCompany({ ...newCompany, careerId: e.target.value })}
+                                            >
+                                                <option value="">-- Todas / General --</option>
+                                                {CAREERS.map(c => (
+                                                    <option key={c.id} value={c.id}>{c.name}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        <div style={{ marginBottom: '1.5rem', gridColumn: '1 / -1' }}>
+                                            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>Documento / Convenio (PDF o Word)</label>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                                <input
+                                                    type="file"
+                                                    accept=".pdf,.doc,.docx"
+                                                    className="input"
+                                                    style={{ padding: '0.5rem' }}
+                                                    onChange={handleCompanyFileChange}
+                                                />
+                                                {newCompany.fileName && <span style={{ color: 'var(--ut-green)', fontSize: '0.875rem' }}><CheckCircle size={14} style={{ display: 'inline', marginRight: 4 }} /> Archivo seleccionado</span>}
+                                            </div>
+                                        </div>
+
+                                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                                            <button type="button" onClick={() => setIsCreatingCompany(false)} className="btn" style={{ background: '#f3f4f6' }}>Cancelar</button>
+                                            <button type="submit" className="btn btn-primary">Guardar Empresa</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            )}
+
+                            <div className="card-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '1.5rem' }}>
+                                {companies.map(company => (
+                                    <div key={company.id} className="process-card" style={{ marginTop: 0, position: 'relative' }}>
+                                        <div style={{ position: 'absolute', top: '1rem', right: '1rem' }}>
+                                            <button
+                                                onClick={() => handleDeleteCompany(company.id)}
+                                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#EF4444', padding: '0.25rem' }}
+                                                title="Eliminar Empresa"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
+
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+                                            <div style={{ width: 40, height: 40, background: '#EFF6FF', color: '#2563EB', borderRadius: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                <Building size={20} />
+                                            </div>
+                                            <div>
+                                                <h3 style={{ fontSize: '1.125rem', fontWeight: 600, color: '#1f2937' }}>{company.name}</h3>
+                                                <p style={{ fontSize: '0.75rem', color: '#6b7280' }}>ID: {company.id}</p>
+                                            </div>
+                                        </div>
+
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.875rem', color: '#4b5563', marginBottom: '1.5rem' }}>
+                                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                                <span style={{ fontWeight: 500, minWidth: '70px' }}>Carrera:</span>
+                                                <span className="tag" style={{ fontSize: '0.75rem', background: '#f3f4f6' }}>
+                                                    {CAREERS.find(c => c.id === company.careerId)?.name || 'General / Todas'}
+                                                </span>
+                                            </div>
+                                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                                <span style={{ fontWeight: 500, minWidth: '70px' }}>Contacto:</span>
+                                                <span>{company.contact || 'N/A'}</span>
+                                            </div>
+                                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                                <span style={{ fontWeight: 500, minWidth: '70px' }}>Datos:</span>
+                                                <span>{company.email || 'N/A'}</span>
+                                            </div>
+                                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                                <span style={{ fontWeight: 500, minWidth: '70px' }}>Dirección:</span>
+                                                <span style={{ fontSize: '0.8rem' }}>{company.address || 'N/A'}</span>
+                                            </div>
+                                        </div>
+
+                                        <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                <FileText size={16} color={company.fileName ? 'var(--ut-green)' : '#9ca3af'} />
+                                                <span style={{ fontSize: '0.875rem', color: company.fileName ? '#1f2937' : '#9ca3af' }}>
+                                                    {company.fileName || 'Sin documento'}
+                                                </span>
+                                            </div>
+                                            {company.fileName && (
+                                                <button className="btn" style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', background: '#f3f4f6', color: '#374151' }}>
+                                                    <Download size={14} style={{ marginRight: 4 }} /> Descargar
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                            {companies.length === 0 && !isCreatingCompany && (
+                                <div style={{ textAlign: 'center', padding: '3rem', color: '#9ca3af' }}>
+                                    <Building size={48} style={{ opacity: 0.3, marginBottom: '1rem' }} />
+                                    <p>No hay empresas registradas aún.</p>
+                                </div>
+                            )}
+                        </div>
+                    )
+                }
+
+                {
+                    activeTab === 'admins' && isRoot && (
+                        <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+                            <div className="flex-between mb-6">
+                                <div>
+                                    <h2 style={{ fontSize: '1.5rem', fontWeight: 700 }}>Gestión de Administradores</h2>
+                                    <p style={{ color: '#6b7280' }}>Control de acceso al panel administrativo</p>
+                                </div>
+                                <button onClick={() => setIsCreating(!isCreating)} className="btn btn-primary">
+                                    <UserPlus size={18} />
+                                    {isCreating ? 'Cancelar' : 'Nuevo Admin'}
+                                </button>
+                            </div>
+
+                            {isCreating && (
+                                <div className="process-card mb-6" style={{ background: '#f9fafb', border: '1px solid #e5e7eb' }}>
+                                    <h3 style={{ marginBottom: '1rem', fontWeight: 600 }}>Crear Nuevo Administrador</h3>
+                                    <form onSubmit={handleCreateAdmin} style={{ display: 'grid', gap: '1rem', gridTemplateColumns: '1fr 1fr auto' }}>
+                                        <input type="text" placeholder="Usuario" className="input" value={newAdmin.username} onChange={(e) => setNewAdmin({ ...newAdmin, username: e.target.value })} />
+                                        <input type="password" placeholder="Contraseña" className="input" value={newAdmin.password} onChange={(e) => setNewAdmin({ ...newAdmin, password: e.target.value })} />
+                                        <button type="submit" className="btn btn-primary">Guardar</button>
+                                    </form>
+                                </div>
+                            )}
+
+                            <div className="process-card">
+                                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                                    <thead>
+                                        <tr style={{ borderBottom: '2px solid #f3f4f6' }}>
+                                            <th style={{ padding: '1rem', color: '#374151' }}>Usuario</th>
+                                            <th style={{ padding: '1rem', color: '#374151' }}>Rol</th>
+                                            <th style={{ padding: '1rem', color: '#374151' }}>Estado</th>
+                                            <th style={{ padding: '1rem', color: '#374151' }}>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr style={{ borderBottom: '1px solid #f3f4f6' }}>
+                                            <td style={{ padding: '1rem' }}><div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Shield size={16} color="var(--ut-orange)" /><span style={{ fontWeight: 600 }}>root</span></div></td>
+                                            <td style={{ padding: '1rem' }}><span className="tag" style={{ background: '#FEF3C7', color: '#D97706' }}>ROOT</span></td>
+                                            <td style={{ padding: '1rem' }}><span style={{ color: 'var(--ut-green)', display: 'flex', alignItems: 'center', gap: 4 }}><UserCheck size={14} /> Activo</span></td>
+                                            <td style={{ padding: '1rem', color: '#9ca3af', fontSize: '0.875rem' }}>Sistema</td>
+                                        </tr>
+                                        {admins.map(admin => (
+                                            <tr key={admin.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                                                <td style={{ padding: '1rem' }}>{admin.username}</td>
+                                                <td style={{ padding: '1rem' }}><span className="tag">ADMIN</span></td>
+                                                <td style={{ padding: '1rem' }}><span style={{ color: 'var(--ut-green)', display: 'flex', alignItems: 'center', gap: 4 }}><UserCheck size={14} /> Activo</span></td>
+                                                <td style={{ padding: '1rem' }}>
+                                                    <button onClick={() => handleDeleteAdmin(admin.id)} style={{ color: '#EF4444', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
+                                                        <UserX size={16} /> Eliminar
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )
+                }
+
+                {
+                    activeTab === 'profile' && (
+                        <div style={{ maxWidth: '600px', margin: '0 auto' }}>
+                            <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem' }}>Configuración del Perfil</h2>
+                            <p style={{ color: '#6b7280', marginBottom: '2rem' }}>Actualiza tus credenciales de acceso</p>
+
+                            <div className="process-card">
+                                <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                    <Shield size={20} color="var(--ut-orange)" />
+                                    Seguridad de la cuenta
+                                </h3>
+
+                                <form onSubmit={handleUpdateProfile}>
+                                    <div style={{ marginBottom: '1.5rem' }}>
+                                        <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#374151', marginBottom: '0.5rem' }}>Usuario Actual</label>
+                                        <input type="text" value={currentUser.username} disabled className="input" style={{ background: '#f3f4f6', cursor: 'not-allowed' }} />
+                                    </div>
+                                    <div style={{ marginBottom: '1.5rem' }}>
+                                        <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#374151', marginBottom: '0.5rem' }}>Nueva Contraseña</label>
+                                        <input
+                                            type="password"
+                                            className="input"
+                                            placeholder="Ingresa nueva contraseña"
+                                            value={newPassword}
+                                            onChange={(e) => setNewPassword(e.target.value)}
+                                        />
+                                        <p style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.5rem' }}>La contraseña debe tener al menos 8 caracteres.</p>
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                                        <button type="submit" className="btn btn-primary" disabled={!newPassword}>
+                                            Actualizar Contraseña
+                                        </button>
+                                    </div>
                                 </form>
                             </div>
-                        )}
-
-                        <div className="process-card">
-                            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                                <thead>
-                                    <tr style={{ borderBottom: '2px solid #f3f4f6' }}>
-                                        <th style={{ padding: '1rem', color: '#374151' }}>Usuario</th>
-                                        <th style={{ padding: '1rem', color: '#374151' }}>Rol</th>
-                                        <th style={{ padding: '1rem', color: '#374151' }}>Estado</th>
-                                        <th style={{ padding: '1rem', color: '#374151' }}>Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr style={{ borderBottom: '1px solid #f3f4f6' }}>
-                                        <td style={{ padding: '1rem' }}><div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Shield size={16} color="var(--ut-orange)" /><span style={{ fontWeight: 600 }}>root</span></div></td>
-                                        <td style={{ padding: '1rem' }}><span className="tag" style={{ background: '#FEF3C7', color: '#D97706' }}>ROOT</span></td>
-                                        <td style={{ padding: '1rem' }}><span style={{ color: 'var(--ut-green)', display: 'flex', alignItems: 'center', gap: 4 }}><UserCheck size={14} /> Activo</span></td>
-                                        <td style={{ padding: '1rem', color: '#9ca3af', fontSize: '0.875rem' }}>Sistema</td>
-                                    </tr>
-                                    {admins.map(admin => (
-                                        <tr key={admin.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
-                                            <td style={{ padding: '1rem' }}>{admin.username}</td>
-                                            <td style={{ padding: '1rem' }}><span className="tag">ADMIN</span></td>
-                                            <td style={{ padding: '1rem' }}><span style={{ color: 'var(--ut-green)', display: 'flex', alignItems: 'center', gap: 4 }}><UserCheck size={14} /> Activo</span></td>
-                                            <td style={{ padding: '1rem' }}>
-                                                <button onClick={() => handleDeleteAdmin(admin.id)} style={{ color: '#EF4444', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
-                                                    <UserX size={16} /> Eliminar
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
                         </div>
-                    </div>
-                )}
-
-                {activeTab === 'profile' && (
-                    <div style={{ maxWidth: '600px', margin: '0 auto' }}>
-                        <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem' }}>Configuración del Perfil</h2>
-                        <p style={{ color: '#6b7280', marginBottom: '2rem' }}>Actualiza tus credenciales de acceso</p>
-
-                        <div className="process-card">
-                            <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                <Shield size={20} color="var(--ut-orange)" />
-                                Seguridad de la cuenta
-                            </h3>
-
-                            <form onSubmit={handleUpdateProfile}>
-                                <div style={{ marginBottom: '1.5rem' }}>
-                                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#374151', marginBottom: '0.5rem' }}>Usuario Actual</label>
-                                    <input type="text" value={currentUser.username} disabled className="input" style={{ background: '#f3f4f6', cursor: 'not-allowed' }} />
-                                </div>
-                                <div style={{ marginBottom: '1.5rem' }}>
-                                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#374151', marginBottom: '0.5rem' }}>Nueva Contraseña</label>
-                                    <input
-                                        type="password"
-                                        className="input"
-                                        placeholder="Ingresa nueva contraseña"
-                                        value={newPassword}
-                                        onChange={(e) => setNewPassword(e.target.value)}
-                                    />
-                                    <p style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.5rem' }}>La contraseña debe tener al menos 8 caracteres.</p>
-                                </div>
-                                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                                    <button type="submit" className="btn btn-primary" disabled={!newPassword}>
-                                        Actualizar Contraseña
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                )}
-            </main>
+                    )
+                }
+            </main >
 
             <Modal
                 isOpen={modalConfig.isOpen}
@@ -919,6 +1218,6 @@ export default function AdminDashboard() {
             >
                 {modalConfig.content}
             </Modal>
-        </div>
+        </div >
     );
 }

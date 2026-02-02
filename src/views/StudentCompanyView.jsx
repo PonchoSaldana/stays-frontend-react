@@ -88,11 +88,11 @@ export default function StudentCompanyView({ mode = 'catalog', onSelect, userMat
                 type: 'danger',
                 content: (
                     <div style={{ textAlign: 'center' }}>
-                        <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⚠️</div>
+                        <div style={{ fontSize: '3rem', marginBottom: '1rem' }}></div>
                         <p style={{ fontWeight: 600, fontSize: '1.1rem', marginBottom: '0.5rem' }}>Ya tienes una empresa asignada.</p>
                         <p style={{ color: '#6b7280' }}>
                             Por reglamento, solo puedes realizar tu estadía en una sola empresa.
-                            Si cometiste un error, contacta a Dirección de Carrera.
+                            Si cometiste un error, contacta al encargado de estadias.
                         </p>
                     </div>
                 ),
@@ -225,7 +225,7 @@ export default function StudentCompanyView({ mode = 'catalog', onSelect, userMat
                 </div>
                 {mode === 'selection' && !selectedCareerId && (
                     <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#D97706', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <span>⚠️ Selecciona tu carrera para ver las empresas recomendadas.</span>
+                        <span> Selecciona tu carrera para ver las empresas recomendadas.</span>
                     </div>
                 )}
             </div>

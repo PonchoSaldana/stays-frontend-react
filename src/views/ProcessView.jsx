@@ -214,7 +214,7 @@ export default function ProcessView({ userMatricula, stageName }) {
                             <div style={{ width: 80, height: 80, background: '#dcfce7', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem auto', color: 'var(--ut-green)' }}>
                                 <CheckCheck size={40} />
                             </div>
-                            <h3 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '1rem' }}>¡Estadía Autorizada!</h3>
+                            <h3 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '1rem' }}>¡Documentación Autorizada!</h3>
                             <p style={{ color: '#6b7280', marginBottom: '2rem', maxWidth: 500, margin: '0 auto 2rem auto' }}>
                                 Ahora puedes descargar los formatos de los documentos requeridos.
                             </p>
