@@ -47,9 +47,39 @@ export default function StudentCompanyView({ mode = 'catalog', onSelect, userMat
         // Load mocks if empty, similar to AdminDashboard logic, ensuring data presence
         if (storedCompanies.length === 0) {
             const mockCompanies = [
-                { id: 1, name: 'Volkswagen de México', address: 'Autopista México-Puebla Km 116', contact: 'Lic. Juan Pérez', email: 'rh@vw.com.mx', fileName: 'convenio_vw_2024.pdf', careerId: 'ing-man' },
-                { id: 2, name: 'Audi México', address: 'San José Chiapa', contact: 'Ing. María González', email: 'practicas@audi.mx', fileName: 'carta_aceptacion.docx', careerId: 'ing-mec' },
-                { id: 3, name: 'Softtek', address: 'Parque Tecnológico', contact: 'Lic. Ana Ruiz', email: 'talento@softtek.com', fileName: 'convenio_softtek.pdf', careerId: 'ing-soft' }
+                {
+                    id: 1,
+                    name: 'Volkswagen de México',
+                    address: 'Autopista México-Puebla Km 116',
+                    contact: 'Lic. Juan Pérez',
+                    email: 'rh@vw.com.mx',
+                    fileName: 'convenio_vw_2024.pdf',
+                    careerId: 'ing-man',
+                    spots: 5,
+                    hasFinancialSupport: true
+                },
+                {
+                    id: 2,
+                    name: 'Audi México',
+                    address: 'San José Chiapa',
+                    contact: 'Ing. María González',
+                    email: 'practicas@audi.mx',
+                    fileName: 'carta_aceptacion.docx',
+                    careerId: 'ing-mec',
+                    spots: 3,
+                    hasFinancialSupport: true
+                },
+                {
+                    id: 3,
+                    name: 'Softtek',
+                    address: 'Parque Tecnológico',
+                    contact: 'Lic. Ana Ruiz',
+                    email: 'talento@softtek.com',
+                    fileName: 'convenio_softtek.pdf',
+                    careerId: 'ing-soft',
+                    spots: 10,
+                    hasFinancialSupport: false
+                }
             ];
             setCompanies(mockCompanies);
         } else {
@@ -280,6 +310,20 @@ export default function StudentCompanyView({ mode = 'catalog', onSelect, userMat
                             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                                 <Mail size={16} />
                                 <span>{company.email || 'Sin correo'}</span>
+                            </div>
+                            <div className="flex-between" style={{ marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px dashed #e5e7eb' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <span style={{ fontWeight: 600, color: '#374151' }}>Cupos:</span>
+                                    <span className="tag" style={{ background: '#f3f4f6' }}>{company.spots || '0'}</span>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <span style={{ fontWeight: 600, color: '#374151' }}>Apoyo:</span>
+                                    {company.hasFinancialSupport ? (
+                                        <span className="tag" style={{ background: '#DCFCE7', color: '#166534', fontSize: '0.75rem' }}>Sí</span>
+                                    ) : (
+                                        <span className="tag" style={{ background: '#FEE2E2', color: '#991B1B', fontSize: '0.75rem' }}>No</span>
+                                    )}
+                                </div>
                             </div>
                         </div>
 

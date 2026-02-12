@@ -5,6 +5,7 @@ import AdminDashboard from './views/AdminDashboard';
 import LoginView from './views/LoginView';
 import ProcessView from './views/ProcessView';
 import StudentCompanyView from './views/StudentCompanyView';
+import StudentProfileView from './views/StudentProfileView';
 
 function App() {
   const [userMatricula, setUserMatricula] = useState(localStorage.getItem('ut_user') || null);
@@ -16,7 +17,7 @@ function App() {
   const handleLogin = (matricula) => {
     setUserMatricula(matricula);
     localStorage.setItem('ut_user', matricula);
-    navigate('/estadia/documentos-iniciales');
+    navigate('/estadia/catalogo-empresas');
   };
 
   const handleAdminLogin = (username, password) => {
@@ -66,7 +67,7 @@ function App() {
     <Layout onLogout={handleLogout} user={userMatricula || adminUser} isAdmin={!!adminUser}>
       <Routes>
         <Route path="/login" element={<LoginView onLogin={handleLogin} onAdminLogin={handleAdminLogin} />} />
-        <Route path="/" element={<Navigate to={userMatricula ? "/estadia/documentos-iniciales" : (adminUser ? "/admin/dashboard" : "/login")} replace />} />
+        <Route path="/" element={<Navigate to={userMatricula ? "/estadia/catalogo-empresas" : (adminUser ? "/admin/dashboard" : "/login")} replace />} />
 
         {/* Admin Routes */}
         <Route path="/admin/dashboard" element={<ProtectedAdmin><AdminDashboard /></ProtectedAdmin>} />
@@ -80,8 +81,8 @@ function App() {
         <Route path="/estadia/generacion-documentos" element={<Protected><ProcessView stageName="generate_1" userMatricula={userMatricula} /></Protected>} />
         <Route path="/estadia/documentos-finales" element={<Protected><ProcessView stageName="upload_2" userMatricula={userMatricula} /></Protected>} />
         <Route path="/estadia/revision-final" element={<Protected><ProcessView stageName="check_2" userMatricula={userMatricula} /></Protected>} />
-        <Route path="/estadia/firma-digital" element={<Protected><ProcessView stageName="sign" userMatricula={userMatricula} /></Protected>} />
         <Route path="/estadia/finalizado" element={<Protected><ProcessView stageName="finish" userMatricula={userMatricula} /></Protected>} />
+        <Route path="/mi-perfil" element={<Protected><StudentProfileView userMatricula={userMatricula} /></Protected>} />
       </Routes>
     </Layout>
   );

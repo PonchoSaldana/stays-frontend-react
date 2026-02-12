@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { User, FileText, CheckCircle, PenTool, Flag } from 'lucide-react';
+import { User, FileText, CheckCircle, PenTool, Flag, FileCheck } from 'lucide-react';
 import motocleStanding from '../assets/motocle-standing.png';
 import motocleRunning from '../assets/motocle-running.png';
 import motocleTrophy from '../assets/motocle-trophy.png';
@@ -26,7 +26,7 @@ export default function AvatarPath({ progress, currentStage }) {
         { pos: 30, icon: FileText, label: 'Documentación' },
         { pos: 50, icon: CheckCircle, label: 'Verificación' },
         { pos: 70, icon: FileText, label: 'Generados' },
-        { pos: 90, icon: PenTool, label: 'Firma' },
+        { pos: 90, icon: FileCheck, label: 'Aprobación' },
         { pos: 100, icon: Flag, label: 'Meta' },
     ];
 

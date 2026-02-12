@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCheck, Download, FileText, Loader, ShieldCheck, PenTool } from 'lucide-react';
+import { CheckCheck, Download, FileText, Loader, ShieldCheck, PenTool, Eye, Edit } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import AvatarPath from '../components/AvatarPath';
 import FileUploader from '../components/FileUploader';
 import confetti from 'canvas-confetti';
+import Modal from '../components/Modal';
 
 // LISTA DE DOCUMENTOS PARA ESTADÍAS
 const INITIAL_DOCS = [
@@ -29,7 +30,18 @@ export default function ProcessView({ userMatricula, stageName }) {
     const [uploads2, setUploads2] = useState(() => JSON.parse(localStorage.getItem('up2') || '{}'));
 
     const [checkStatus, setCheckStatus] = useState({});
-    const [adminSigning, setAdminSigning] = useState(false);
+
+    // Estados para edición y previsualización de documentos
+    const [editingDoc, setEditingDoc] = useState(null);
+    const [modalMode, setModalMode] = useState('preview'); // 'preview' | 'edit'
+    const [docData, setDocData] = useState({
+        studentName: 'Alumno Ficticio',
+        matricula: userMatricula,
+        companyName: 'Empresa Ejemplo S.A.',
+        projectTitle: 'Sistema de Gestión',
+        advisor: 'Ing. Supervisor'
+    });
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
     // Calcula el progreso visual basado en la etapa actual
     const getProgress = (st) => {
@@ -38,8 +50,7 @@ export default function ProcessView({ userMatricula, stageName }) {
             case 'check_1': return 35;
             case 'generate_1': return 50;
             case 'upload_2': return 50 + (Object.keys(uploads2).length / GENERATED_DOCS.length) * 20;
-            case 'check_2': return 75;
-            case 'sign': return 90;
+            case 'check_2': return 85;
             case 'finish': return 100;
             default: return 0;
         }
@@ -74,11 +85,9 @@ export default function ProcessView({ userMatricula, stageName }) {
                     setCheckStatus(prev => ({ ...prev, [doc]: 'ok' }));
                 }, delay);
             });
-            setTimeout(() => navigate('/estadia/firma-digital'), 2500);
+            setTimeout(() => navigate('/estadia/finalizado'), 2500);
         }
-        if (stageName === 'sign') {
-            setTimeout(() => setAdminSigning(true), 500);
-        }
+
         if (stageName === 'finish') {
             confetti({
                 particleCount: 150,
@@ -117,12 +126,36 @@ export default function ProcessView({ userMatricula, stageName }) {
         navigate('/estadia/revision-final');
     };
 
-    // Simula la firma electrónica por parte del administrador
-    const handleAdminSign = () => {
-        setAdminSigning(true);
+    const handleOpenPreview = (docName) => {
+        setEditingDoc(docName);
+        setModalMode('preview');
+        setIsEditModalOpen(true);
+    };
+
+    const handleSwitchToEdit = () => {
+        setModalMode('edit');
+    };
+
+    const handleSaveEdit = () => {
+        setModalMode('preview');
+    };
+
+    const handleApproveAndDownload = () => {
+        // Aquí iría la lógica real de generación usando docData + docxtemplater
+        console.log("Generando documento", editingDoc, "con datos:", docData);
+        setIsEditModalOpen(false);
+        // Simular descarga
+        const link = document.createElement('a');
+        link.href = '#';
+        link.setAttribute('download', `${editingDoc}.pdf`);
+        document.body.appendChild(link);
+        // link.click(); // Comentado visualmente
+        document.body.removeChild(link);
+
+        // Simular tiempo de generación
         setTimeout(() => {
-            navigate('/estadia/finalizado');
-        }, 3000);
+            alert(`Documento "${editingDoc}" aprobado y descargado correctamente.`);
+        }, 500);
     };
 
     return (
@@ -136,8 +169,7 @@ export default function ProcessView({ userMatricula, stageName }) {
                 stageName === 'upload_1' ? 'Cargando Documentos' :
                     stageName.includes('check') ? 'Validando' :
                         stageName === 'generate_1' ? 'Generando' :
-                            stageName === 'sign' ? 'Firmando' :
-                                stageName === 'finish' ? '¡Felicidades!' : 'Procesando'
+                            stageName === 'finish' ? '¡Felicidades!' : 'Procesando'
             } />
 
             <AnimatePresence mode="wait">
@@ -215,8 +247,8 @@ export default function ProcessView({ userMatricula, stageName }) {
                                 <CheckCheck size={40} />
                             </div>
                             <h3 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '1rem' }}>¡Documentación Autorizada!</h3>
-                            <p style={{ color: '#6b7280', marginBottom: '2rem', maxWidth: 500, margin: '0 auto 2rem auto' }}>
-                                Ahora puedes descargar los formatos de los documentos requeridos.
+                            <p style={{ color: '#6b7280', marginBottom: '2rem', maxWidth: 600, margin: '0 auto 2rem auto' }}>
+                                Verifica que los datos sean correctos y edita el contenido si es necesario antes de descargar los formatos.
                             </p>
 
                             <div className="grid-3" style={{ marginBottom: '2rem', gap: '2rem' }}>
@@ -251,18 +283,15 @@ export default function ProcessView({ userMatricula, stageName }) {
                                             marginBottom: '0.5rem'
                                         }}>
                                             {doc}
+                                            {doc}
                                         </h4>
-                                        <span style={{
-                                            fontSize: '0.875rem',
-                                            color: '#16A34A', // Green
-                                            fontWeight: 500,
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: 4,
-                                            cursor: 'pointer'
-                                        }}>
-                                            Descargar PDF <Download size={14} />
-                                        </span>
+                                        <button
+                                            onClick={() => handleOpenPreview(doc)}
+                                            className="btn btn-primary"
+                                            style={{ marginTop: '0.5rem', width: '100%', fontSize: '0.875rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+                                        >
+                                            <Eye size={16} /> Ver Documento
+                                        </button>
                                     </div>
                                 ))}
                             </div>
@@ -312,36 +341,7 @@ export default function ProcessView({ userMatricula, stageName }) {
                         </div>
                     )}
 
-                    {/* STAGE 6: ADMIN SIGN */}
-                    {stageName === 'sign' && (
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '3rem 0', textAlign: 'center' }}>
-                            {!adminSigning ? (
-                                <>
-                                    <div style={{ width: 80, height: 80, background: '#fff7ed', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem auto', color: 'var(--ut-orange)' }}>
-                                        <ShieldCheck size={40} />
-                                    </div>
-                                    <h3 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '1rem' }}>En espera de Liberación</h3>
-                                    <p style={{ color: '#6b7280', marginBottom: '2rem', maxWidth: 500, margin: '0 auto 2rem auto' }}>
-                                        Tus reportes han sido aprobados. El Director de Carrera está revisando tu expediente para la liberación final.
-                                    </p>
-                                    <button onClick={handleAdminSign} className="btn btn-primary">
-                                        Firmar Liberación (Admin)
-                                        <PenTool size={18} />
-                                    </button>
-                                </>
-                            ) : (
-                                <>
-                                    <div style={{ position: 'relative', marginBottom: '1.5rem' }}>
-                                        <div style={{ width: 96, height: 96, background: 'white', borderRadius: '50%', border: '4px solid var(--ut-green)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ut-green)', zIndex: 10, position: 'relative' }}>
-                                            <PenTool size={40} />
-                                        </div>
-                                    </div>
-                                    <h3 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem' }}>Firmando Documentos...</h3>
-                                    <p style={{ color: '#6b7280' }}>Aplicando firma electrónica avanzada...</p>
-                                </>
-                            )}
-                        </div>
-                    )}
+
 
                     {/* STAGE 7: FINISH */}
                     {stageName === 'finish' && (
@@ -370,53 +370,7 @@ export default function ProcessView({ userMatricula, stageName }) {
                                 </p>
                             </div>
 
-                            <div className="grid-3" style={{ marginBottom: '3rem', gap: '2rem' }}>
-                                {FINAL_DOCS.map(doc => (
-                                    <div key={doc} style={{
-                                        background: 'white',
-                                        padding: '2rem',
-                                        borderRadius: '1rem',
-                                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        alignItems: 'center',
-                                        textAlign: 'center',
-                                        border: '1px solid #f3f4f6'
-                                    }}>
-                                        <div style={{
-                                            width: 64, height: 64,
-                                            background: '#F97316',
-                                            borderRadius: '12px',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            color: 'white',
-                                            marginBottom: '1rem'
-                                        }}>
-                                            <FileText size={32} strokeWidth={2} />
-                                        </div>
-                                        <h4 style={{
-                                            fontSize: '1.125rem',
-                                            fontWeight: 700,
-                                            color: '#1f2937',
-                                            marginBottom: '0.5rem'
-                                        }}>
-                                            {doc}
-                                        </h4>
-                                        <span style={{
-                                            fontSize: '0.875rem',
-                                            color: '#16A34A',
-                                            fontWeight: 500,
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: 4,
-                                            cursor: 'pointer'
-                                        }}>
-                                            Descargar PDF <Download size={14} />
-                                        </span>
-                                    </div>
-                                ))}
-                            </div>
+
 
                             <button onClick={() => { localStorage.clear(); window.location.href = '/login'; }} className="btn" style={{ color: '#6b7280' }}>
                                 Cerrar Sesión
@@ -425,6 +379,85 @@ export default function ProcessView({ userMatricula, stageName }) {
                     )}
                 </motion.div>
             </AnimatePresence>
-        </div>
+
+            {/* Modal de Previsualización y Edición */}
+            <Modal
+                isOpen={isEditModalOpen}
+                onClose={() => setIsEditModalOpen(false)}
+                title={modalMode === 'preview' ? `Vista Previa: ${editingDoc}` : `Editar Datos: ${editingDoc}`}
+                footer={
+                    modalMode === 'preview' ? (
+                        <>
+                            <button onClick={handleSwitchToEdit} className="btn" style={{ background: '#F59E0B', color: 'white', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <Edit size={16} /> Editar
+                            </button>
+                            <button onClick={handleApproveAndDownload} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <Download size={16} /> Aprobar y Descargar
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            <button onClick={() => setModalMode('preview')} className="btn" style={{ background: '#f3f4f6' }}>Cancelar Edición</button>
+                            <button onClick={handleSaveEdit} className="btn btn-primary">Guardar Cambios</button>
+                        </>
+                    )
+                }
+            >
+                {modalMode === 'preview' ? (
+                    <div style={{ background: '#f9fafb', padding: '1.5rem', borderRadius: '0.5rem', border: '1px solid #e5e7eb' }}>
+                        <div style={{ marginBottom: '1rem', borderBottom: '1px dashed #d1d5db', paddingBottom: '0.5rem', fontWeight: 600, color: '#374151', textAlign: 'center' }}>
+                            DOCUMENTO PRELIMINAR
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '1rem 2rem', fontSize: '0.9rem' }}>
+                            <div style={{ fontWeight: 600, color: '#6b7280' }}>Alumno:</div>
+                            <div>{docData.studentName}</div>
+
+                            <div style={{ fontWeight: 600, color: '#6b7280' }}>Matrícula:</div>
+                            <div>{docData.matricula}</div>
+
+                            <div style={{ fontWeight: 600, color: '#6b7280' }}>Empresa:</div>
+                            <div>{docData.companyName}</div>
+
+                            <div style={{ fontWeight: 600, color: '#6b7280' }}>Proyecto:</div>
+                            <div>{docData.projectTitle}</div>
+
+                            <div style={{ fontWeight: 600, color: '#6b7280' }}>Asesor:</div>
+                            <div>{docData.advisor}</div>
+                        </div>
+                        <div style={{ marginTop: '1.5rem', fontSize: '0.75rem', color: '#9ca3af', textAlign: 'center', fontStyle: 'italic' }}>
+                            * Este es un visor de datos preliminar. El formato final .pdf tendrá el diseño oficial de la universidad.
+                        </div>
+                    </div>
+                ) : (
+                    <div>
+                        <p style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '1rem' }}>
+                            Corrige los datos necesarios. Estos cambios se reflejarán en el documento generado.
+                        </p>
+                        <div style={{ display: 'grid', gap: '1rem' }}>
+                            <div>
+                                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.25rem' }}>Nombre del Alumno</label>
+                                <input type="text" className="input" value={docData.studentName} onChange={e => setDocData({ ...docData, studentName: e.target.value })} />
+                            </div>
+                            <div>
+                                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.25rem' }}>Matrícula</label>
+                                <input type="text" className="input" value={docData.matricula} disabled style={{ background: '#f3f4f6' }} />
+                            </div>
+                            <div>
+                                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.25rem' }}>Empresa</label>
+                                <input type="text" className="input" value={docData.companyName} onChange={e => setDocData({ ...docData, companyName: e.target.value })} />
+                            </div>
+                            <div>
+                                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.25rem' }}>Proyecto</label>
+                                <input type="text" className="input" value={docData.projectTitle} onChange={e => setDocData({ ...docData, projectTitle: e.target.value })} />
+                            </div>
+                            <div>
+                                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.25rem' }}>Asesor Empresarial</label>
+                                <input type="text" className="input" value={docData.advisor} onChange={e => setDocData({ ...docData, advisor: e.target.value })} />
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </Modal>
+        </div >
     );
 }

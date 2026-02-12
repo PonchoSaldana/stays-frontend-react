@@ -1,5 +1,5 @@
-import { LogOut, GraduationCap, LayoutDashboard, FileText, CheckSquare, FileCheck, PenTool, Flag, Building, Search, AlertCircle } from 'lucide-react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { LogOut, GraduationCap, LayoutDashboard, FileText, CheckSquare, FileCheck, PenTool, Flag, Building, Search, AlertCircle, User as UserIcon } from 'lucide-react';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import logoUt from '../assets/logo-ut.png';
 import Modal from './Modal';
 import { useState } from 'react';
@@ -7,6 +7,7 @@ import { useState } from 'react';
 export default function Layout({ children, onLogout, user, isAdmin }) {
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const menuItems = [
     { path: '/estadia/catalogo-empresas', icon: Building, label: 'Catálogo Empresas' },
     { path: '/estadia/seleccion-empresa', icon: Search, label: 'Selección Plaza' },
@@ -15,7 +16,6 @@ export default function Layout({ children, onLogout, user, isAdmin }) {
     { path: '/estadia/generacion-documentos', icon: FileCheck, label: '3. Generación' },
     { path: '/estadia/documentos-finales', icon: FileText, label: '4. Doc. Finales' },
     { path: '/estadia/revision-final', icon: CheckSquare, label: '5. Revisión 2' },
-    { path: '/estadia/firma-digital', icon: PenTool, label: '6. Firma Admin' },
     { path: '/estadia/finalizado', icon: Flag, label: '7. Finalizado' },
   ];
 
@@ -34,13 +34,22 @@ export default function Layout({ children, onLogout, user, isAdmin }) {
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
               {user && (
-                <button
-                  onClick={() => setIsLogoutModalOpen(true)}
-                  className="btn"
-                  style={{ fontSize: '0.875rem', padding: '0.5rem 1rem', color: '#6b7280', background: '#f3f4f6' }}
-                >
-                  <LogOut size={16} /> Salir
-                </button>
+                <>
+                  <button
+                    onClick={() => navigate('/mi-perfil')}
+                    className="btn"
+                    style={{ fontSize: '0.875rem', padding: '0.5rem 1rem', color: '#4b5563', background: 'transparent', display: 'flex', alignItems: 'center', gap: '0.5rem', marginRight: '0.5rem' }}
+                  >
+                    <UserIcon size={18} /> Mi Perfil
+                  </button>
+                  <button
+                    onClick={() => setIsLogoutModalOpen(true)}
+                    className="btn"
+                    style={{ fontSize: '0.875rem', padding: '0.5rem 1rem', color: '#6b7280', background: '#f3f4f6' }}
+                  >
+                    <LogOut size={16} /> Salir
+                  </button>
+                </>
               )}
               {/* Decorative dot */}
               <div style={{ width: 8, height: 8, background: 'var(--ut-orange)', borderRadius: '50%' }}></div>
