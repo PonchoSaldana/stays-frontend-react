@@ -314,7 +314,7 @@ export default function LoginView({ onLogin, onAdminLogin }) {
                             <label className="form-label">Matrícula</label>
                             <input type="text" value={matricula} onChange={e => setMatricula(e.target.value)}
                                 className="input" placeholder="Ej. 20230001" autoFocus
-                                style={{ fontSize: '1.125rem', borderColor: recognizedName ? 'var(--ut-green)' : '#e5e7eb' }} />
+                                style={{ fontSize: '1.125rem', borderColor: recognizedName ? 'var(--ut-green)' : '#d1d5db', borderWidth: recognizedName ? '2px' : '1.5px' }} />
                             {recognizedName && (
                                 <p style={{ color: 'var(--ut-green)', fontSize: '0.875rem', marginTop: '0.5rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                     <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--ut-green)', display: 'inline-block' }} />
