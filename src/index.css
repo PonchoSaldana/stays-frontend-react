@@ -470,16 +470,23 @@ body {
 ──────────────────────────────────────────────── */
 @media (max-width: 480px) {
   body {
-    background-color: white;
+    background-color: var(--ut-gray);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1rem;
   }
 
   .login-card {
     flex-direction: column;
-    margin: 0;
-   border-radius: 1.5rem;
-  box-shadow: var(--shadow-xl);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-    min-height: 100vh;
+    margin: 0 auto;
+    border-radius: 1.5rem;
+    box-shadow: var(--shadow-xl);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    min-height: auto;
+    width: 100%;
+    max-width: 420px;
   }
 
   .login-visual-section {
