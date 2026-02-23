@@ -56,6 +56,12 @@ export default function LoginView({ onLogin, onAdminLogin }) {
         setError('');
         const mat = String(matricula).trim();
         if (!mat) return;
+
+        // Limpiar estados previos por seguridad (evita que se "quede" el correo o nombre de otro alumno)
+        setStudentName('');
+        setEmail('');
+        setRecognizedName(null);
+        setPassword('');
         setLoading(true);
 
         try {
@@ -78,6 +84,8 @@ export default function LoginView({ onLogin, onAdminLogin }) {
                 // Primer ingreso → flujo de configuración de cuenta
                 if (data.emailAlreadySet && data.email) {
                     setEmail(data.email);
+                } else {
+                    setEmail(''); // Asegurar que está vacío si el alumno no ha puesto uno
                 }
                 setFlow('email');
             } else {
@@ -89,6 +97,14 @@ export default function LoginView({ onLogin, onAdminLogin }) {
             setError('Error de conexión con el servidor');
         }
         setLoading(false);
+    };
+
+    // Función para enmascarar correo (j***e@gmail.com)
+    const maskEmail = (str) => {
+        if (!str || !str.includes('@')) return str;
+        const [user, domain] = str.split('@');
+        if (user.length <= 2) return `*@${domain}`;
+        return `${user[0]}${'*'.repeat(user.length - 2)}${user[user.length - 1]}@${domain}`;
     };
 
     // ─── LOGIN normal (ya tiene contraseña) ───────────────────────────────────
@@ -225,8 +241,8 @@ export default function LoginView({ onLogin, onAdminLogin }) {
     const headers = {
         login: { title: 'Bienvenido', subtitle: 'Ingresa tu matrícula para acceder.' },
         onboarding_password: { title: `Hola, ${studentName}`, subtitle: 'Ingresa tu contraseña para continuar.' },
-        email: { title: 'Vincula tu cuenta', subtitle: 'Ingresa tu correo para recibir un código.' },
-        verify: { title: 'Verifica tu correo', subtitle: `Código enviado a ${email}` },
+        email: { title: 'Vincula tu cuenta', subtitle: email ? `Confirma o cambia el correo de recuperación.` : 'Ingresa tu correo para recibir un código.' },
+        verify: { title: 'Verifica tu correo', subtitle: `Código enviado a ${maskEmail(email)}` },
         password: { title: 'Crea tu contraseña', subtitle: 'Establece una contraseña segura.' },
         admin: { title: 'Panel Administrativo', subtitle: 'Ingresa tus credenciales de administrador.' }
     };
@@ -236,8 +252,15 @@ export default function LoginView({ onLogin, onAdminLogin }) {
     const handleBack = () => {
         setError('');
         if (adminMode) { setAdminMode(false); return; }
-        if (flow === 'onboarding_password') setFlow('login');
-        else if (flow === 'email') setFlow('login');
+        if (flow === 'onboarding_password') {
+            setFlow('login');
+            setStudentName('');
+        }
+        else if (flow === 'email') {
+            setFlow('login');
+            setEmail('');
+            setStudentName('');
+        }
         else if (flow === 'verify') setFlow('email');
         else if (flow === 'password') setFlow('verify');
     };
@@ -314,6 +337,7 @@ export default function LoginView({ onLogin, onAdminLogin }) {
                             <label className="form-label">Matrícula</label>
                             <input type="text" value={matricula} onChange={e => setMatricula(e.target.value)}
                                 className="input" placeholder="Ej. 20230001" autoFocus
+                                autoComplete="off"
                                 style={{ fontSize: '1.125rem', borderColor: recognizedName ? 'var(--ut-green)' : '#9ca3af', borderWidth: recognizedName ? '2px' : '1.5px' }} />
                             {recognizedName && (
                                 <p style={{ color: 'var(--ut-green)', fontSize: '0.875rem', marginTop: '0.5rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -338,6 +362,7 @@ export default function LoginView({ onLogin, onAdminLogin }) {
                                 <Lock size={20} style={{ position: 'absolute', top: '50%', left: '1rem', transform: 'translateY(-50%)', color: '#9ca3af' }} />
                                 <input type="password" value={password} onChange={e => setPassword(e.target.value)}
                                     className="input" style={{ paddingLeft: '3rem' }}
+                                    autoComplete="current-password"
                                     placeholder="Tu contraseña" autoFocus />
                             </div>
                         </div>
@@ -357,6 +382,7 @@ export default function LoginView({ onLogin, onAdminLogin }) {
                                 <Mail size={20} style={{ position: 'absolute', top: '50%', left: '1rem', transform: 'translateY(-50%)', color: '#9ca3af' }} />
                                 <input type="email" value={email} onChange={e => setEmail(e.target.value)}
                                     className="input" style={{ paddingLeft: '3rem' }}
+                                    autoComplete="off"
                                     placeholder="alumno@uttecam.edu.mx" autoFocus />
                             </div>
                         </div>
