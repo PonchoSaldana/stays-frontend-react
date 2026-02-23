@@ -54,10 +54,13 @@ export default function Modal({ isOpen, onClose, title, children, footer, type =
 
                 {/* Footer */}
                 {footer && (
-                    <div style={{
-                        padding: '1rem 1.5rem', backgroundColor: '#f9fafb', borderTop: '1px solid #e5e7eb',
-                        display: 'flex', justifyContent: 'flex-end', gap: '0.75rem'
-                    }}>
+                    <div
+                        className="modal-footer"
+                        style={{
+                            padding: '1rem 1.5rem', backgroundColor: '#f9fafb', borderTop: '1px solid #e5e7eb',
+                            display: 'flex', justifyContent: 'flex-end', gap: '0.75rem'
+                        }}
+                    >
                         {footer}
                     </div>
                 )}

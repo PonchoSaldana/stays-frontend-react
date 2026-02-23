@@ -88,6 +88,21 @@ body {
   width: 100%;
 }
 
+@media (max-width: 768px) {
+  .main-header {
+    height: 70px;
+  }
+
+  .header-content {
+    height: 70px;
+    padding: 0 1rem;
+  }
+
+  .brand-text p {
+    display: none;
+  }
+}
+
 .brand {
   display: flex;
   align-items: center;
@@ -138,6 +153,39 @@ body {
   height: fit-content;
   position: sticky;
   top: 100px;
+  transition: transform 0.3s ease, visibility 0.3s;
+}
+
+@media (max-width: 1024px) {
+  .body-container {
+    gap: 0;
+    padding: 1rem;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 280px;
+    z-index: 100;
+    border-radius: 0;
+    transform: translateX(-100%);
+    visibility: hidden;
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+    visibility: visible;
+  }
+
+  .hamburger-btn {
+    display: flex;
+  }
+
+  .sidebar-overlay.active {
+    display: block;
+  }
 }
 
 .sidebar-header {
@@ -203,8 +251,19 @@ body {
   display: inline;
 }
 
-.mobile-only {
-  display: none;
+@media (max-width: 640px) {
+  .desktop-label {
+    display: none;
+  }
+
+  .mobile-only {
+    display: block;
+  }
+
+  .grid-3,
+  .grid-2 {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Components */
@@ -261,6 +320,12 @@ body {
   border-color: var(--ut-green);
   border-width: 2px;
   box-shadow: 0 0 0 3px var(--ut-light-green);
+}
+
+@media (max-width: 768px) {
+  .filter-grid-2 {
+    grid-template-columns: 1fr !important;
+  }
 }
 
 /* Login View */
@@ -604,6 +669,12 @@ body {
   white-space: nowrap;
 }
 
+@media (max-width: 640px) {
+  .milestone-label {
+    display: none;
+  }
+}
+
 .milestone.active .milestone-label {
   color: var(--ut-green);
 }
@@ -715,4 +786,30 @@ body {
   border-radius: 999px;
   font-size: 0.875rem;
   font-weight: 500;
+}
+
+@media (max-width: 640px) {
+  .profile-info-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1.5rem !important;
+    text-align: center;
+  }
+
+  .profile-info-grid>div:first-child {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .profile-details-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .modal-footer {
+    flex-direction: column;
+  }
+
+  .modal-footer button {
+    width: 100%;
+  }
 }

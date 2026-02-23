@@ -108,7 +108,7 @@ export default function StudentProfileView({ userMatricula }) {
                     </div>
 
                     {/* Columna Derecha: Datos Académicos */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem 1rem' }}>
+                    <div className="profile-details-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem 1rem' }}>
                         <div style={{ gridColumn: '1 / -1' }}>
                             <label style={{ display: 'block', fontSize: '0.875rem', color: '#6b7280', marginBottom: '0.25rem' }}>Nombre Completo</label>
                             <div style={{ fontSize: '1.125rem', fontWeight: 600, color: '#111827' }}>
