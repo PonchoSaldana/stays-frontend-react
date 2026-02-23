@@ -255,12 +255,10 @@ export default function AdminDashboard() {
             setReasignNewCompanyId('');
         } else {
             setReasignStudent(null);
-            setModalConfig({
-                isOpen: true,
-                title: 'No encontrado',
+            showToast({
                 type: 'info',
-                content: <p>No se encontró ningún estudiante con "<strong>{reasignSearch}</strong>". Intenta con otro nombre o matrícula.</p>,
-                footer: <button onClick={() => setModalConfig({ ...modalConfig, isOpen: false })} className="btn btn-primary">Aceptar</button>
+                title: 'No encontrado',
+                message: `No se encontró ningún estudiante con "${reasignSearch}". Intenta con otro nombre o matrícula.`,
             });
         }
     };
@@ -278,13 +276,13 @@ export default function AdminDashboard() {
         // 2. Feedback
         const companyName = companies.find(c => c.id == reasignNewCompanyId)?.name;
 
-        setModalConfig({
-            isOpen: true,
-            title: 'Reasignación Exitosa',
+        showToast({
             type: 'success',
-            content: <p>El estudiante <strong>{reasignStudent.name}</strong> ha sido reasignado a la empresa <strong>{companyName}</strong>. Su estatus ha pasado a "Pendiente" para reiniciar el proceso.</p>,
-            footer: <button onClick={() => { setModalConfig({ ...modalConfig, isOpen: false }); setReasignStudent(null); setReasignSearch(''); }} className="btn btn-primary">Aceptar</button>
+            title: 'Reasignación Exitosa',
+            message: `El estudiante ${reasignStudent.name} ha sido reasignado a la empresa ${companyName}.`,
         });
+        setReasignStudent(null);
+        setReasignSearch('');
     };
 
     // Modal State
@@ -299,21 +297,17 @@ export default function AdminDashboard() {
         let updated;
         if (isEditingCompany) {
             updated = companies.map(c => c.id === currentCompanyId ? { ...newCompany, id: currentCompanyId } : c);
-            setModalConfig({
-                isOpen: true,
-                title: 'Empresa Actualizada',
+            showToast({
                 type: 'success',
-                content: <p>La empresa <strong>{newCompany.name}</strong> se ha actualizado correctamente.</p>,
-                footer: <button onClick={() => setModalConfig({ ...modalConfig, isOpen: false })} className="btn btn-primary">Aceptar</button>
+                title: 'Empresa Actualizada',
+                message: `La empresa ${newCompany.name} se ha actualizado correctamente.`,
             });
         } else {
             updated = [...companies, { ...newCompany, id: Date.now() }];
-            setModalConfig({
-                isOpen: true,
-                title: 'Empresa Registrada',
+            showToast({
                 type: 'success',
-                content: <p>La empresa <strong>{newCompany.name}</strong> se ha registrado correctamente en el catálogo.</p>,
-                footer: <button onClick={() => setModalConfig({ ...modalConfig, isOpen: false })} className="btn btn-primary">Aceptar</button>
+                title: 'Empresa Registrada',
+                message: `La empresa ${newCompany.name} se ha registrado correctamente en el catálogo.`,
             });
         }
 
@@ -519,7 +513,7 @@ export default function AdminDashboard() {
 
                 // Recargar datos desde el servidor
                 if (endpoint === 'students') {
-                    await fetchStudents();
+                    await fetchStudentCounts();
                 } else {
                     await fetchCompanies();
                 }

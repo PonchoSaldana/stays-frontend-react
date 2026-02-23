@@ -168,8 +168,8 @@ export default function ProcessView({ userMatricula, stageName }) {
     return (
         <div className="process-container">
             <div className="text-center mb-6">
-                <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#1f2937' }}>Gestión de Estadías</h2>
-                <p style={{ color: '#6b7280' }}>Alumno: <span style={{ color: 'var(--ut-green)', fontWeight: 600, fontFamily: 'monospace' }}>{userMatricula}</span></p>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#111827' }}>Gestión de Estadías</h2>
+                <p style={{ color: '#6b7280', fontSize: '0.9rem' }}>Alumno: <span style={{ color: 'var(--ut-green)', fontWeight: 600, fontFamily: 'monospace' }}>{userMatricula}</span></p>
             </div>
 
             <AvatarPath progress={progress} currentStage={
@@ -249,16 +249,16 @@ export default function ProcessView({ userMatricula, stageName }) {
 
                     {/* STAGE 3: GENERATE DOCS */}
                     {stageName === 'generate_1' && (
-                        <div className="text-center" style={{ padding: '2.5rem 0' }}>
-                            <div style={{ width: 80, height: 80, background: '#dcfce7', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem auto', color: 'var(--ut-green)' }}>
-                                <CheckCheck size={40} />
+                        <div className="text-center" style={{ padding: '1rem 0' }}>
+                            <div style={{ width: 64, height: 64, background: '#dcfce7', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem auto', color: 'var(--ut-green)' }}>
+                                <CheckCheck size={32} />
                             </div>
-                            <h3 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '1rem' }}>¡Documentación Autorizada!</h3>
-                            <p style={{ color: '#6b7280', marginBottom: '2rem', maxWidth: 600, margin: '0 auto 2rem auto' }}>
+                            <h3 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.75rem' }}>¡Documentación Autorizada!</h3>
+                            <p style={{ color: '#6b7280', marginBottom: '2rem', maxWidth: 600, margin: '0 auto 2.5rem auto', fontSize: '1rem' }}>
                                 Verifica que los datos sean correctos y edita el contenido si es necesario antes de descargar los formatos.
                             </p>
 
-                            <div className="grid-3" style={{ marginBottom: '2rem', gap: '2rem' }}>
+                            <div className="grid-2" style={{ marginBottom: '2.5rem' }}>
                                 {GENERATED_DOCS.map(doc => (
                                     <div key={doc} style={{
                                         background: 'white',
@@ -272,30 +272,24 @@ export default function ProcessView({ userMatricula, stageName }) {
                                         border: '1px solid #f3f4f6'
                                     }}>
                                         <div style={{
-                                            width: 64, height: 64,
-                                            background: '#F97316', // Orange
-                                            borderRadius: '12px',
+                                            width: 56, height: 56,
+                                            background: '#F97316',
+                                            borderRadius: '1rem',
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
                                             color: 'white',
                                             marginBottom: '1rem'
                                         }}>
-                                            <FileText size={32} strokeWidth={2} />
+                                            <FileText size={28} />
                                         </div>
-                                        <h4 style={{
-                                            fontSize: '1.125rem',
-                                            fontWeight: 700,
-                                            color: '#1f2937',
-                                            marginBottom: '0.5rem'
-                                        }}>
-                                            {doc}
+                                        <h4 style={{ fontSize: '1.125rem', fontWeight: 700, color: '#111827', marginBottom: '1rem' }}>
                                             {doc}
                                         </h4>
                                         <button
                                             onClick={() => handleOpenPreview(doc)}
                                             className="btn btn-primary"
-                                            style={{ marginTop: '0.5rem', width: '100%', fontSize: '0.875rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+                                            style={{ width: '100%', fontSize: '0.875rem' }}
                                         >
                                             <Eye size={16} /> Ver Documento
                                         </button>
@@ -303,7 +297,7 @@ export default function ProcessView({ userMatricula, stageName }) {
                                 ))}
                             </div>
 
-                            <button onClick={handleGenerate} className="btn btn-primary">
+                            <button onClick={handleGenerate} className="btn btn-primary" style={{ maxWidth: '400px' }}>
                                 Continuar (Subir Reportes)
                                 <Download size={18} />
                             </button>
@@ -356,23 +350,25 @@ export default function ProcessView({ userMatricula, stageName }) {
                             <div style={{ display: 'inline-block', padding: '1rem', borderRadius: '50%', background: '#dcfce7', color: 'var(--ut-green)', marginBottom: '1.5rem' }}>
                                 <CheckCheck size={48} />
                             </div>
-                            <h2 style={{ fontSize: '2.25rem', fontWeight: 700, marginBottom: '1rem', color: 'var(--ut-green)' }}>¡Entrega de documentos concluida!</h2>
+                            <h2 style={{ fontSize: '1.75rem', fontWeight: 800, marginBottom: '1rem', color: 'var(--ut-green)', lineHeight: 1.2 }}>¡Entrega de documentos concluida!</h2>
                             <p style={{ fontSize: '1.125rem', color: '#4b5563', marginBottom: '2.5rem' }}>
                                 Has finalizado exitosamente el proceso de estadías.
                             </p>
 
                             <div style={{
-                                background: '#FFF7ED',
-                                borderRadius: '1rem',
+                                background: 'white',
+                                borderRadius: '1.5rem',
                                 padding: '2rem',
                                 maxWidth: '600px',
                                 margin: '0 auto 3rem auto',
-                                border: '1px solid #FED7AA'
+                                border: '2px solid #FED7AA',
+                                boxShadow: '0 10px 30px -10px rgba(251, 146, 60, 0.2)'
                             }}>
-                                <h3 style={{ color: '#C2410C', fontWeight: 700, fontSize: '1.25rem', marginBottom: '0.5rem' }}>
-                                    Siguiente paso:
+                                <h3 style={{ color: '#C2410C', fontWeight: 800, fontSize: '1.25rem', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                                    <AlertTriangle size={24} />
+                                    Siguiente paso
                                 </h3>
-                                <p style={{ color: '#9A3412', fontSize: '1rem', lineHeight: '1.5' }}>
+                                <p style={{ color: '#9A3412', fontSize: '1rem', lineHeight: '1.6' }}>
                                     Por favor acude a la Dirección de Carrera o al Departamento de Estadías para <strong>entregar tu expediente físico</strong> completo para su resguardo final.
                                 </p>
                             </div>
@@ -415,21 +411,21 @@ export default function ProcessView({ userMatricula, stageName }) {
                         <div style={{ marginBottom: '1rem', borderBottom: '1px dashed #d1d5db', paddingBottom: '0.5rem', fontWeight: 600, color: '#374151', textAlign: 'center' }}>
                             DOCUMENTO PRELIMINAR
                         </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '1rem 2rem', fontSize: '0.9rem' }}>
+                        <div className="grid-2" style={{ gap: '1rem', fontSize: '0.9rem' }}>
                             <div style={{ fontWeight: 600, color: '#6b7280' }}>Alumno:</div>
-                            <div>{docData.studentName}</div>
+                            <div style={{ fontWeight: 500 }}>{docData.studentName}</div>
 
                             <div style={{ fontWeight: 600, color: '#6b7280' }}>Matrícula:</div>
-                            <div>{docData.matricula}</div>
+                            <div style={{ fontWeight: 500 }}>{docData.matricula}</div>
 
                             <div style={{ fontWeight: 600, color: '#6b7280' }}>Empresa:</div>
-                            <div>{docData.companyName}</div>
+                            <div style={{ fontWeight: 500 }}>{docData.companyName}</div>
 
                             <div style={{ fontWeight: 600, color: '#6b7280' }}>Proyecto:</div>
-                            <div>{docData.projectTitle}</div>
+                            <div style={{ fontWeight: 500 }}>{docData.projectTitle}</div>
 
                             <div style={{ fontWeight: 600, color: '#6b7280' }}>Asesor:</div>
-                            <div>{docData.advisor}</div>
+                            <div style={{ fontWeight: 500 }}>{docData.advisor}</div>
                         </div>
                         <div style={{ marginTop: '1.5rem', fontSize: '0.75rem', color: '#9ca3af', textAlign: 'center', fontStyle: 'italic' }}>
                             * Este es un visor de datos preliminar. El formato final .pdf tendrá el diseño oficial de la universidad.

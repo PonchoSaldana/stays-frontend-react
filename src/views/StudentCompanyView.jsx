@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Building, Search, MapPin, Phone, Mail, FileText, CheckCircle, Filter } from 'lucide-react';
 import Modal from '../components/Modal';
+import ToastContainer from '../components/Toast';
+import { useToast } from '../hooks/useToast';
 import { authFetch } from '../auth';
 
 // Copied from AdminDashboard for consistency (In a real app, this would be a shared constant)
@@ -41,6 +43,7 @@ const getMockCompanies = () => [
 ];
 
 export default function StudentCompanyView({ mode = 'catalog', onSelect, userMatricula }) {
+    const { toasts, showToast, removeToast } = useToast();
     const [companies, setCompanies] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCareerId, setSelectedCareerId] = useState('');
@@ -153,11 +156,8 @@ export default function StudentCompanyView({ mode = 'catalog', onSelect, userMat
                 });
                 if (!res.ok) {
                     const data = await res.json();
-                    setModalConfig({
-                        isOpen: true, title: 'Error', type: 'danger',
-                        content: <p>{data.message || 'No se pudo guardar la selección.'}</p>,
-                        footer: <button onClick={() => setModalConfig(m => ({ ...m, isOpen: false }))} className="btn btn-primary">Entendido</button>
-                    });
+                    showToast({ type: 'error', title: 'Error', message: data.message || 'No se pudo guardar la selección.' });
+                    setModalConfig(m => ({ ...m, isOpen: false }));
                     return;
                 }
             } catch {
@@ -168,20 +168,8 @@ export default function StudentCompanyView({ mode = 'catalog', onSelect, userMat
         setSelectedCompanyId(company.id);
         if (onSelect) onSelect(company);
 
-        setModalConfig({
-            isOpen: true, title: '¡Empresa Seleccionada!', type: 'success',
-            content: (
-                <div style={{ textAlign: 'center', padding: '1rem 0' }}>
-                    <div style={{ display: 'inline-flex', padding: '1rem', background: '#DCFCE7', borderRadius: '50%', color: '#166534', marginBottom: '1rem' }}>
-                        <CheckCircle size={48} />
-                    </div>
-                    <p style={{ fontSize: '1.125rem' }}>Has registrado correctamente a <strong>{company.name}</strong>.</p>
-                </div>
-            ),
-            footer: (
-                <button onClick={() => setModalConfig(m => ({ ...m, isOpen: false }))} className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}>Entendido</button>
-            )
-        });
+        setModalConfig(m => ({ ...m, isOpen: false }));
+        showToast({ type: 'success', title: '¡Empresa Seleccionada!', message: `Has registrado correctamente a ${company.name}.` });
     };
 
     return (
@@ -329,6 +317,7 @@ export default function StudentCompanyView({ mode = 'catalog', onSelect, userMat
             >
                 {modalConfig.content}
             </Modal>
+            <ToastContainer toasts={toasts} onRemove={removeToast} />
         </div>
     );
 }

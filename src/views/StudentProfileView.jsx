@@ -4,9 +4,12 @@ import { useNavigate } from 'react-router-dom';
 import Modal from '../components/Modal';
 import { API_URL } from '../config';
 import { authFetch } from '../auth';
+import ToastContainer from '../components/Toast';
+import { useToast } from '../hooks/useToast';
 
 export default function StudentProfileView({ userMatricula }) {
     const navigate = useNavigate();
+    const { toasts, showToast, removeToast } = useToast();
     const [passwordData, setPasswordData] = useState({ current: '', new: '', confirm: '' });
     const [cvFile, setCvFile] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -27,19 +30,11 @@ export default function StudentProfileView({ userMatricula }) {
     const handlePasswordChange = async (e) => {
         e.preventDefault();
         if (passwordData.new !== passwordData.confirm) {
-            setModalConfig({
-                isOpen: true, title: 'Error', type: 'danger',
-                content: <p>Las contraseñas no coinciden.</p>,
-                footer: <button onClick={() => setModalConfig(m => ({ ...m, isOpen: false }))} className="btn btn-primary">Aceptar</button>
-            });
+            showToast({ type: 'warning', title: 'Error', message: 'Las contraseñas no coinciden.' });
             return;
         }
         if (passwordData.new.length < 6) {
-            setModalConfig({
-                isOpen: true, title: 'Error', type: 'danger',
-                content: <p>La nueva contraseña debe tener al menos 6 caracteres.</p>,
-                footer: <button onClick={() => setModalConfig(m => ({ ...m, isOpen: false }))} className="btn btn-primary">Aceptar</button>
-            });
+            showToast({ type: 'warning', title: 'Contraseña corta', message: 'La nueva contraseña debe tener al menos 6 caracteres.' });
             return;
         }
 
@@ -53,25 +48,13 @@ export default function StudentProfileView({ userMatricula }) {
             const data = await res.json();
 
             if (!res.ok) {
-                setModalConfig({
-                    isOpen: true, title: 'Error', type: 'danger',
-                    content: <p>{data.message || 'No se pudo cambiar la contraseña.'}</p>,
-                    footer: <button onClick={() => setModalConfig(m => ({ ...m, isOpen: false }))} className="btn btn-primary">Aceptar</button>
-                });
+                showToast({ type: 'error', title: 'Error', message: data.message || 'No se pudo cambiar la contraseña.' });
             } else {
-                setModalConfig({
-                    isOpen: true, title: 'Contraseña Actualizada', type: 'success',
-                    content: <p>Tu contraseña ha sido actualizada correctamente.</p>,
-                    footer: <button onClick={() => setModalConfig(m => ({ ...m, isOpen: false }))} className="btn btn-primary">Aceptar</button>
-                });
+                showToast({ type: 'success', title: 'Contraseña Actualizada', message: 'Tu contraseña ha sido actualizada correctamente.' });
                 setPasswordData({ current: '', new: '', confirm: '' });
             }
         } catch {
-            setModalConfig({
-                isOpen: true, title: 'Error', type: 'danger',
-                content: <p>Error de conexión. Intenta de nuevo.</p>,
-                footer: <button onClick={() => setModalConfig(m => ({ ...m, isOpen: false }))} className="btn btn-primary">Aceptar</button>
-            });
+            showToast({ type: 'error', title: 'Error de conexión', message: 'Intenta de nuevo más tarde.' });
         }
         setLoading(false);
     };
@@ -88,13 +71,7 @@ export default function StudentProfileView({ userMatricula }) {
         setLoading(true);
         setTimeout(() => {
             setLoading(false);
-            setModalConfig({
-                isOpen: true,
-                title: 'CV Actualizado',
-                type: 'success',
-                content: <p>Tu Curriculum Vitae se ha guardado correctamente.</p>,
-                footer: <button onClick={() => setModalConfig({ ...modalConfig, isOpen: false })} className="btn btn-primary">Aceptar</button>
-            });
+            showToast({ type: 'success', title: 'CV Actualizado', message: 'Tu Curriculum Vitae se ha guardado correctamente.' });
         }, 1500);
     };
 
@@ -268,6 +245,7 @@ export default function StudentProfileView({ userMatricula }) {
             >
                 {modalConfig.content}
             </Modal>
+            <ToastContainer toasts={toasts} onRemove={removeToast} />
         </div>
     );
 }
