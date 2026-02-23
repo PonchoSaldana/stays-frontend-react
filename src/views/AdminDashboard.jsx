@@ -53,7 +53,7 @@ export default function AdminDashboard() {
     const closeAdminSidebar = () => setAdminSidebarOpen(false);
 
     // Configuración del Usuario Actual
-    const currentUser = JSON.parse(localStorage.getItem('ut_admin_session') || '{}');
+    const currentUser = JSON.parse(sessionStorage.getItem('ut_admin_session') || '{}');
     const isRoot = (currentUser.username?.toLowerCase() === 'root' || currentUser.role === 'ROOT');
 
     // ── Estado de supervisión ──────────────────────────────────────────────────
@@ -210,7 +210,7 @@ export default function AdminDashboard() {
     const [isCreating, setIsCreating] = useState(false);
 
     useEffect(() => {
-        const storedAdmins = JSON.parse(localStorage.getItem('ut_admins_db') || '[]');
+        const storedAdmins = JSON.parse(sessionStorage.getItem('ut_admins_db') || '[]');
         setAdmins(storedAdmins);
     }, []);
 
@@ -316,7 +316,7 @@ export default function AdminDashboard() {
         }
 
         setCompanies(updated);
-        localStorage.setItem('ut_companies_db', JSON.stringify(updated));
+        sessionStorage.setItem('ut_companies_db', JSON.stringify(updated));
 
         // Reset form
         setNewCompany({ name: '', address: '', contact: '', email: '', fileName: '', careerId: '', spots: 0, hasFinancialSupport: false });
@@ -358,7 +358,7 @@ export default function AdminDashboard() {
                     <button onClick={() => {
                         const updated = companies.filter(c => c.id !== id);
                         setCompanies(updated);
-                        localStorage.setItem('ut_companies_db', JSON.stringify(updated));
+                        sessionStorage.setItem('ut_companies_db', JSON.stringify(updated));
                         setModalConfig(prev => ({ ...prev, isOpen: false }));
                         showToast({ type: 'success', title: 'Empresa eliminada', message: 'La empresa fue eliminada del catálogo.' });
                     }} className="btn" style={{ background: '#DC2626', color: 'white' }}>Eliminar</button>
@@ -372,7 +372,7 @@ export default function AdminDashboard() {
         e.preventDefault();
         if (!newAdmin.username || !newAdmin.password) return;
         const updatedAdmins = [...admins, { ...newAdmin, id: Date.now(), assignedCareers: [] }];
-        localStorage.setItem('ut_admins_db', JSON.stringify(updatedAdmins));
+        sessionStorage.setItem('ut_admins_db', JSON.stringify(updatedAdmins));
         setAdmins(updatedAdmins);
         setNewAdmin({ username: '', password: '', role: 'ADMIN' });
         setIsCreating(false);
@@ -397,7 +397,7 @@ export default function AdminDashboard() {
                     <button onClick={() => {
                         const updated = admins.filter(a => a.username !== username);
                         setAdmins(updated);
-                        localStorage.setItem('ut_admins_db', JSON.stringify(updated));
+                        sessionStorage.setItem('ut_admins_db', JSON.stringify(updated));
                         setModalConfig(prev => ({ ...prev, isOpen: false }));
                         showToast({ type: 'success', title: 'Administrador eliminado', message: `El usuario "${username}" fue eliminado.` });
                     }} className="btn" style={{ background: '#DC2626', color: 'white' }}>Eliminar</button>
@@ -428,7 +428,7 @@ export default function AdminDashboard() {
                 : a
         );
         setAdmins(updatedAdmins);
-        localStorage.setItem('ut_admins_db', JSON.stringify(updatedAdmins));
+        sessionStorage.setItem('ut_admins_db', JSON.stringify(updatedAdmins));
         setAssignModalOpen(false);
         setSelectedAdminForAssign(null);
     };
@@ -632,7 +632,7 @@ export default function AdminDashboard() {
     };
 
     const handleLogout = () => {
-        localStorage.removeItem('ut_admin_session');
+        sessionStorage.removeItem('ut_admin_session');
         window.location.reload();
     };
 

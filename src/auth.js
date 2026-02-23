@@ -1,9 +1,9 @@
 import { API_URL } from './config';
 
 /**
- * Obtiene el token JWT guardado en localStorage.
+ * Obtiene el token JWT guardado en sessionStorage.
  */
-export const getToken = () => localStorage.getItem('ut_token');
+export const getToken = () => sessionStorage.getItem('ut_token');
 
 /**
  * Obtiene headers con Authorization Bearer para requests autenticados.
@@ -39,7 +39,7 @@ export const authFetch = async (endpoint, options = {}) => {
 
     // Token expirado o inválido → cerrar sesión
     if (response.status === 401 || response.status === 403) {
-        localStorage.clear();
+        sessionStorage.clear();
         window.location.href = '/';
         return response;
     }

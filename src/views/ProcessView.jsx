@@ -29,8 +29,8 @@ export default function ProcessView({ userMatricula, stageName }) {
     const navigate = useNavigate();
     const { toasts, showToast, removeToast } = useToast();
     // Estado local para simulacion de persistencia
-    const [uploads1, setUploads1] = useState(() => JSON.parse(localStorage.getItem('up1') || '{}'));
-    const [uploads2, setUploads2] = useState(() => JSON.parse(localStorage.getItem('up2') || '{}'));
+    const [uploads1, setUploads1] = useState(() => JSON.parse(sessionStorage.getItem('up1') || '{}'));
+    const [uploads2, setUploads2] = useState(() => JSON.parse(sessionStorage.getItem('up2') || '{}'));
 
     const [checkStatus, setCheckStatus] = useState({});
 
@@ -61,10 +61,10 @@ export default function ProcessView({ userMatricula, stageName }) {
 
     const progress = getProgress(stageName);
 
-    // Simula auto-guardado en localStorage
+    // Simula auto-guardado en sessionStorage
     useEffect(() => {
-        localStorage.setItem('up1', JSON.stringify(uploads1));
-        localStorage.setItem('up2', JSON.stringify(uploads2));
+        sessionStorage.setItem('up1', JSON.stringify(uploads1));
+        sessionStorage.setItem('up2', JSON.stringify(uploads2));
     }, [uploads1, uploads2]);
 
     // Efectos para transiciones automáticas y animaciones
@@ -375,7 +375,7 @@ export default function ProcessView({ userMatricula, stageName }) {
 
 
 
-                            <button onClick={() => { localStorage.clear(); window.location.href = '/login'; }} className="btn" style={{ color: '#6b7280' }}>
+                            <button onClick={() => { sessionStorage.clear(); window.location.href = '/login'; }} className="btn" style={{ color: '#6b7280' }}>
                                 Cerrar Sesión
                             </button>
                         </div>

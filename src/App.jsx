@@ -8,34 +8,34 @@ import StudentCompanyView from './views/StudentCompanyView';
 import StudentProfileView from './views/StudentProfileView';
 
 function App() {
-  const [userMatricula, setUserMatricula] = useState(localStorage.getItem('ut_user') || null);
-  const [adminUser, setAdminUser] = useState(JSON.parse(localStorage.getItem('ut_admin_session') || 'null'));
+  const [userMatricula, setUserMatricula] = useState(sessionStorage.getItem('ut_user') || null);
+  const [adminUser, setAdminUser] = useState(JSON.parse(sessionStorage.getItem('ut_admin_session') || 'null'));
 
   const navigate = useNavigate();
   const location = useLocation();
 
   const handleLogin = (matricula, userData) => {
     setUserMatricula(matricula);
-    localStorage.setItem('ut_user', matricula);
-    if (userData) localStorage.setItem('ut_user_data', JSON.stringify(userData));
+    sessionStorage.setItem('ut_user', matricula);
+    if (userData) sessionStorage.setItem('ut_user_data', JSON.stringify(userData));
     navigate('/estadia/catalogo-empresas');
   };
 
   const handleAdminLogin = (username, password, token, userData) => {
     const session = userData || { username, role: 'ADMIN' };
     setAdminUser(session);
-    localStorage.setItem('ut_admin_session', JSON.stringify(session));
-    if (token) localStorage.setItem('ut_token', token);
+    sessionStorage.setItem('ut_admin_session', JSON.stringify(session));
+    if (token) sessionStorage.setItem('ut_token', token);
     navigate('/admin/dashboard');
   };
 
   const handleLogout = () => {
     setUserMatricula(null);
     setAdminUser(null);
-    localStorage.removeItem('ut_user');
-    localStorage.removeItem('ut_user_data');
-    localStorage.removeItem('ut_admin_session');
-    localStorage.removeItem('ut_token');
+    sessionStorage.removeItem('ut_user');
+    sessionStorage.removeItem('ut_user_data');
+    sessionStorage.removeItem('ut_admin_session');
+    sessionStorage.removeItem('ut_token');
     navigate('/login');
   };
 

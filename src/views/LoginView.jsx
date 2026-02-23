@@ -139,7 +139,7 @@ export default function LoginView({ onLogin, onAdminLogin }) {
             }
 
             // Guardar token y datos de sesión
-            localStorage.setItem('ut_token', data.token);
+            sessionStorage.setItem('ut_token', data.token);
             onLogin(data.user.matricula, data.user);
 
         } catch (err) {
@@ -206,7 +206,7 @@ export default function LoginView({ onLogin, onAdminLogin }) {
             const data = await res.json();
             if (!res.ok) { setError(data.message); setLoading(false); return; }
 
-            localStorage.setItem('ut_token', data.token);
+            sessionStorage.setItem('ut_token', data.token);
             onLogin(data.user.matricula, data.user);
         } catch {
             setError('Error al guardar la contraseña');
@@ -229,7 +229,7 @@ export default function LoginView({ onLogin, onAdminLogin }) {
             const data = await res.json();
             if (!res.ok) { setError(data.message || 'Credenciales incorrectas'); setLoading(false); return; }
 
-            localStorage.setItem('ut_token', data.token);
+            sessionStorage.setItem('ut_token', data.token);
             onAdminLogin(adminUser, adminPass, data.token, data.user);
         } catch {
             setError('Error de conexión');
