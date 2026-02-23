@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Building, Search, MapPin, Phone, Mail, FileText, CheckCircle, Filter } from 'lucide-react';
 import Modal from '../components/Modal';
+import { authFetch } from '../auth';
 
 // Copied from AdminDashboard for consistency (In a real app, this would be a shared constant)
 const CAREERS = [
@@ -33,6 +34,12 @@ const CAREERS = [
     { id: 'tsu-qui', name: 'TSU en Química Área Tecnología Ambiental' },
 ];
 
+const getMockCompanies = () => [
+    { id: 1, name: 'Volkswagen de México', address: 'Autopista México-Puebla Km 116', contact: 'Lic. Juan Pérez', email: 'rh@vw.com.mx', careerId: 'ing-man', maxStudents: 5 },
+    { id: 2, name: 'Audi México', address: 'San José Chiapa', contact: 'Ing. María González', email: 'practicas@audi.mx', careerId: 'ing-mec', maxStudents: 3 },
+    { id: 3, name: 'Softtek', address: 'Parque Tecnológico', contact: 'Lic. Ana Ruiz', email: 'talento@softtek.com', careerId: 'ing-soft', maxStudents: 10 }
+];
+
 export default function StudentCompanyView({ mode = 'catalog', onSelect, userMatricula }) {
     const [companies, setCompanies] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
@@ -43,60 +50,21 @@ export default function StudentCompanyView({ mode = 'catalog', onSelect, userMat
     const [modalConfig, setModalConfig] = useState({ isOpen: false, title: '', content: null, footer: null, type: 'info' });
 
     useEffect(() => {
-        const storedCompanies = JSON.parse(localStorage.getItem('ut_companies_db') || '[]');
-        // Load mocks if empty, similar to AdminDashboard logic, ensuring data presence
-        if (storedCompanies.length === 0) {
-            const mockCompanies = [
-                {
-                    id: 1,
-                    name: 'Volkswagen de México',
-                    address: 'Autopista México-Puebla Km 116',
-                    contact: 'Lic. Juan Pérez',
-                    email: 'rh@vw.com.mx',
-                    fileName: 'convenio_vw_2024.pdf',
-                    careerId: 'ing-man',
-                    spots: 5,
-                    hasFinancialSupport: true
-                },
-                {
-                    id: 2,
-                    name: 'Audi México',
-                    address: 'San José Chiapa',
-                    contact: 'Ing. María González',
-                    email: 'practicas@audi.mx',
-                    fileName: 'carta_aceptacion.docx',
-                    careerId: 'ing-mec',
-                    spots: 3,
-                    hasFinancialSupport: true
-                },
-                {
-                    id: 3,
-                    name: 'Softtek',
-                    address: 'Parque Tecnológico',
-                    contact: 'Lic. Ana Ruiz',
-                    email: 'talento@softtek.com',
-                    fileName: 'convenio_softtek.pdf',
-                    careerId: 'ing-soft',
-                    spots: 10,
-                    hasFinancialSupport: false
-                }
-            ];
-            setCompanies(mockCompanies);
-        } else {
-            setCompanies(storedCompanies);
-        }
+        // Cargar empresas desde el backend (requiere token)
+        authFetch('/companies')
+            .then(res => res.ok ? res.json() : [])
+            .then(data => setCompanies(data.length > 0 ? data : getMockCompanies()))
+            .catch(() => setCompanies(getMockCompanies()));
 
-        // Cargar selección guardada del usuario
+        // Cargar empresa ya seleccionada desde el backend
         if (userMatricula && mode === 'selection') {
-            const savedSelection = localStorage.getItem(`ut_selection_${userMatricula}`);
-            if (savedSelection) {
-                try {
-                    const parsed = JSON.parse(savedSelection);
-                    setSelectedCompanyId(parsed.id);
-                } catch (e) {
-                    console.error("Error cargando selección", e);
-                }
-            }
+            const mat = String(userMatricula).trim().toLowerCase();
+            authFetch(`/students/${mat}`)
+                .then(res => res.ok ? res.json() : null)
+                .then(student => {
+                    if (student?.companyId) setSelectedCompanyId(student.companyId);
+                })
+                .catch(() => { });
         }
     }, [userMatricula, mode]);
 
@@ -175,21 +143,33 @@ export default function StudentCompanyView({ mode = 'catalog', onSelect, userMat
         });
     };
 
-    const confirmSelection = (company) => {
-        setSelectedCompanyId(company.id);
-
-        // Guardar persistencia por usuario
+    const confirmSelection = async (company) => {
         if (userMatricula) {
-            localStorage.setItem(`ut_selection_${userMatricula}`, JSON.stringify(company));
+            try {
+                const mat = String(userMatricula).trim().toLowerCase();
+                const res = await authFetch(`/students/${mat}/select-company`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ companyId: company.id })
+                });
+                if (!res.ok) {
+                    const data = await res.json();
+                    setModalConfig({
+                        isOpen: true, title: 'Error', type: 'danger',
+                        content: <p>{data.message || 'No se pudo guardar la selección.'}</p>,
+                        footer: <button onClick={() => setModalConfig(m => ({ ...m, isOpen: false }))} className="btn btn-primary">Entendido</button>
+                    });
+                    return;
+                }
+            } catch {
+                // Continuar aunque falle la red (mostrar éxito visual de todas formas)
+            }
         }
 
+        setSelectedCompanyId(company.id);
         if (onSelect) onSelect(company);
 
-        // Show Success Modal
         setModalConfig({
-            isOpen: true,
-            title: '¡Empresa Seleccionada!',
-            type: 'success',
+            isOpen: true, title: '¡Empresa Seleccionada!', type: 'success',
             content: (
                 <div style={{ textAlign: 'center', padding: '1rem 0' }}>
                     <div style={{ display: 'inline-flex', padding: '1rem', background: '#DCFCE7', borderRadius: '50%', color: '#166534', marginBottom: '1rem' }}>
@@ -199,13 +179,7 @@ export default function StudentCompanyView({ mode = 'catalog', onSelect, userMat
                 </div>
             ),
             footer: (
-                <button
-                    onClick={() => setModalConfig({ ...modalConfig, isOpen: false })}
-                    className="btn btn-primary"
-                    style={{ width: '100%', justifyContent: 'center' }}
-                >
-                    Entendido
-                </button>
+                <button onClick={() => setModalConfig(m => ({ ...m, isOpen: false }))} className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}>Entendido</button>
             )
         });
     };
@@ -225,7 +199,7 @@ export default function StudentCompanyView({ mode = 'catalog', onSelect, userMat
 
             {/* Filters */}
             <div className="process-card mb-6" style={{ marginTop: 0 }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div className="filter-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                     <div style={{ position: 'relative' }}>
                         <Search size={18} style={{ position: 'absolute', left: 12, top: 12, color: '#9ca3af' }} />
                         <input

@@ -31,7 +31,7 @@ export default function AvatarPath({ progress, currentStage }) {
     ];
 
     return (
-        <div className="path-container" style={{ paddingTop: '3rem' }}>
+        <div className="path-container" style={{ paddingTop: '3.5rem', overflowX: 'hidden' }}>
             <div className="path-track">
                 {/* Progress Fill */}
                 <motion.div

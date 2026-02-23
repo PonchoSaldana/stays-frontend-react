@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Search, FolderOpen, ArrowLeft, FileText, CheckCircle, Clock, Settings, Shield, UserPlus, UserX, UserCheck, LogOut, Database, Upload, XCircle, Send, MessageSquare, Building, File, Trash2, Download, PieChart as PieChartIcon, RefreshCw, Edit, GraduationCap, Briefcase, CloudUpload } from 'lucide-react';
+import { Users, Search, FolderOpen, ArrowLeft, FileText, CheckCircle, Clock, Settings, Shield, UserPlus, UserX, UserCheck, LogOut, Database, Upload, XCircle, Send, MessageSquare, Building, File, Trash2, Download, PieChart as PieChartIcon, RefreshCw, Edit, GraduationCap, Briefcase, CloudUpload, Menu, X, AlertTriangle } from 'lucide-react';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { read, utils, writeFile } from 'xlsx';
 import logoUt from '../assets/logo-ut.png';
 import Modal from '../components/Modal';
+import ToastContainer from '../components/Toast';
+import { useToast } from '../hooks/useToast';
+import { API_URL } from '../config';
+import { authFetch } from '../auth';
 
 const CAREERS = [
     // --- Ingenierías y Licenciaturas ---
@@ -39,103 +43,157 @@ const CAREERS = [
     { id: 'tsu-qui', name: 'TSU en Química Área Tecnología Ambiental', type: 'TSU' },
 ];
 
-const API_URL = 'http://localhost:3001/api';
+
 
 export default function AdminDashboard() {
     const [activeTab, setActiveTab] = useState('supervision');
+    const [adminSidebarOpen, setAdminSidebarOpen] = useState(false);
+    const { toasts, showToast, removeToast } = useToast();
+
+    const closeAdminSidebar = () => setAdminSidebarOpen(false);
 
     // Configuración del Usuario Actual
     const currentUser = JSON.parse(localStorage.getItem('ut_admin_session') || '{}');
     const isRoot = (currentUser.username?.toLowerCase() === 'root' || currentUser.role === 'ROOT');
 
-    // --- Estado para la Base de Datos de Estudiantes ---
-    const [localStudents, setLocalStudents] = useState([]);
-    const [previewData, setPreviewData] = useState([]); // Arreglo genérico para previsualización
-    const [previewType, setPreviewType] = useState(null); // 'students' | 'companies'
-    const [uploadError, setUploadError] = useState(null);
-
-    // --- Estado para Supervisión ---
+    // ── Estado de supervisión ──────────────────────────────────────────────────
     const [selectedCareer, setSelectedCareer] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
 
-    // State para acciones de Aprobar/Regresar
-    const [rejectAction, setRejectAction] = useState({ id: null, comment: '' });
+    // ── Estado de paginación de alumnos por carrera ────────────────────────────
+    const [careerStudents, setCareerStudents] = useState([]);   // página actual
+    const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0, limit: 20 });
+    const [loadingStudents, setLoadingStudents] = useState(false);
+
+    // ── Counts por carrera (para el mosaico) ──────────────────────────────────
+    const [careerCounts, setCareerCounts] = useState({});  // { [careerId]: number }
 
     // Inicialización de datos (Backend API)
     useEffect(() => {
-        fetchStudents();
+        fetchStudentCounts();
         fetchCompanies();
     }, []);
 
-    const fetchStudents = async () => {
-        try {
-            const res = await fetch(`${API_URL}/students`);
-            if (res.ok) {
-                const data = await res.json();
-                setLocalStudents(data.map(s => ({
-                    ...s,
-                    id: s.matricula,
-                    status: s.status || 'Pendiente',
-                    careerId: CAREERS.find(c => {
-                        const cName = c.name.toLowerCase();
-                        const sName = (s.careerName || s.carrera || '').toLowerCase(); // Fallback check
-                        return cName === sName || sName.includes(cName) || cName.includes(sName);
-                    })?.id || 'unknown'
-                })));
-            }
-        } catch (error) {
-            console.error("Error fetching students:", error);
+    // Cuando se abre una carrera, cargamos página 1
+    useEffect(() => {
+        if (selectedCareer) {
+            fetchCareerStudents(selectedCareer, 1, '');
+            setSearchTerm('');
         }
+    }, [selectedCareer]);
+
+    // Debounce: re-fetch cuando cambia el buscador (espera 400ms)
+    useEffect(() => {
+        if (!selectedCareer) return;
+        const timer = setTimeout(() => {
+            fetchCareerStudents(selectedCareer, 1, searchTerm);
+        }, 400);
+        return () => clearTimeout(timer);
+    }, [searchTerm]);
+
+    /**
+     * Carga rápida (sin datos) para obtener counts por carrera.
+     * Usa limit=1 por carrera — en producción podrías tener un endpoint dedicado.
+     * Aquí se cargan todos sin restricción de campo para conteo.
+     */
+    const fetchStudentCounts = async () => {
+        try {
+            const res = await authFetch('/students?page=1&limit=1');
+            if (!res.ok) return;
+            const json = await res.json();
+            setPagination(p => ({ ...p, total: json.total }));
+        } catch { /* silencioso */ }
+    };
+
+    /**
+     * Fetch paginado de alumnos filtrados por carrera y búsqueda.
+     */
+    const fetchCareerStudents = async (career, page, search) => {
+        setLoadingStudents(true);
+        try {
+            const params = new URLSearchParams({
+                page,
+                limit: pagination.limit,
+                careerName: career.name,
+                ...(search ? { search } : {})
+            });
+            const res = await authFetch(`/students?${params.toString()}`);
+            if (!res.ok) return;
+            const json = await res.json();
+
+            const mapped = (json.data || []).map(s => ({
+                ...s,
+                id: s.matricula,
+                status: s.status || 'Pendiente',
+                careerId: CAREERS.find(c => {
+                    const cName = c.name.toLowerCase();
+                    const sName = (s.careerName || '').toLowerCase();
+                    return cName === sName || sName.includes(cName) || cName.includes(sName);
+                })?.id || 'unknown'
+            }));
+
+            setCareerStudents(mapped);
+            setPagination({ page: json.page, totalPages: json.totalPages, total: json.total, limit: json.limit });
+
+            // Actualizar el count de esta carrera en el mapa
+            setCareerCounts(prev => ({ ...prev, [career.id]: json.total }));
+        } catch { /* silencioso */ }
+        setLoadingStudents(false);
+    };
+
+    /**
+     * Navegar a otra página dentro de la carrera seleccionada.
+     */
+    const goToPage = (newPage) => {
+        if (newPage < 1 || newPage > pagination.totalPages) return;
+        fetchCareerStudents(selectedCareer, newPage, searchTerm);
     };
 
     const fetchCompanies = async () => {
         try {
-            const res = await fetch(`${API_URL}/companies`);
+            const res = await authFetch('/companies');
             if (res.ok) {
                 const data = await res.json();
                 setCompanies(data);
             }
         } catch (error) {
-            console.error("Error fetching companies:", error);
+            // Error de red
         }
     };
 
-    // Filtra alumnos según la carrera seleccionada y el término de búsqueda
-    const filteredStudents = selectedCareer
-        ? localStudents.filter(s => s.careerId === selectedCareer.id && (s.name.toLowerCase().includes(searchTerm.toLowerCase()) || String(s.matricula).includes(searchTerm)))
-        : [];
+    // Alias para compatibilidad con handlers: careerStudents ES la lista activa
+    // (No declaramos 'localStudents' como const porque algunos handlers la usan por referencia)
+    const filteredStudents = careerStudents;  // ya filtrados por servidor
 
-    const getStudentCount = (careerId) => localStudents.filter(s => s.careerId === careerId).length;
+    const getStudentCount = (careerId) => careerCounts[careerId] ?? 0;
+
+    // Estado extra que todavía usan partes del componente
+    const [previewData, setPreviewData] = useState([]);
+    const [previewType, setPreviewType] = useState(null);
+    const [uploadError, setUploadError] = useState(null);
+    const [rejectAction, setRejectAction] = useState({ id: null, comment: '' });
 
     // --- Handlers de Acciones ---
 
-    // Aprueba al estudiante
+    // Aprueba al estudiante (optimistic update local)
     const handleApprove = (student) => {
-        const updated = localStudents.map(s =>
+        setCareerStudents(prev => prev.map(s =>
             s.id === student.id ? { ...s, status: 'Aprobado' } : s
-        );
-        setLocalStudents(updated);
-        // Actualizar LS si estamos usando datos persistentes
-        if (localStorage.getItem('ut_students_db')) {
-            localStorage.setItem('ut_students_db', JSON.stringify(updated));
-        }
+        ));
     };
 
     const initReject = (student) => {
         setRejectAction({ id: student.id, comment: '' });
     };
 
-    // Confirma el rechazo y guarda el comentario
+    // Confirma el rechazo y actualiza localmente
     const confirmReject = () => {
         if (!rejectAction.comment.trim()) return;
-
-        const updated = localStudents.map(s =>
-            s.id === rejectAction.id ? { ...s, status: 'Corrección Solicitada', comment: rejectAction.comment } : s
-        );
-        setLocalStudents(updated);
-        if (localStorage.getItem('ut_students_db')) {
-            localStorage.setItem('ut_students_db', JSON.stringify(updated));
-        }
+        setCareerStudents(prev => prev.map(s =>
+            s.id === rejectAction.id
+                ? { ...s, status: 'Corrección Solicitada', comment: rejectAction.comment }
+                : s
+        ));
         setRejectAction({ id: null, comment: '' });
     };
 
@@ -187,7 +245,7 @@ export default function AdminDashboard() {
 
         // Búsqueda flexible (matricula o nombre)
         const term = reasignSearch.toLowerCase();
-        const found = localStudents.find(s =>
+        const found = careerStudents.find(s =>
             String(s.matricula).includes(term) ||
             s.name.toLowerCase().includes(term)
         );
@@ -210,12 +268,12 @@ export default function AdminDashboard() {
     const handleReasignSubmit = () => {
         if (!reasignStudent || !reasignNewCompanyId) return;
 
-        // 1. Actualizar estudiante en localStudents
-        const updatedStudents = localStudents.map(s =>
-            s.id === reasignStudent.id ? { ...s, companyId: reasignNewCompanyId, status: 'Pendiente', comment: 'Reasignación de Estadía realizada por Root.' } : s
-        );
-        setLocalStudents(updatedStudents);
-        localStorage.setItem('ut_students_db', JSON.stringify(updatedStudents));
+        // 1. Actualizar alumno localmente
+        setCareerStudents(prev => prev.map(s =>
+            s.id === reasignStudent.id
+                ? { ...s, companyId: reasignNewCompanyId, status: 'Pendiente', comment: 'Reasignación de Estadía realizada por Root.' }
+                : s
+        ));
 
         // 2. Feedback
         const companyName = companies.find(c => c.id == reasignNewCompanyId)?.name;
@@ -284,11 +342,31 @@ export default function AdminDashboard() {
     };
 
     const handleDeleteCompany = (id) => {
-        if (window.confirm('¿Estás seguro de eliminar esta empresa?')) {
-            const updated = companies.filter(c => c.id !== id);
-            setCompanies(updated);
-            localStorage.setItem('ut_companies_db', JSON.stringify(updated));
-        }
+        setModalConfig({
+            isOpen: true,
+            title: 'Eliminar Empresa',
+            type: 'danger',
+            content: (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', textAlign: 'center', padding: '0.5rem 0' }}>
+                    <div style={{ width: 48, height: 48, background: '#FEF2F2', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#DC2626' }}>
+                        <AlertTriangle size={24} />
+                    </div>
+                    <p>¿Estás seguro de que deseas eliminar esta empresa? <strong>Esta acción no se puede deshacer.</strong></p>
+                </div>
+            ),
+            footer: (
+                <>
+                    <button onClick={() => setModalConfig(prev => ({ ...prev, isOpen: false }))} className="btn" style={{ background: '#f3f4f6', color: '#374151' }}>Cancelar</button>
+                    <button onClick={() => {
+                        const updated = companies.filter(c => c.id !== id);
+                        setCompanies(updated);
+                        localStorage.setItem('ut_companies_db', JSON.stringify(updated));
+                        setModalConfig(prev => ({ ...prev, isOpen: false }));
+                        showToast({ type: 'success', title: 'Empresa eliminada', message: 'La empresa fue eliminada del catálogo.' });
+                    }} className="btn" style={{ background: '#DC2626', color: 'white' }}>Eliminar</button>
+                </>
+            )
+        });
     };
 
     // Crea un nuevo administrador
@@ -303,11 +381,31 @@ export default function AdminDashboard() {
     };
 
     const handleDeleteAdmin = (username) => {
-        if (window.confirm(`¿Eliminar administrador ${username}?`)) {
-            const updated = admins.filter(a => a.username !== username);
-            setAdmins(updated);
-            localStorage.setItem('ut_admins_db', JSON.stringify(updated));
-        }
+        setModalConfig({
+            isOpen: true,
+            title: 'Eliminar Administrador',
+            type: 'danger',
+            content: (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', textAlign: 'center', padding: '0.5rem 0' }}>
+                    <div style={{ width: 48, height: 48, background: '#FEF2F2', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#DC2626' }}>
+                        <AlertTriangle size={24} />
+                    </div>
+                    <p>¿Eliminar al administrador <strong>{username}</strong>? Esta acción es permanente.</p>
+                </div>
+            ),
+            footer: (
+                <>
+                    <button onClick={() => setModalConfig(prev => ({ ...prev, isOpen: false }))} className="btn" style={{ background: '#f3f4f6', color: '#374151' }}>Cancelar</button>
+                    <button onClick={() => {
+                        const updated = admins.filter(a => a.username !== username);
+                        setAdmins(updated);
+                        localStorage.setItem('ut_admins_db', JSON.stringify(updated));
+                        setModalConfig(prev => ({ ...prev, isOpen: false }));
+                        showToast({ type: 'success', title: 'Administrador eliminado', message: `El usuario "${username}" fue eliminado.` });
+                    }} className="btn" style={{ background: '#DC2626', color: 'white' }}>Eliminar</button>
+                </>
+            )
+        });
     };
 
     // --- Funciones de Asignación de Tareas ---
@@ -337,24 +435,13 @@ export default function AdminDashboard() {
         setSelectedAdminForAssign(null);
     };
 
-    // Calcular progreso de un admin
+    // Calcular progreso de un admin (usa careerCounts que se llenan al navegar carreras)
     const getAdminProgress = (admin) => {
         if (!admin.assignedCareers || admin.assignedCareers.length === 0) return { total: 0, reviewed: 0, percentage: 0 };
-
-        let totalFiles = 0;
-        let reviewedFiles = 0;
-
-        admin.assignedCareers.forEach(careerId => {
-            const studentsInCareer = localStudents.filter(s => s.careerId === careerId);
-            totalFiles += studentsInCareer.length;
-            reviewedFiles += studentsInCareer.filter(s => s.status !== 'Pendiente').length; // Asumiendo 'Pendiente' es no revisado
-        });
-
-        return {
-            total: totalFiles,
-            reviewed: reviewedFiles,
-            percentage: totalFiles === 0 ? 0 : Math.round((reviewedFiles / totalFiles) * 100)
-        };
+        // Con paginación ya no tenemos todos los alumnos en memoria.
+        // Usamos el count por carrera que se acumula a medida que el admin las visita.
+        const total = admin.assignedCareers.reduce((sum, careerId) => sum + (careerCounts[careerId] ?? 0), 0);
+        return { total, reviewed: 0, percentage: 0 };
     };
 
     // Dashboard para Admin NO Root (Filtrado)
@@ -417,14 +504,18 @@ export default function AdminDashboard() {
         const endpoint = previewType === 'students' ? 'students' : 'companies';
 
         try {
-            const res = await fetch(`${API_URL}/import/${endpoint}`, {
+            const res = await authFetch(`/import/${endpoint}`, {
                 method: 'POST',
                 body: formData
             });
 
             if (res.ok) {
                 const result = await res.json();
-                alert(`✅ Importación Exitosa: ${result.count} ${previewType === 'students' ? 'alumnos' : 'empresas'} importados.`);
+                showToast({
+                    type: 'success',
+                    title: 'Importación Exitosa',
+                    message: `${result.count} ${previewType === 'students' ? 'alumnos' : 'empresas'} importados correctamente.`,
+                });
 
                 // Recargar datos desde el servidor
                 if (endpoint === 'students') {
@@ -439,20 +530,45 @@ export default function AdminDashboard() {
                 setSelectedFile(null);
             } else {
                 const err = await res.json();
-                alert(`❌ Error: ${err.message || 'Error desconocido'}`);
+                showToast({
+                    type: 'error',
+                    title: 'Error de importación',
+                    message: err.message || 'Error desconocido al importar el archivo.',
+                });
             }
         } catch (error) {
             console.error(error);
-            alert("❌ Error de conexión. Asegúrate de que el backend esté corriendo.");
+            showToast({
+                type: 'error',
+                title: 'Error de conexión',
+                message: 'No se pudo conectar con el servidor. Asegúrate de que el backend esté corriendo.',
+            });
         }
     };
 
-    // Exporta la base de datos a Excel
-    const handleExportExcel = () => {
-        const ws = utils.json_to_sheet(localStudents);
-        const wb = utils.book_new();
-        utils.book_append_sheet(wb, ws, "Base de Datos Completa");
-        writeFile(wb, `BD_Alumnos_UT_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    // Exporta la base de datos a Excel (descarga todos los alumnos del servidor)
+    const handleExportExcel = async () => {
+        try {
+            const res = await authFetch('/students?page=1&limit=99999');
+            if (!res.ok) {
+                showToast({ type: 'error', title: 'Error', message: 'No se pudieron obtener los datos del servidor.' });
+                return;
+            }
+            const data = await res.json();
+            const allStudents = data.students || data || [];
+            if (allStudents.length === 0) {
+                showToast({ type: 'warning', title: 'Sin registros', message: 'No hay alumnos registrados para exportar.' });
+                return;
+            }
+            const ws = utils.json_to_sheet(allStudents);
+            const wb = utils.book_new();
+            utils.book_append_sheet(wb, ws, 'Base de Datos Completa');
+            writeFile(wb, `BD_Alumnos_UT_${new Date().toISOString().slice(0, 10)}.xlsx`);
+            showToast({ type: 'success', title: 'Exportado', message: `${allStudents.length} registros exportados exitosamente.` });
+        } catch (err) {
+            console.error(err);
+            showToast({ type: 'error', title: 'Error al exportar', message: 'Ocurrió un problema al generar el archivo Excel.' });
+        }
     };
 
     // Simula descarga de Documentos (ZIP)
@@ -495,7 +611,7 @@ export default function AdminDashboard() {
 
     const handleUpdateProfile = (e) => {
         e.preventDefault();
-        alert("Contraseña actualizada correctamente (Simulación)");
+        showToast({ type: 'success', title: 'Contraseña actualizada', message: 'Tu contraseña ha sido actualizada correctamente.' });
         setNewPassword('');
     };
 
@@ -555,7 +671,7 @@ export default function AdminDashboard() {
                         </div>
 
                         {/* Selector de Nivel Académico */}
-                        <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
+                        <div className="level-selector" style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
                             <button
                                 onClick={() => setViewLevel('TSU')}
                                 style={{
@@ -672,7 +788,16 @@ export default function AdminDashboard() {
                                     />
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#6b7280', fontSize: '0.875rem' }}>
-                                    <span style={{ fontWeight: 600, color: 'var(--ut-dark)' }}>{filteredStudents.length}</span> resultados
+                                    {loadingStudents ? (
+                                        <span style={{ color: '#9ca3af', fontStyle: 'italic' }}>Cargando...</span>
+                                    ) : (
+                                        <>
+                                            <span style={{ fontWeight: 600, color: 'var(--ut-dark)' }}>{filteredStudents.length}</span>
+                                            <span>de</span>
+                                            <span style={{ fontWeight: 600, color: 'var(--ut-dark)' }}>{pagination.total}</span>
+                                            <span>alumnos</span>
+                                        </>
+                                    )}
                                 </div>
                             </div>
 
@@ -778,6 +903,63 @@ export default function AdminDashboard() {
                                     </tbody>
                                 </table>
                             </div>
+
+                            {/* ── Paginación ── */}
+                            {pagination.totalPages > 1 && (
+                                <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    marginTop: '1.5rem',
+                                    paddingTop: '1.25rem',
+                                    borderTop: '1px solid #f3f4f6',
+                                    flexWrap: 'wrap',
+                                    gap: '0.75rem'
+                                }}>
+                                    <p style={{ color: '#6b7280', fontSize: '0.875rem', margin: 0 }}>
+                                        Página <strong>{pagination.page}</strong> de <strong>{pagination.totalPages}</strong>
+                                        &nbsp;&mdash;&nbsp;{pagination.total} alumnos en esta carrera
+                                    </p>
+                                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                        <button
+                                            onClick={() => goToPage(1)}
+                                            disabled={pagination.page === 1 || loadingStudents}
+                                            className="btn"
+                                            style={{ padding: '0.4rem 0.75rem', fontSize: '0.8rem', background: pagination.page === 1 ? '#f3f4f6' : 'white', color: pagination.page === 1 ? '#9ca3af' : '#374151', border: '1px solid #e5e7eb', cursor: pagination.page === 1 ? 'not-allowed' : 'pointer' }}
+                                        >&laquo;</button>
+                                        <button
+                                            onClick={() => goToPage(pagination.page - 1)}
+                                            disabled={pagination.page === 1 || loadingStudents}
+                                            className="btn"
+                                            style={{ padding: '0.4rem 0.9rem', fontSize: '0.875rem', background: pagination.page === 1 ? '#f3f4f6' : 'white', color: pagination.page === 1 ? '#9ca3af' : '#374151', border: '1px solid #e5e7eb', cursor: pagination.page === 1 ? 'not-allowed' : 'pointer' }}
+                                        >Anterior</button>
+
+                                        {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                                            const startPage = Math.max(1, Math.min(pagination.page - 2, pagination.totalPages - 4));
+                                            const p = startPage + i;
+                                            if (p > pagination.totalPages) return null;
+                                            return (
+                                                <button key={p} onClick={() => goToPage(p)} disabled={loadingStudents} className="btn"
+                                                    style={{ padding: '0.4rem 0.75rem', fontSize: '0.875rem', minWidth: '2rem', background: p === pagination.page ? 'var(--ut-dark)' : 'white', color: p === pagination.page ? 'white' : '#374151', border: `1px solid ${p === pagination.page ? 'var(--ut-dark)' : '#e5e7eb'}`, fontWeight: p === pagination.page ? 700 : 400, cursor: 'pointer' }}
+                                                >{p}</button>
+                                            );
+                                        })}
+
+                                        <button
+                                            onClick={() => goToPage(pagination.page + 1)}
+                                            disabled={pagination.page === pagination.totalPages || loadingStudents}
+                                            className="btn"
+                                            style={{ padding: '0.4rem 0.9rem', fontSize: '0.875rem', background: pagination.page === pagination.totalPages ? '#f3f4f6' : 'white', color: pagination.page === pagination.totalPages ? '#9ca3af' : '#374151', border: '1px solid #e5e7eb', cursor: pagination.page === pagination.totalPages ? 'not-allowed' : 'pointer' }}
+                                        >Siguiente</button>
+                                        <button
+                                            onClick={() => goToPage(pagination.totalPages)}
+                                            disabled={pagination.page === pagination.totalPages || loadingStudents}
+                                            className="btn"
+                                            style={{ padding: '0.4rem 0.75rem', fontSize: '0.8rem', background: pagination.page === pagination.totalPages ? '#f3f4f6' : 'white', color: pagination.page === pagination.totalPages ? '#9ca3af' : '#374151', border: '1px solid #e5e7eb', cursor: pagination.page === pagination.totalPages ? 'not-allowed' : 'pointer' }}
+                                        >&raquo;</button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}
@@ -787,10 +969,27 @@ export default function AdminDashboard() {
     };
 
     return (
-        <div style={{ display: 'flex', minHeight: '100vh', flexDirection: 'row', background: '#f9fafb' }}>
+        <div className="admin-main-layout" style={{ display: 'flex', minHeight: '100vh', flexDirection: 'row', background: '#f9fafb' }}>
+
+            {/* Botón hamburguesa móvil */}
+            <button
+                className="admin-mobile-toggle"
+                onClick={() => setAdminSidebarOpen(prev => !prev)}
+                aria-label="Abrir menú admin"
+            >
+                {adminSidebarOpen ? <X size={22} /> : <Menu size={22} />}
+            </button>
+
+            {/* Overlay para móvil */}
+            <div
+                className={`sidebar-overlay ${adminSidebarOpen ? 'active' : ''}`}
+                onClick={closeAdminSidebar}
+                style={{ zIndex: 59 }}
+            />
+
             {/* Sidebar de Admin */}
-            <aside style={{ width: '260px', background: 'white', borderRight: '1px solid #e5e7eb', padding: '1.5rem', display: 'flex', flexDirection: 'column', position: 'fixed', height: '100%', left: 0, top: 0, zIndex: 50 }}>
-                <div style={{ marginBottom: '2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', textAlign: 'center' }}>
+            <aside className={`admin-sidebar ${adminSidebarOpen ? 'open' : ''}`} style={{ width: '260px', background: 'white', borderRight: '1px solid #e5e7eb', padding: '1.5rem', display: 'flex', flexDirection: 'column', position: 'fixed', height: '100%', left: 0, top: 0, zIndex: 60, overflowY: 'auto' }}>
+                <div style={{ marginBottom: '2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', textAlign: 'center', paddingTop: '0.5rem' }}>
                     <img src={logoUt} alt="Logo" style={{ height: 50, objectFit: 'contain' }} />
                     <div>
                         <p style={{ fontSize: '0.75rem', color: '#6b7280' }}>Gestión Estadías</p>
@@ -799,7 +998,7 @@ export default function AdminDashboard() {
 
                 <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                     <button
-                        onClick={() => setActiveTab('supervision')}
+                        onClick={() => { setActiveTab('supervision'); closeAdminSidebar(); }}
                         className={`nav-item ${activeTab === 'supervision' ? 'active' : ''}`}
                         style={{ border: 'none', background: activeTab === 'supervision' ? undefined : 'transparent', width: '100%', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
                     >
@@ -807,7 +1006,7 @@ export default function AdminDashboard() {
                     </button>
 
                     <button
-                        onClick={() => setActiveTab('companies')}
+                        onClick={() => { setActiveTab('companies'); closeAdminSidebar(); }}
                         className={`nav-item ${activeTab === 'companies' ? 'active' : ''}`}
                         style={{ border: 'none', background: activeTab === 'companies' ? undefined : 'transparent', width: '100%', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
                     >
@@ -815,7 +1014,7 @@ export default function AdminDashboard() {
                     </button>
 
                     <button
-                        onClick={() => setActiveTab('database')}
+                        onClick={() => { setActiveTab('database'); closeAdminSidebar(); }}
                         className={`nav-item ${activeTab === 'database' ? 'active' : ''}`}
                         style={{ border: 'none', background: activeTab === 'database' ? undefined : 'transparent', width: '100%', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
                     >
@@ -823,7 +1022,7 @@ export default function AdminDashboard() {
                     </button>
 
                     <button
-                        onClick={() => setActiveTab('statistics')}
+                        onClick={() => { setActiveTab('statistics'); closeAdminSidebar(); }}
                         className={`nav-item ${activeTab === 'statistics' ? 'active' : ''}`}
                         style={{ border: 'none', background: activeTab === 'statistics' ? undefined : 'transparent', width: '100%', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
                     >
@@ -833,7 +1032,7 @@ export default function AdminDashboard() {
                     {isRoot && (
                         <>
                             <button
-                                onClick={() => setActiveTab('admins')}
+                                onClick={() => { setActiveTab('admins'); closeAdminSidebar(); }}
                                 className={`nav-item ${activeTab === 'admins' ? 'active' : ''}`}
                                 style={{ border: 'none', background: activeTab === 'admins' ? undefined : 'transparent', width: '100%', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
                             >
@@ -841,7 +1040,7 @@ export default function AdminDashboard() {
                             </button>
 
                             <button
-                                onClick={() => setActiveTab('reasignment')}
+                                onClick={() => { setActiveTab('reasignment'); closeAdminSidebar(); }}
                                 className={`nav-item ${activeTab === 'reasignment' ? 'active' : ''}`}
                                 style={{ border: 'none', background: activeTab === 'reasignment' ? undefined : 'transparent', width: '100%', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
                             >
@@ -851,7 +1050,7 @@ export default function AdminDashboard() {
                     )}
 
                     <button
-                        onClick={() => setActiveTab('profile')}
+                        onClick={() => { setActiveTab('profile'); closeAdminSidebar(); }}
                         className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`}
                         style={{ border: 'none', background: activeTab === 'profile' ? undefined : 'transparent', width: '100%', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
                     >
@@ -876,7 +1075,7 @@ export default function AdminDashboard() {
             </aside>
 
             {/* Main Content */}
-            <main style={{ marginLeft: '260px', flex: 1, padding: '2rem' }}>
+            <main className="admin-main-content" style={{ marginLeft: '260px', flex: 1, padding: '2rem' }}>
                 {activeTab === 'supervision' && renderSupervisionView()}
 
                 {activeTab === 'database' && (
@@ -888,8 +1087,7 @@ export default function AdminDashboard() {
                             </div>
                             <div className="tag" style={{ background: '#E6F5EC', color: '#009B4D', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                 <Database size={16} />
-                                <Database size={16} />
-                                {localStudents.length} Registros actuales
+                                {Object.values(careerCounts).reduce((a, b) => a + b, 0) || pagination.total} Registros actuales
                             </div>
                         </div>
 
@@ -904,7 +1102,7 @@ export default function AdminDashboard() {
                                     <h3 style={{ fontSize: '1.125rem', fontWeight: 600, color: '#1E40AF' }}>Exportar Información</h3>
                                     <p style={{ color: '#60A5FA', fontSize: '0.875rem' }}>Descarga la base de datos actual o el respaldo de documentos.</p>
                                 </div>
-                                <div style={{ display: 'flex', gap: '1rem' }}>
+                                <div className="export-btn-group" style={{ display: 'flex', gap: '1rem' }}>
                                     <button
                                         onClick={handleExportExcel}
                                         className="btn"
@@ -925,7 +1123,7 @@ export default function AdminDashboard() {
                             </div>
                         </div>
 
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                        <div className="db-upload-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
                             {/* Carga de Alumnos */}
                             <div className="process-card mb-6" style={{ marginTop: 0 }}>
                                 <div
@@ -963,8 +1161,8 @@ export default function AdminDashboard() {
                                         onMouseEnter={e => { e.currentTarget.style.borderColor = '#2563EB'; e.currentTarget.style.backgroundColor = '#DBEAFE'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
                                         onMouseLeave={e => { e.currentTarget.style.borderColor = '#93C5FD'; e.currentTarget.style.backgroundColor = '#EFF6FF'; e.currentTarget.style.transform = 'translateY(0)'; }}
                                     >
-                                        <div style={{ padding: '1rem', borderRadius: '50%', background: 'white', color: previewType === 'students' && selectedFile ? '#10B981' : localStudents.length > 0 ? '#10B981' : '#2563EB', marginBottom: '1rem', boxShadow: '0 4px 6px -1px rgba(37, 99, 235, 0.1)' }}>
-                                            {previewType === 'students' && selectedFile ? <CheckCircle size={40} strokeWidth={1.5} /> : localStudents.length > 0 ? <Database size={40} strokeWidth={1.5} /> : <CloudUpload size={40} strokeWidth={1.5} />}
+                                        <div style={{ padding: '1rem', borderRadius: '50%', background: 'white', color: previewType === 'students' && selectedFile ? '#10B981' : '#2563EB', marginBottom: '1rem', boxShadow: '0 4px 6px -1px rgba(37, 99, 235, 0.1)' }}>
+                                            {previewType === 'students' && selectedFile ? <CheckCircle size={40} strokeWidth={1.5} /> : <CloudUpload size={40} strokeWidth={1.5} />}
                                         </div>
 
                                         {previewType === 'students' && selectedFile ? (
@@ -974,14 +1172,6 @@ export default function AdminDashboard() {
                                                 <p style={{ color: '#6B7280', fontSize: '0.75rem', textAlign: 'center', maxWidth: '80%', margin: 0 }}>
                                                     {previewData.length} registros detectados<br />
                                                     <strong style={{ color: '#059669' }}>Listo para guardar ↓</strong>
-                                                </p>
-                                            </>
-                                        ) : localStudents.length > 0 ? (
-                                            <>
-                                                <span style={{ fontWeight: 600, color: '#059669', fontSize: '1rem', marginBottom: '0.25rem' }}>✓ Base de Datos Activa</span>
-                                                <span style={{ fontSize: '0.8rem', color: '#10B981', marginBottom: '0.5rem' }}>{localStudents.length} alumnos registrados</span>
-                                                <p style={{ color: '#6B7280', fontSize: '0.75rem', textAlign: 'center', maxWidth: '80%' }}>
-                                                    Haz clic para <strong>actualizar</strong> o <strong>agregar</strong> más alumnos
                                                 </p>
                                             </>
                                         ) : (
@@ -1004,21 +1194,43 @@ export default function AdminDashboard() {
                                     </label>
 
                                     <button
-                                        onClick={async () => {
-                                            if (window.confirm('⚠️ ¿ESTÁS SEGURO? \n\nEsto borrará TODOS los alumnos registrados en el sistema de forma permanente.\n\n¿Deseas continuar?')) {
-                                                try {
-                                                    const res = await fetch(`${API_URL}/import/students`, { method: 'DELETE' });
-                                                    if (res.ok) {
-                                                        setLocalStudents([]);
-                                                        alert('✅ Base de datos de alumnos eliminada correctamente.');
-                                                    } else {
-                                                        alert('❌ Error al eliminar alumnos');
-                                                    }
-                                                } catch (error) {
-                                                    console.error(error);
-                                                    alert('❌ Error de conexión al servidor');
-                                                }
-                                            }
+                                        onClick={() => {
+                                            setModalConfig({
+                                                isOpen: true,
+                                                title: '⚠️ Eliminar Base de Alumnos',
+                                                type: 'danger',
+                                                content: (
+                                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', textAlign: 'center', padding: '0.5rem 0' }}>
+                                                        <div style={{ width: 56, height: 56, background: '#FEF2F2', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#DC2626' }}>
+                                                            <AlertTriangle size={28} />
+                                                        </div>
+                                                        <p style={{ fontWeight: 600, color: '#991B1B' }}>¡Esta acción es irreversible!</p>
+                                                        <p style={{ color: '#6b7280', fontSize: '0.9rem' }}>Se borrarán <strong>TODOS los alumnos</strong> registrados en el sistema de forma permanente. ¿Deseas continuar?</p>
+                                                    </div>
+                                                ),
+                                                footer: (
+                                                    <>
+                                                        <button onClick={() => setModalConfig(prev => ({ ...prev, isOpen: false }))} className="btn" style={{ background: '#f3f4f6', color: '#374151' }}>Cancelar</button>
+                                                        <button onClick={async () => {
+                                                            setModalConfig(prev => ({ ...prev, isOpen: false }));
+                                                            try {
+                                                                const res = await authFetch('/import/students', { method: 'DELETE' });
+                                                                if (res.ok) {
+                                                                    setCareerStudents([]);
+                                                                    setCareerCounts({});
+                                                                    setPagination({ page: 1, totalPages: 1, total: 0, limit: 20 });
+                                                                    showToast({ type: 'success', title: 'Base eliminada', message: 'Todos los alumnos fueron eliminados del sistema.' });
+                                                                } else {
+                                                                    showToast({ type: 'error', title: 'Error', message: 'No se pudo eliminar la base de datos de alumnos.' });
+                                                                }
+                                                            } catch (error) {
+                                                                console.error(error);
+                                                                showToast({ type: 'error', title: 'Error de conexión', message: 'No se pudo conectar con el servidor.' });
+                                                            }
+                                                        }} className="btn" style={{ background: '#DC2626', color: 'white' }}>Sí, eliminar todo</button>
+                                                    </>
+                                                )
+                                            });
                                         }}
                                         style={{
                                             fontSize: '0.75rem',
@@ -1121,21 +1333,41 @@ export default function AdminDashboard() {
                                     </label>
 
                                     <button
-                                        onClick={async () => {
-                                            if (window.confirm('⚠️ ¿ESTÁS SEGURO? \n\nEsto borrará TODAS las empresas del catálogo.\n\n¿Deseas continuar?')) {
-                                                try {
-                                                    const res = await fetch(`${API_URL}/import/companies`, { method: 'DELETE' });
-                                                    if (res.ok) {
-                                                        setCompanies([]);
-                                                        alert('✅ Base de datos de empresas eliminada correctamente.');
-                                                    } else {
-                                                        alert('❌ Error al eliminar empresas');
-                                                    }
-                                                } catch (error) {
-                                                    console.error(error);
-                                                    alert('❌ Error de conexión al servidor');
-                                                }
-                                            }
+                                        onClick={() => {
+                                            setModalConfig({
+                                                isOpen: true,
+                                                title: '⚠️ Eliminar Catálogo de Empresas',
+                                                type: 'danger',
+                                                content: (
+                                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', textAlign: 'center', padding: '0.5rem 0' }}>
+                                                        <div style={{ width: 56, height: 56, background: '#FEF2F2', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#DC2626' }}>
+                                                            <AlertTriangle size={28} />
+                                                        </div>
+                                                        <p style={{ fontWeight: 600, color: '#991B1B' }}>¡Esta acción es irreversible!</p>
+                                                        <p style={{ color: '#6b7280', fontSize: '0.9rem' }}>Se borrarán <strong>TODAS las empresas</strong> del catálogo de forma permanente. ¿Deseas continuar?</p>
+                                                    </div>
+                                                ),
+                                                footer: (
+                                                    <>
+                                                        <button onClick={() => setModalConfig(prev => ({ ...prev, isOpen: false }))} className="btn" style={{ background: '#f3f4f6', color: '#374151' }}>Cancelar</button>
+                                                        <button onClick={async () => {
+                                                            setModalConfig(prev => ({ ...prev, isOpen: false }));
+                                                            try {
+                                                                const res = await authFetch('/import/companies', { method: 'DELETE' });
+                                                                if (res.ok) {
+                                                                    setCompanies([]);
+                                                                    showToast({ type: 'success', title: 'Catálogo eliminado', message: 'Todas las empresas fueron eliminadas del catálogo.' });
+                                                                } else {
+                                                                    showToast({ type: 'error', title: 'Error', message: 'No se pudo eliminar el catálogo de empresas.' });
+                                                                }
+                                                            } catch (error) {
+                                                                console.error(error);
+                                                                showToast({ type: 'error', title: 'Error de conexión', message: 'No se pudo conectar con el servidor.' });
+                                                            }
+                                                        }} className="btn" style={{ background: '#DC2626', color: 'white' }}>Sí, eliminar todo</button>
+                                                    </>
+                                                )
+                                            });
                                         }}
                                         style={{
                                             fontSize: '0.75rem',
@@ -1332,39 +1564,50 @@ export default function AdminDashboard() {
                             <div className="card-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '2rem' }}>
                                 {/* Gráfica de Estatus Global */}
                                 <div className="process-card" style={{ marginTop: 0 }}>
-                                    <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '1rem', textAlign: 'center' }}>Estatus de Estudiantes</h3>
-                                    <div style={{ height: '300px' }}>
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <PieChart>
-                                                <Pie
-                                                    data={[
-                                                        { name: 'Aprobado', value: localStudents.filter(s => s.status === 'Aprobado').length },
-                                                        { name: 'En Revisión', value: localStudents.filter(s => s.status === 'En Revisión').length },
-                                                        { name: 'Pendiente', value: localStudents.filter(s => s.status === 'Pendiente').length },
-                                                        { name: 'Corrección', value: localStudents.filter(s => s.status === 'Corrección Solicitada').length },
-                                                    ].filter(d => d.value > 0)}
-                                                    cx="50%"
-                                                    cy="50%"
-                                                    labelLine={false}
-                                                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                                                    outerRadius={100}
-                                                    fill="#8884d8"
-                                                    dataKey="value"
-                                                >
-                                                    {[
-                                                        { name: 'Aprobado', color: '#00C49F' },
-                                                        { name: 'En Revisión', color: '#FFBB28' },
-                                                        { name: 'Pendiente', color: '#9CA3AF' },
-                                                        { name: 'Corrección', color: '#EF4444' },
-                                                    ].map((entry, index) => (
-                                                        <Cell key={`cell-${index}`} fill={entry.color} />
-                                                    ))}
-                                                </Pie>
-                                                <Tooltip />
-                                                <Legend />
-                                            </PieChart>
-                                        </ResponsiveContainer>
-                                    </div>
+                                    <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '0.25rem', textAlign: 'center' }}>Estatus de Estudiantes</h3>
+                                    <p style={{ color: '#9ca3af', fontSize: '0.75rem', textAlign: 'center', marginBottom: '1rem' }}>
+                                        {selectedCareer ? `Carrera: ${selectedCareer.name.split(' ').slice(0, 3).join(' ')}...` : 'Selecciona una carrera en "Documentos" para ver datos'}
+                                    </p>
+                                    {careerStudents.length === 0 ? (
+                                        <div style={{ height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af', flexDirection: 'column', gap: '0.5rem' }}>
+                                            <PieChartIcon size={48} strokeWidth={1} />
+                                            <p style={{ fontSize: '0.875rem' }}>Sin datos cargados</p>
+                                            <p style={{ fontSize: '0.75rem' }}>Ve a "Documentos" y selecciona una carrera</p>
+                                        </div>
+                                    ) : (
+                                        <div style={{ height: '300px' }}>
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <PieChart>
+                                                    <Pie
+                                                        data={[
+                                                            { name: 'Aprobado', value: careerStudents.filter(s => s.status === 'Aprobado').length },
+                                                            { name: 'En Revisión', value: careerStudents.filter(s => s.status === 'En Revisión').length },
+                                                            { name: 'Pendiente', value: careerStudents.filter(s => s.status === 'Pendiente').length },
+                                                            { name: 'Corrección', value: careerStudents.filter(s => s.status === 'Corrección Solicitada').length },
+                                                        ].filter(d => d.value > 0)}
+                                                        cx="50%"
+                                                        cy="50%"
+                                                        labelLine={false}
+                                                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                                                        outerRadius={100}
+                                                        fill="#8884d8"
+                                                        dataKey="value"
+                                                    >
+                                                        {[
+                                                            { name: 'Aprobado', color: '#00C49F' },
+                                                            { name: 'En Revisión', color: '#FFBB28' },
+                                                            { name: 'Pendiente', color: '#9CA3AF' },
+                                                            { name: 'Corrección', color: '#EF4444' },
+                                                        ].map((entry, index) => (
+                                                            <Cell key={`cell-${index}`} fill={entry.color} />
+                                                        ))}
+                                                    </Pie>
+                                                    <Tooltip />
+                                                    <Legend />
+                                                </PieChart>
+                                            </ResponsiveContainer>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Gráfica de Distribución por Carrera (Top 5) */}
@@ -1374,13 +1617,14 @@ export default function AdminDashboard() {
                                         <ResponsiveContainer width="100%" height="100%">
                                             <PieChart>
                                                 <Pie
-                                                    data={Object.entries(localStudents.reduce((acc, curr) => {
-                                                        acc[curr.careerName] = (acc[curr.careerName] || 0) + 1;
-                                                        return acc;
-                                                    }, {}))
-                                                        .map(([name, value]) => ({ name, value }))
+                                                    data={Object.entries(careerCounts)
+                                                        .map(([id, value]) => ({
+                                                            name: CAREERS.find(c => c.id === id)?.name?.split(' ').slice(0, 3).join(' ') || id,
+                                                            value
+                                                        }))
+                                                        .filter(d => d.value > 0)
                                                         .sort((a, b) => b.value - a.value)
-                                                        .slice(0, 5)} // Top 5
+                                                        .slice(0, 5)}
                                                     cx="50%"
                                                     cy="50%"
                                                     innerRadius={60}
@@ -1826,6 +2070,7 @@ export default function AdminDashboard() {
                     </div>
                 </div>
             </Modal>
+            <ToastContainer toasts={toasts} onRemove={removeToast} />
         </div >
     );
 }

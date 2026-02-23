@@ -6,6 +6,8 @@ import AvatarPath from '../components/AvatarPath';
 import FileUploader from '../components/FileUploader';
 import confetti from 'canvas-confetti';
 import Modal from '../components/Modal';
+import ToastContainer from '../components/Toast';
+import { useToast } from '../hooks/useToast';
 
 // LISTA DE DOCUMENTOS PARA ESTADÍAS
 const INITIAL_DOCS = [
@@ -25,6 +27,7 @@ const FINAL_DOCS = [
 
 export default function ProcessView({ userMatricula, stageName }) {
     const navigate = useNavigate();
+    const { toasts, showToast, removeToast } = useToast();
     // Estado local para simulacion de persistencia
     const [uploads1, setUploads1] = useState(() => JSON.parse(localStorage.getItem('up1') || '{}'));
     const [uploads2, setUploads2] = useState(() => JSON.parse(localStorage.getItem('up2') || '{}'));
@@ -154,7 +157,11 @@ export default function ProcessView({ userMatricula, stageName }) {
 
         // Simular tiempo de generación
         setTimeout(() => {
-            alert(`Documento "${editingDoc}" aprobado y descargado correctamente.`);
+            showToast({
+                type: 'success',
+                title: 'Documento generado',
+                message: `El documento "${editingDoc}" fue aprobado y descargado correctamente.`,
+            });
         }, 500);
     };
 
@@ -183,7 +190,7 @@ export default function ProcessView({ userMatricula, stageName }) {
                     {/* STAGE 1: INITIAL UPLOAD */}
                     {stageName === 'upload_1' && (
                         <div>
-                            <div className="flex-between mb-6">
+                            <div className="flex-between stage-header mb-6">
                                 <h3 style={{ fontSize: '1.25rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                     <FileText color="var(--ut-orange)" />
                                     1. Documentación de Inicio de Estadía
@@ -306,7 +313,7 @@ export default function ProcessView({ userMatricula, stageName }) {
                     {/* STAGE 4: RE-UPLOAD */}
                     {stageName === 'upload_2' && (
                         <div>
-                            <div className="flex-between mb-6">
+                            <div className="flex-between stage-header mb-6">
                                 <h3 style={{ fontSize: '1.25rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                     <FileText color="var(--ut-orange)" />
                                     2. Carga de Documentos Finales
@@ -458,6 +465,7 @@ export default function ProcessView({ userMatricula, stageName }) {
                     </div>
                 )}
             </Modal>
+            <ToastContainer toasts={toasts} onRemove={removeToast} />
         </div >
     );
 }

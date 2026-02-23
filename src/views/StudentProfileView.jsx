@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { User, Lock, Upload, Save, FileText, CheckCircle, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Modal from '../components/Modal';
+import { API_URL } from '../config';
+import { authFetch } from '../auth';
 
 export default function StudentProfileView({ userMatricula }) {
     const navigate = useNavigate();
@@ -15,48 +17,63 @@ export default function StudentProfileView({ userMatricula }) {
     React.useEffect(() => {
         if (userMatricula) {
             const targetMat = String(userMatricula).trim().toLowerCase();
-
-            fetch(`http://localhost:3001/api/students/${targetMat}`)
+            authFetch(`/students/${targetMat}`)
                 .then(res => res.ok ? res.json() : null)
-                .then(student => {
-                    if (student) {
-                        setStudentData(student);
-                    } else {
-                        console.warn("Perfil: No se encontraron datos para la matrícula", userMatricula);
-                    }
-                })
-                .catch(err => {
-                    console.error("Error al cargar datos del estudiante:", err);
-                });
+                .then(student => { if (student) setStudentData(student); })
+                .catch(() => { });
         }
     }, [userMatricula]);
 
-    const handlePasswordChange = (e) => {
-        // ... (resto de lógica igual)
+    const handlePasswordChange = async (e) => {
         e.preventDefault();
         if (passwordData.new !== passwordData.confirm) {
             setModalConfig({
-                isOpen: true,
-                title: 'Error',
-                type: 'danger',
+                isOpen: true, title: 'Error', type: 'danger',
                 content: <p>Las contraseñas no coinciden.</p>,
-                footer: <button onClick={() => setModalConfig({ ...modalConfig, isOpen: false })} className="btn btn-primary">Aceptar</button>
+                footer: <button onClick={() => setModalConfig(m => ({ ...m, isOpen: false }))} className="btn btn-primary">Aceptar</button>
+            });
+            return;
+        }
+        if (passwordData.new.length < 6) {
+            setModalConfig({
+                isOpen: true, title: 'Error', type: 'danger',
+                content: <p>La nueva contraseña debe tener al menos 6 caracteres.</p>,
+                footer: <button onClick={() => setModalConfig(m => ({ ...m, isOpen: false }))} className="btn btn-primary">Aceptar</button>
             });
             return;
         }
 
         setLoading(true);
-        setTimeout(() => {
-            setLoading(false);
-            setModalConfig({
-                isOpen: true,
-                title: 'Contraseña Actualizada',
-                type: 'success',
-                content: <p>Tu contraseña ha sido actualizada correctamente.</p>,
-                footer: <button onClick={() => setModalConfig({ ...modalConfig, isOpen: false })} className="btn btn-primary">Aceptar</button>
+        try {
+            const mat = String(userMatricula).trim().toLowerCase();
+            const res = await authFetch(`/students/${mat}/change-password`, {
+                method: 'PUT',
+                body: JSON.stringify({ currentPassword: passwordData.current, newPassword: passwordData.new })
             });
-            setPasswordData({ current: '', new: '', confirm: '' });
-        }, 1500);
+            const data = await res.json();
+
+            if (!res.ok) {
+                setModalConfig({
+                    isOpen: true, title: 'Error', type: 'danger',
+                    content: <p>{data.message || 'No se pudo cambiar la contraseña.'}</p>,
+                    footer: <button onClick={() => setModalConfig(m => ({ ...m, isOpen: false }))} className="btn btn-primary">Aceptar</button>
+                });
+            } else {
+                setModalConfig({
+                    isOpen: true, title: 'Contraseña Actualizada', type: 'success',
+                    content: <p>Tu contraseña ha sido actualizada correctamente.</p>,
+                    footer: <button onClick={() => setModalConfig(m => ({ ...m, isOpen: false }))} className="btn btn-primary">Aceptar</button>
+                });
+                setPasswordData({ current: '', new: '', confirm: '' });
+            }
+        } catch {
+            setModalConfig({
+                isOpen: true, title: 'Error', type: 'danger',
+                content: <p>Error de conexión. Intenta de nuevo.</p>,
+                footer: <button onClick={() => setModalConfig(m => ({ ...m, isOpen: false }))} className="btn btn-primary">Aceptar</button>
+            });
+        }
+        setLoading(false);
     };
 
     const handleCvUpload = (e) => {
@@ -102,7 +119,7 @@ export default function StudentProfileView({ userMatricula }) {
                     Información del Alumno
                 </h3>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'min-content 1fr', gap: '2rem', alignItems: 'start' }}>
+                <div className="profile-info-grid" style={{ display: 'grid', gridTemplateColumns: 'min-content 1fr', gap: '2rem', alignItems: 'start' }}>
 
                     {/* Columna Izquierda: Avatar y Matrícula */}
                     <div style={{ textAlign: 'center' }}>

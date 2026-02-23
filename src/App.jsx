@@ -14,41 +14,28 @@ function App() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const handleLogin = (matricula) => {
+  const handleLogin = (matricula, userData) => {
     setUserMatricula(matricula);
     localStorage.setItem('ut_user', matricula);
+    if (userData) localStorage.setItem('ut_user_data', JSON.stringify(userData));
     navigate('/estadia/catalogo-empresas');
   };
 
-  const handleAdminLogin = (username, password) => {
-    // 1. Check Root
-    if (username === 'root' && password === 'uttecam2026') {
-      const session = { username: 'root', role: 'ROOT' };
-      setAdminUser(session);
-      localStorage.setItem('ut_admin_session', JSON.stringify(session));
-      navigate('/admin/dashboard');
-      return;
-    }
-
-    // 2. Check Created Admins
-    const storedAdmins = JSON.parse(localStorage.getItem('ut_admins_db') || '[]');
-    const foundAdmin = storedAdmins.find(a => a.username === username && a.password === password);
-
-    if (foundAdmin) {
-      const session = { username: foundAdmin.username, role: 'ADMIN' };
-      setAdminUser(session);
-      localStorage.setItem('ut_admin_session', JSON.stringify(session));
-      navigate('/admin/dashboard');
-    } else {
-      alert("Credenciales incorrectas (Demo: root / uttecam2026)");
-    }
+  const handleAdminLogin = (username, password, token, userData) => {
+    const session = userData || { username, role: 'ADMIN' };
+    setAdminUser(session);
+    localStorage.setItem('ut_admin_session', JSON.stringify(session));
+    if (token) localStorage.setItem('ut_token', token);
+    navigate('/admin/dashboard');
   };
 
   const handleLogout = () => {
     setUserMatricula(null);
     setAdminUser(null);
     localStorage.removeItem('ut_user');
+    localStorage.removeItem('ut_user_data');
     localStorage.removeItem('ut_admin_session');
+    localStorage.removeItem('ut_token');
     navigate('/login');
   };
 

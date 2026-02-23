@@ -192,6 +192,15 @@ body {
   margin-top: auto;
 }
 
+/* Utility: show/hide on desktop vs mobile */
+.desktop-label {
+  display: inline;
+}
+
+.mobile-only {
+  display: none;
+}
+
 /* Components */
 .btn {
   display: inline-flex;
@@ -266,7 +275,117 @@ body {
   position: relative;
 }
 
+/* ─────────────────────────────────────────────
+   Hamburger & Mobile Sidebar Overlay
+──────────────────────────────────────────────── */
+.hamburger-btn {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.4rem;
+  color: var(--ut-dark);
+  border-radius: 0.4rem;
+  transition: background 0.2s;
+}
+
+.hamburger-btn:hover {
+  background: #f3f4f6;
+}
+
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 49;
+  backdrop-filter: blur(2px);
+}
+
+/* ─────────────────────────────────────────────
+   Admin Dashboard Mobile Sidebar
+──────────────────────────────────────────────── */
+.admin-mobile-toggle {
+  display: none;
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 100;
+  background: var(--ut-green);
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  cursor: pointer;
+  box-shadow: var(--shadow-md);
+}
+
+/* ─────────────────────────────────────────────
+   Responsive Breakpoint: Mobile (≤ 768px)
+──────────────────────────────────────────────── */
 @media (max-width: 768px) {
+
+  /* Header */
+  .header-content {
+    height: 64px;
+    padding: 0 1rem;
+  }
+
+  .brand-text p {
+    display: none;
+  }
+
+  .hamburger-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Hide text labels on header buttons, show only icons */
+  .desktop-label {
+    display: none;
+  }
+
+  .mobile-only {
+    display: inline;
+  }
+
+  /* Sidebar as Drawer */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: -280px;
+    width: 260px !important;
+    height: 100vh;
+    z-index: 50;
+    border-radius: 0;
+    margin: 0 !important;
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow-y: auto;
+    padding-top: 4rem;
+  }
+
+  .sidebar.open {
+    left: 0;
+  }
+
+  .sidebar-overlay.active {
+    display: block;
+  }
+
+  /* Body container goes full width (no sidebar space) */
+  .body-container {
+    flex-direction: column;
+    padding: 1rem;
+    max-width: 100%;
+  }
+
+  .main-content {
+    width: 100%;
+    min-width: 0;
+  }
+
+  /* Login */
   .login-visual-section {
     display: none;
   }
@@ -275,24 +394,188 @@ body {
     margin: 1rem;
     min-height: auto;
     width: auto;
-    /* Ensure it fits within the small screen */
+    flex-direction: column;
   }
 
   .login-form-section {
     padding: 2rem 1.5rem;
-    /* Reduce padding for mobile */
   }
 
-  .body-container {
-    flex-direction: column;
-    padding: 1rem;
-    /* Reduce container padding */
+  /* Process card */
+  .process-card {
+    padding: 1.25rem;
   }
 
-  .sidebar {
+  /* Grids go single column */
+  .grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .grid-3 {
+    grid-template-columns: 1fr;
+  }
+
+  /* Avatar path milestones: smaller labels */
+  .milestone-label {
+    font-size: 0.6rem;
+    white-space: normal;
+    text-align: center;
+    max-width: 60px;
+  }
+
+  .milestone-icon {
+    width: 26px;
+    height: 26px;
+  }
+
+  /* flex-between stacks on mobile */
+  .flex-between {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  /* Buttons inside flex-between go full width on mobile */
+  .flex-end {
+    justify-content: center;
+  }
+
+  /* Tables: horizontal scroll */
+  .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Footer */
+  .main-footer {
+    font-size: 0.75rem;
+    padding: 1rem 0;
+  }
+
+  /* Admin Dashboard – make sidebar a drawer */
+  .admin-main-layout {
+    flex-direction: column !important;
+  }
+
+  .admin-sidebar {
+    position: fixed !important;
+    left: -280px !important;
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    width: 260px !important;
+    z-index: 60 !important;
+  }
+
+  .admin-sidebar.open {
+    left: 0 !important;
+  }
+
+  .admin-main-content {
+    margin-left: 0 !important;
+    padding: 1rem !important;
+    padding-top: 4rem !important;
+  }
+
+  .admin-mobile-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Company / student filter grid */
+  .filter-grid-2 {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* DB export buttons stack */
+  .export-btn-group {
+    flex-direction: column !important;
     width: 100%;
-    position: static;
-    margin-bottom: 1rem;
+  }
+
+  .export-btn-group .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* DB upload grid: single column */
+  .db-upload-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Supervision level selector: wraps */
+  .level-selector {
+    flex-wrap: wrap;
+  }
+
+  .level-selector button {
+    flex: 1;
+    min-width: 140px;
+    font-size: 0.8rem;
+    padding: 0.6rem 0.75rem !important;
+  }
+
+  /* Student profile grid */
+  .profile-info-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Process view: stage header stacks */
+  .stage-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  /* Uploader card: tighter on mobile */
+  .uploader-card {
+    gap: 0.5rem;
+    padding: 0.75rem;
+  }
+
+  /* Upload btn label shrinks */
+  .uploader-file-info {
+    font-size: 0.8rem;
+  }
+}
+
+/* ─────────────────────────────────────────────
+   Responsive Breakpoint: Small Mobile (≤ 480px)
+──────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  h2 {
+    font-size: 1.2rem !important;
+  }
+
+  .process-card {
+    padding: 1rem;
+  }
+
+  .btn {
+    font-size: 0.85rem;
+    padding: 0.6rem 1rem;
+  }
+
+  .brand-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .login-card {
+    margin: 0.5rem;
+  }
+
+  .login-form-section {
+    padding: 1.5rem 1rem;
+  }
+
+  /* Milestone track */
+  .path-track {
+    max-width: 100%;
+  }
+
+  /* Modal footer: stack buttons */
+  [style*="justifyContent: 'flex-end'"] {
+    flex-direction: column;
+    align-items: stretch;
   }
 }
 
