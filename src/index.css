@@ -248,12 +248,12 @@ body {
 
 .input {
   width: 100%;
-  padding: 0.75rem;
-  border: 1.5px solid #d1d5db;
-  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  border: 1.5px solid #9ca3af;
+  border-radius: 0.75rem;
   font-size: 1rem;
   outline: none;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   background: white;
 }
 
@@ -488,19 +488,32 @@ body {
   .login-form-section {
     padding: 2.5rem 1.5rem;
     flex: 1;
+    display: flex;
+    flex-direction: column;
     justify-content: flex-start;
   }
 
+  .login-form-section>.mb-6 {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 2rem !important;
+  }
+
   .login-form-section img {
-    height: 65px !important;
-    margin-bottom: 2.5rem !important;
-    margin-left: auto;
-    margin-right: auto;
+    height: 70px !important;
+    width: auto !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    margin-bottom: 2rem !important;
+    display: block !important;
   }
 
   .login-form-section h2,
   .login-form-section p {
     text-align: center;
+    width: 100%;
   }
 
   h2 {
@@ -511,6 +524,8 @@ body {
     font-size: 16px;
     padding: 0.875rem 1rem;
     border-radius: 0.75rem;
+    border-width: 1.5px;
+    border-color: #9ca3af;
   }
 
   .main-footer {
