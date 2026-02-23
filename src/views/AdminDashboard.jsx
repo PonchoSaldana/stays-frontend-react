@@ -149,12 +149,14 @@ export default function AdminDashboard() {
         fetchCareerStudents(selectedCareer, newPage, searchTerm);
     };
 
-    const fetchCompanies = async () => {
+    const fetchCompanies = async (search = '') => {
         try {
-            const res = await authFetch('/companies');
+            const params = new URLSearchParams({ page: 1, limit: 100, search });
+            const res = await authFetch(`/companies?${params.toString()}`);
             if (res.ok) {
-                const data = await res.json();
-                setCompanies(data);
+                const json = await res.json();
+                setCompanies(json.data || []);
+                setTotalCompanies(json.total || 0);
             }
         } catch (error) {
             // Error de red
@@ -213,6 +215,7 @@ export default function AdminDashboard() {
     }, []);
 
     const [companies, setCompanies] = useState([]);
+    const [totalCompanies, setTotalCompanies] = useState(0);
     const [isCreatingCompany, setIsCreatingCompany] = useState(false);
     const [isEditingCompany, setIsEditingCompany] = useState(false);
     const [currentCompanyId, setCurrentCompanyId] = useState(null);
@@ -1297,8 +1300,8 @@ export default function AdminDashboard() {
                                         onMouseEnter={e => { e.currentTarget.style.borderColor = '#EA580C'; e.currentTarget.style.backgroundColor = '#FFEDD5'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
                                         onMouseLeave={e => { e.currentTarget.style.borderColor = '#FDBA74'; e.currentTarget.style.backgroundColor = '#FFF7ED'; e.currentTarget.style.transform = 'translateY(0)'; }}
                                     >
-                                        <div style={{ padding: '1rem', borderRadius: '50%', background: 'white', color: previewType === 'companies' && selectedFile ? '#10B981' : companies.length > 0 ? '#10B981' : '#EA580C', marginBottom: '1rem', boxShadow: '0 4px 6px -1px rgba(234, 88, 12, 0.1)' }}>
-                                            {previewType === 'companies' && selectedFile ? <CheckCircle size={40} strokeWidth={1.5} /> : companies.length > 0 ? <Database size={40} strokeWidth={1.5} /> : <CloudUpload size={40} strokeWidth={1.5} />}
+                                        <div style={{ padding: '1rem', borderRadius: '50%', background: 'white', color: previewType === 'companies' && selectedFile ? '#10B981' : totalCompanies > 0 ? '#10B981' : '#EA580C', marginBottom: '1rem', boxShadow: '0 4px 6px -1px rgba(234, 88, 12, 0.1)' }}>
+                                            {previewType === 'companies' && selectedFile ? <CheckCircle size={40} strokeWidth={1.5} /> : totalCompanies > 0 ? <Database size={40} strokeWidth={1.5} /> : <CloudUpload size={40} strokeWidth={1.5} />}
                                         </div>
 
                                         {previewType === 'companies' && selectedFile ? (
@@ -1310,10 +1313,10 @@ export default function AdminDashboard() {
                                                     <strong style={{ color: '#059669' }}>Listo para guardar ↓</strong>
                                                 </p>
                                             </>
-                                        ) : companies.length > 0 ? (
+                                        ) : totalCompanies > 0 ? (
                                             <>
                                                 <span style={{ fontWeight: 600, color: '#059669', fontSize: '1rem', marginBottom: '0.25rem' }}>✓ Base de Datos Activa</span>
-                                                <span style={{ fontSize: '0.8rem', color: '#10B981', marginBottom: '0.5rem' }}>{companies.length} empresas registradas</span>
+                                                <span style={{ fontSize: '0.8rem', color: '#10B981', marginBottom: '0.5rem' }}>{totalCompanies} empresas registradas</span>
                                                 <p style={{ color: '#6B7280', fontSize: '0.75rem', textAlign: 'center', maxWidth: '80%' }}>
                                                     Haz clic para <strong>actualizar</strong> o <strong>agregar</strong> más empresas
                                                 </p>
@@ -1544,6 +1547,19 @@ export default function AdminDashboard() {
                                         </div>
 
                                         <div style={{ marginBottom: '1.5rem' }}>
+                                            <div className="flex-between" style={{ marginBottom: '0.5rem' }}>
+                                                <label style={{ fontSize: '0.875rem', fontWeight: 500 }}>Nueva Empresa</label>
+                                                <div style={{ position: 'relative', width: '200px' }}>
+                                                    <Search size={14} style={{ position: 'absolute', left: 8, top: 10, color: '#9ca3af' }} />
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Filtrar catálogo..."
+                                                        className="input"
+                                                        style={{ padding: '0.4rem 0.4rem 0.4rem 1.8rem', fontSize: '0.75rem' }}
+                                                        onChange={(e) => fetchCompanies(e.target.value)}
+                                                    />
+                                                </div>
+                                            </div>
                                             <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>Seleccionar Nueva Empresa</label>
                                             <select
                                                 className="input"

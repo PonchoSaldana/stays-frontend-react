@@ -53,12 +53,25 @@ export default function StudentCompanyView({ mode = 'catalog', onSelect, userMat
     const [modalConfig, setModalConfig] = useState({ isOpen: false, title: '', content: null, footer: null, type: 'info' });
 
     useEffect(() => {
-        // Cargar empresas desde el backend (requiere token)
-        authFetch('/companies')
-            .then(res => res.ok ? res.json() : [])
-            .then(data => setCompanies(data.length > 0 ? data : getMockCompanies()))
-            .catch(() => setCompanies(getMockCompanies()));
+        const timer = setTimeout(() => {
+            const params = new URLSearchParams({
+                page: 1,
+                limit: 50,
+                search: searchTerm
+            });
+            authFetch(`/companies?${params.toString()}`)
+                .then(res => res.ok ? res.json() : { data: [] })
+                .then(json => {
+                    const data = json.data || [];
+                    setCompanies(data.length > 0 ? data : (searchTerm ? [] : getMockCompanies()));
+                })
+                .catch(() => setCompanies(searchTerm ? [] : getMockCompanies()));
+        }, 300);
 
+        return () => clearTimeout(timer);
+    }, [searchTerm]);
+
+    useEffect(() => {
         // Cargar empresa ya seleccionada desde el backend
         if (userMatricula && mode === 'selection') {
             const mat = String(userMatricula).trim().toLowerCase();
@@ -72,12 +85,8 @@ export default function StudentCompanyView({ mode = 'catalog', onSelect, userMat
     }, [userMatricula, mode]);
 
     const filteredCompanies = companies.filter(c => {
-        const matchesSearch = c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (c.address && c.address.toLowerCase().includes(searchTerm.toLowerCase()));
-
         const matchesCareer = selectedCareerId ? (c.careerId === selectedCareerId || !c.careerId) : true;
-
-        return matchesSearch && matchesCareer;
+        return matchesCareer;
     });
 
     const handleSelect = (company) => {
