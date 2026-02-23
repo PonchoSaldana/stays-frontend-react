@@ -476,8 +476,9 @@ body {
   .login-card {
     flex-direction: column;
     margin: 0;
-    border-radius: 0;
-    box-shadow: none;
+   border-radius: 1.5rem;
+  box-shadow: var(--shadow-xl);
+  border: 1px solid rgba(0, 0, 0, 0.05);
     min-height: 100vh;
   }
 
