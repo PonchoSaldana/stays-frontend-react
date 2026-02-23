@@ -171,6 +171,7 @@ export default function AdminDashboard() {
     const [previewData, setPreviewData] = useState([]);
     const [previewType, setPreviewType] = useState(null);
     const [uploadError, setUploadError] = useState(null);
+    const [isImporting, setIsImporting] = useState(false);
     const [rejectAction, setRejectAction] = useState({ id: null, comment: '' });
 
     // --- Handlers de Acciones ---
@@ -491,6 +492,7 @@ export default function AdminDashboard() {
     // Guarda los datos importados en la base de datos (BACKEND API)
     const handleSaveDatabase = async () => {
         if (!selectedFile || !previewType) return;
+        setIsImporting(true);
 
         const formData = new FormData();
         formData.append('file', selectedFile);
@@ -537,6 +539,8 @@ export default function AdminDashboard() {
                 title: 'Error de conexión',
                 message: 'No se pudo conectar con el servidor. Asegúrate de que el backend esté corriendo.',
             });
+        } finally {
+            setIsImporting(false);
         }
     };
 
@@ -1155,8 +1159,8 @@ export default function AdminDashboard() {
                                         onMouseEnter={e => { e.currentTarget.style.borderColor = '#2563EB'; e.currentTarget.style.backgroundColor = '#DBEAFE'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
                                         onMouseLeave={e => { e.currentTarget.style.borderColor = '#93C5FD'; e.currentTarget.style.backgroundColor = '#EFF6FF'; e.currentTarget.style.transform = 'translateY(0)'; }}
                                     >
-                                        <div style={{ padding: '1rem', borderRadius: '50%', background: 'white', color: previewType === 'students' && selectedFile ? '#10B981' : '#2563EB', marginBottom: '1rem', boxShadow: '0 4px 6px -1px rgba(37, 99, 235, 0.1)' }}>
-                                            {previewType === 'students' && selectedFile ? <CheckCircle size={40} strokeWidth={1.5} /> : <CloudUpload size={40} strokeWidth={1.5} />}
+                                        <div style={{ padding: '1rem', borderRadius: '50%', background: 'white', color: previewType === 'students' && selectedFile ? '#10B981' : pagination.total > 0 ? '#10B981' : '#2563EB', marginBottom: '1rem', boxShadow: '0 4px 6px -1px rgba(37, 99, 235, 0.1)' }}>
+                                            {previewType === 'students' && selectedFile ? <CheckCircle size={40} strokeWidth={1.5} /> : pagination.total > 0 ? <Database size={40} strokeWidth={1.5} /> : <CloudUpload size={40} strokeWidth={1.5} />}
                                         </div>
 
                                         {previewType === 'students' && selectedFile ? (
@@ -1166,6 +1170,14 @@ export default function AdminDashboard() {
                                                 <p style={{ color: '#6B7280', fontSize: '0.75rem', textAlign: 'center', maxWidth: '80%', margin: 0 }}>
                                                     {previewData.length} registros detectados<br />
                                                     <strong style={{ color: '#059669' }}>Listo para guardar ↓</strong>
+                                                </p>
+                                            </>
+                                        ) : pagination.total > 0 ? (
+                                            <>
+                                                <span style={{ fontWeight: 600, color: '#059669', fontSize: '1rem', marginBottom: '0.25rem' }}>✓ Base de Datos Activa</span>
+                                                <span style={{ fontSize: '0.8rem', color: '#10B981', marginBottom: '0.5rem' }}>{pagination.total} alumnos registrados</span>
+                                                <p style={{ color: '#6B7280', fontSize: '0.75rem', textAlign: 'center', maxWidth: '80%' }}>
+                                                    Haz clic para <strong>actualizar</strong> o <strong>agregar</strong> más alumnos
                                                 </p>
                                             </>
                                         ) : (
@@ -1403,8 +1415,22 @@ export default function AdminDashboard() {
                                             Vista Previa: {previewType === 'students' ? 'Alumnos' : 'Empresas'} ({previewData.length} registros)
                                         </h4>
                                         <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                            <button onClick={() => { setPreviewData([]); setPreviewType(null); }} className="btn" style={{ background: '#f3f4f6', color: '#374151' }}>Cancelar</button>
-                                            <button onClick={handleSaveDatabase} className="btn btn-primary">Importar y Guardar</button>
+                                            <button disabled={isImporting} onClick={() => { setPreviewData([]); setPreviewType(null); }} className="btn" style={{ background: '#f3f4f6', color: '#374151' }}>Cancelar</button>
+                                            <button
+                                                disabled={isImporting}
+                                                onClick={handleSaveDatabase}
+                                                className="btn btn-primary"
+                                                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                                            >
+                                                {isImporting ? (
+                                                    <>
+                                                        <RefreshCw size={18} className="animate-spin" />
+                                                        Guardando...
+                                                    </>
+                                                ) : (
+                                                    'Importar y Guardar'
+                                                )}
+                                            </button>
                                         </div>
                                     </div>
                                     <div style={{ overflowX: 'auto', maxHeight: '400px', overflowY: 'auto', border: '1px solid #e5e7eb', borderRadius: '0.5rem' }}>
