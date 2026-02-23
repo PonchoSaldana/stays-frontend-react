@@ -669,7 +669,7 @@ export default function AdminDashboard() {
                         </div>
 
                         {/* Selector de Nivel Académico */}
-                        <div className="level-selector" style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
+                        <div className="level-selector" style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
                             <button
                                 onClick={() => setViewLevel('TSU')}
                                 style={{
@@ -799,7 +799,7 @@ export default function AdminDashboard() {
                                 </div>
                             </div>
 
-                            <div style={{ overflowX: 'auto' }}>
+                            <div className="table-container">
                                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                                     <thead>
                                         <tr style={{ borderBottom: '2px solid #f3f4f6' }}>
@@ -967,7 +967,7 @@ export default function AdminDashboard() {
     };
 
     return (
-        <div className="admin-main-layout" style={{ display: 'flex', minHeight: '100vh', flexDirection: 'row', background: '#f9fafb' }}>
+        <div className="admin-main-layout">
 
             {/* Botón hamburguesa móvil */}
             <button
@@ -982,11 +982,10 @@ export default function AdminDashboard() {
             <div
                 className={`sidebar-overlay ${adminSidebarOpen ? 'active' : ''}`}
                 onClick={closeAdminSidebar}
-                style={{ zIndex: 59 }}
             />
 
             {/* Sidebar de Admin */}
-            <aside className={`admin-sidebar ${adminSidebarOpen ? 'open' : ''}`} style={{ width: '260px', background: 'white', borderRight: '1px solid #e5e7eb', padding: '1.5rem', display: 'flex', flexDirection: 'column', position: 'fixed', height: '100%', left: 0, top: 0, zIndex: 60, overflowY: 'auto' }}>
+            <aside className={`admin-sidebar ${adminSidebarOpen ? 'open' : ''}`}>
                 <div style={{ marginBottom: '2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', textAlign: 'center', paddingTop: '0.5rem' }}>
                     <img src={logoUt} alt="Logo" style={{ height: 50, objectFit: 'contain' }} />
                     <div>
@@ -1073,7 +1072,7 @@ export default function AdminDashboard() {
             </aside>
 
             {/* Main Content */}
-            <main className="admin-main-content" style={{ marginLeft: '260px', flex: 1, padding: '2rem' }}>
+            <main className="admin-main-content">
                 {activeTab === 'supervision' && renderSupervisionView()}
 
                 {activeTab === 'database' && (
@@ -1100,7 +1099,7 @@ export default function AdminDashboard() {
                                     <h3 style={{ fontSize: '1.125rem', fontWeight: 600, color: '#1E40AF' }}>Exportar Información</h3>
                                     <p style={{ color: '#60A5FA', fontSize: '0.875rem' }}>Descarga la base de datos actual o el respaldo de documentos.</p>
                                 </div>
-                                <div className="export-btn-group" style={{ display: 'flex', gap: '1rem' }}>
+                                <div className="export-btn-group" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
                                     <button
                                         onClick={handleExportExcel}
                                         className="btn"
@@ -1121,7 +1120,7 @@ export default function AdminDashboard() {
                             </div>
                         </div>
 
-                        <div className="db-upload-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                        <div className="db-upload-grid">
                             {/* Carga de Alumnos */}
                             <div className="process-card mb-6" style={{ marginTop: 0 }}>
                                 <div
@@ -1433,7 +1432,7 @@ export default function AdminDashboard() {
                                             </button>
                                         </div>
                                     </div>
-                                    <div style={{ overflowX: 'auto', maxHeight: '400px', overflowY: 'auto', border: '1px solid #e5e7eb', borderRadius: '0.5rem' }}>
+                                    <div className="table-container" style={{ maxHeight: '400px' }}>
                                         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
                                             <thead style={{ position: 'sticky', top: 0, background: '#f9fafb' }}>
                                                 <tr>
@@ -1488,7 +1487,7 @@ export default function AdminDashboard() {
                                         return (
                                             <div>
                                                 <p style={{ color: '#059669', fontWeight: 600, marginBottom: '0.5rem' }}>✓ Alumno encontrado:</p>
-                                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.5rem' }}>
+                                                <div className="grid-3" style={{ gap: '0.5rem' }}>
                                                     {Object.entries(found).map(([key, val]) => (
                                                         <div key={key} style={{ background: 'white', padding: '0.5rem', borderRadius: '0.25rem', border: '1px solid #E5E7EB' }}>
                                                             <strong style={{ display: 'block', fontSize: '0.75rem', color: '#9CA3AF', textTransform: 'uppercase' }}>{key}</strong>
@@ -1581,7 +1580,7 @@ export default function AdminDashboard() {
                         <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
                             <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '2rem' }}>Estadísticas de Procesos</h2>
 
-                            <div className="card-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '2rem' }}>
+                            <div className="card-grid">
                                 {/* Gráfica de Estatus Global */}
                                 <div className="process-card" style={{ marginTop: 0 }}>
                                     <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '0.25rem', textAlign: 'center' }}>Estatus de Estudiantes</h3>
