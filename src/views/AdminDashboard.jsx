@@ -1364,6 +1364,7 @@ export default function AdminDashboard() {
                                                                 const res = await authFetch('/import/companies', { method: 'DELETE' });
                                                                 if (res.ok) {
                                                                     setCompanies([]);
+                                                                    setTotalCompanies(0);
                                                                     showToast({ type: 'success', title: 'Catálogo eliminado', message: 'Todas las empresas fueron eliminadas del catálogo.' });
                                                                 } else {
                                                                     showToast({ type: 'error', title: 'Error', message: 'No se pudo eliminar el catálogo de empresas.' });
