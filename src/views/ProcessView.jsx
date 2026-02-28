@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCheck, Download, FileText, Loader, ShieldCheck, PenTool, Eye, Edit } from 'lucide-react';
+import { CheckCheck, Download, FileText, Loader, AlertTriangle, Eye, Edit } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import AvatarPath from '../components/AvatarPath';
 import FileUploader from '../components/FileUploader';

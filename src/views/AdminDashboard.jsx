@@ -40,7 +40,6 @@ const CAREERS = [
     { id: 'tsu-ali', name: 'TSU en Procesos Alimentarios', type: 'TSU' },
     { id: 'tsu-agr', name: 'TSU en Agricultura Sustentable y Protegida', type: 'TSU' },
     { id: 'tsu-qui', name: 'TSU en Química Área Tecnología Ambiental', type: 'TSU' },
-    { id: 'tsu-qui', name: 'TSU en Química Área Tecnología Ambiental', type: 'TSU' },
 ];
 
 
@@ -1486,7 +1485,7 @@ export default function AdminDashboard() {
                             {testMatricula && (
                                 <div style={{ marginTop: '1rem', background: '#F3F4F6', padding: '1rem', borderRadius: '0.5rem', fontSize: '0.875rem' }}>
                                     {(() => {
-                                        const found = localStudents.find(s => String(s.matricula).includes(testMatricula));
+                                        const found = careerStudents.find(s => String(s.matricula).includes(testMatricula));
                                         if (!found) return <span style={{ color: '#DC2626' }}>No se encontró ningún estudiante con esa matrícula. Asegúrate de haber cargado el Excel.</span>;
                                         return (
                                             <div>
