@@ -306,7 +306,7 @@ export default function LoginView({ onLogin, onAdminLogin }) {
                             alignItems: 'flex-start',
                             gap: '0.5rem'
                         }}>
-                            <span style={{ fontSize: '1rem' }}>{isLocked ? '🔒' : '⚠️'}</span>
+                            <span style={{ fontSize: '1rem' }}>{isLocked ? '' : ''}</span>
                             <span>{error}</span>
                         </div>
                     )}

@@ -83,7 +83,7 @@ export default function StudentCompanyView({ mode = 'catalog', onSelect, userMat
                 isOpen: true, title: 'Acción no permitida', type: 'danger',
                 content: (
                     <div style={{ textAlign: 'center', padding: '0.5rem 0' }}>
-                        <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>🚫</div>
+                        <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}></div>
                         <p style={{ fontWeight: 600, marginBottom: '0.5rem' }}>Ya tienes una empresa asignada.</p>
                         <p style={{ color: '#6b7280', fontSize: '0.875rem' }}>
                             Solo puedes realizar tu estadía en una empresa. Contacta al encargado si cometiste un error.
@@ -183,7 +183,7 @@ export default function StudentCompanyView({ mode = 'catalog', onSelect, userMat
                     </div>
                 </div>
                 {mode === 'selection' && !selectedCareerId && (
-                    <p className="scv-tip">⚠️ Selecciona tu carrera para ver las empresas recomendadas.</p>
+                    <p className="scv-tip">Selecciona tu carrera para ver las empresas recomendadas.</p>
                 )}
             </div>
 

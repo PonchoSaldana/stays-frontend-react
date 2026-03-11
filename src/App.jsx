@@ -168,12 +168,12 @@ function App() {
 function NoProcessView() {
   return (
     <div className="no-process-view">
-      <div className="no-process-emoji">⏳</div>
       <h2 className="no-process-title">Sin proceso activo</h2>
       <p className="no-process-body">
         Actualmente no hay ningún proceso de estadía habilitado.
         El departamento de estadías te notificará cuando se abra el siguiente proceso.
       </p>
+    
     </div>
   );
 }
