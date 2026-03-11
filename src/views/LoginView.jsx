@@ -266,221 +266,222 @@ export default function LoginView({ onLogin, onAdminLogin }) {
     };
 
     return (
-        <div className="login-card">
-            {/* Left Side - Form */}
-            <div className="login-form-section">
-                <div className="mb-6">
-                    <img src={logoUt} alt="Logo UT Tecamachalco" style={{ height: '80px', marginBottom: '1.5rem', display: 'block' }} />
+        <div className="login-page-wrapper">
+            <div className="login-card">
+                {/* Left Side - Form */}
+                <div className="login-form-section">
+                    <div className="mb-6">
+                        <img src={logoUt} alt="Logo UT Tecamachalco" style={{ height: '80px', marginBottom: '1.5rem', display: 'block' }} />
 
-                    {(flow !== 'login' || adminMode) && (
-                        <button onClick={handleBack} style={{
-                            display: 'flex', alignItems: 'center', gap: '0.5rem',
-                            color: '#6b7280', fontSize: '0.875rem', marginBottom: '1rem',
-                            background: 'none', border: 'none', cursor: 'pointer', padding: 0
+                        {(flow !== 'login' || adminMode) && (
+                            <button onClick={handleBack} style={{
+                                display: 'flex', alignItems: 'center', gap: '0.5rem',
+                                color: '#6b7280', fontSize: '0.875rem', marginBottom: '1rem',
+                                background: 'none', border: 'none', cursor: 'pointer', padding: 0
+                            }}>
+                                <ArrowLeft size={16} /> Volver
+                            </button>
+                        )}
+
+                        <h2 onClick={handleTitleClick} style={{
+                            fontSize: '1.875rem', fontWeight: 700, marginBottom: '0.5rem',
+                            cursor: 'default', userSelect: 'none'
                         }}>
-                            <ArrowLeft size={16} /> Volver
-                        </button>
+                            {hdr.title}
+                        </h2>
+                        <p style={{ color: '#6b7280' }}>{hdr.subtitle}</p>
+                    </div>
+
+                    {/* Error global */}
+                    {error && (
+                        <div style={{
+                            background: isLocked ? '#fef2f2' : '#fffbeb',
+                            border: `1px solid ${isLocked ? '#fca5a5' : '#fcd34d'}`,
+                            borderRadius: '0.5rem',
+                            padding: '0.75rem 1rem',
+                            marginBottom: '1rem',
+                            color: isLocked ? '#dc2626' : '#92400e',
+                            fontSize: '0.875rem',
+                            display: 'flex',
+                            alignItems: 'flex-start',
+                            gap: '0.5rem'
+                        }}>
+                            <span style={{ fontSize: '1rem' }}>{isLocked ? '🔒' : '⚠️'}</span>
+                            <span>{error}</span>
+                        </div>
                     )}
 
-                    <h2 onClick={handleTitleClick} style={{
-                        fontSize: '1.875rem', fontWeight: 700, marginBottom: '0.5rem',
-                        cursor: 'default', userSelect: 'none'
-                    }}>
-                        {hdr.title}
-                    </h2>
-                    <p style={{ color: '#6b7280' }}>{hdr.subtitle}</p>
-                </div>
-
-                {/* Error global */}
-                {error && (
-                    <div style={{
-                        background: isLocked ? '#fef2f2' : '#fffbeb',
-                        border: `1px solid ${isLocked ? '#fca5a5' : '#fcd34d'}`,
-                        borderRadius: '0.5rem',
-                        padding: '0.75rem 1rem',
-                        marginBottom: '1rem',
-                        color: isLocked ? '#dc2626' : '#92400e',
-                        fontSize: '0.875rem',
-                        display: 'flex',
-                        alignItems: 'flex-start',
-                        gap: '0.5rem'
-                    }}>
-                        <span style={{ fontSize: '1rem' }}>{isLocked ? '🔒' : '⚠️'}</span>
-                        <span>{error}</span>
-                    </div>
-                )}
-
-                {/* ── MODO ADMIN ── */}
-                {adminMode && (
-                    <form onSubmit={handleAdminSubmit}>
-                        <div style={{ marginBottom: '1rem' }}>
-                            <label className="form-label">Usuario</label>
-                            <input type="text" value={adminUser} onChange={e => setAdminUser(e.target.value)}
-                                className="input" placeholder="Admin User" autoFocus />
-                        </div>
-                        <div style={{ marginBottom: '1.5rem' }}>
-                            <label className="form-label">Contraseña</label>
-                            <input type="password" value={adminPass} onChange={e => setAdminPass(e.target.value)}
-                                className="input" placeholder="••••••••" />
-                        </div>
-                        <button type="submit" disabled={!adminUser || !adminPass || loading} className="btn"
-                            style={{ width: '100%', fontSize: '1.125rem', background: '#374151', color: 'white' }}>
-                            {loading ? 'Accediendo...' : 'Entrar como Admin'}
-                        </button>
-                    </form>
-                )}
-
-                {/* ── PASO 1: MATRÍCULA ── */}
-                {!adminMode && flow === 'login' && (
-                    <form onSubmit={handleMatriculaSubmit}>
-                        <div style={{ marginBottom: '1.5rem' }}>
-                            <label className="form-label">Matrícula</label>
-                            <input type="text" value={matricula} onChange={e => setMatricula(e.target.value)}
-                                className="input" placeholder="Ej. 20230001" autoFocus
-                                autoComplete="off"
-                                style={{ fontSize: '1.125rem', borderColor: recognizedName ? 'var(--ut-green)' : '#9ca3af', borderWidth: recognizedName ? '2px' : '1.5px' }} />
-                            {recognizedName && (
-                                <p style={{ color: 'var(--ut-green)', fontSize: '0.875rem', marginTop: '0.5rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--ut-green)', display: 'inline-block' }} />
-                                    Hola, {recognizedName}
-                                </p>
-                            )}
-                        </div>
-                        <button type="submit" disabled={!matricula || loading} className="btn btn-primary"
-                            style={{ width: '100%', fontSize: '1.125rem' }}>
-                            {loading ? 'Verificando...' : <><span>Continuar</span><ArrowRight size={20} /></>}
-                        </button>
-                    </form>
-                )}
-
-                {/* ── PASO LOGIN: CONTRASEÑA NORMAL ── */}
-                {!adminMode && flow === 'onboarding_password' && (
-                    <form onSubmit={handlePasswordLogin}>
-                        <div style={{ marginBottom: '1.5rem' }}>
-                            <label className="form-label">Contraseña</label>
-                            <div style={{ position: 'relative' }}>
-                                <Lock size={20} style={{ position: 'absolute', top: '50%', left: '1rem', transform: 'translateY(-50%)', color: '#9ca3af' }} />
-                                <input type="password" value={password} onChange={e => setPassword(e.target.value)}
-                                    className="input" style={{ paddingLeft: '3rem' }}
-                                    autoComplete="current-password"
-                                    placeholder="Tu contraseña" autoFocus />
+                    {/* ── MODO ADMIN ── */}
+                    {adminMode && (
+                        <form onSubmit={handleAdminSubmit}>
+                            <div style={{ marginBottom: '1rem' }}>
+                                <label className="form-label">Usuario</label>
+                                <input type="text" value={adminUser} onChange={e => setAdminUser(e.target.value)}
+                                    className="input" placeholder="Admin User" autoFocus />
                             </div>
-                        </div>
-                        <button type="submit" disabled={!password || loading} className="btn btn-primary"
-                            style={{ width: '100%', fontSize: '1.125rem' }}>
-                            {loading ? 'Entrando...' : <><span>Entrar</span><ArrowRight size={20} /></>}
-                        </button>
-                    </form>
-                )}
+                            <div style={{ marginBottom: '1.5rem' }}>
+                                <label className="form-label">Contraseña</label>
+                                <input type="password" value={adminPass} onChange={e => setAdminPass(e.target.value)}
+                                    className="input" placeholder="••••••••" />
+                            </div>
+                            <button type="submit" disabled={!adminUser || !adminPass || loading} className="btn"
+                                style={{ width: '100%', fontSize: '1.125rem', background: '#374151', color: 'white' }}>
+                                {loading ? 'Accediendo...' : 'Entrar como Admin'}
+                            </button>
+                        </form>
+                    )}
 
-                {/* ── ONBOARDING PASO 2: EMAIL ── */}
-                {!adminMode && flow === 'email' && (
-                    <form onSubmit={handleEmailSubmit}>
-                        <div style={{ marginBottom: '1.5rem' }}>
-                            <label className="form-label">Correo Electrónico</label>
-                            <div style={{ position: 'relative' }}>
-                                <Mail size={20} style={{ position: 'absolute', top: '50%', left: '1rem', transform: 'translateY(-50%)', color: '#9ca3af' }} />
-                                <input type="email" value={email} onChange={e => setEmail(e.target.value)}
-                                    className="input" style={{ paddingLeft: '3rem' }}
+                    {/* ── PASO 1: MATRÍCULA ── */}
+                    {!adminMode && flow === 'login' && (
+                        <form onSubmit={handleMatriculaSubmit}>
+                            <div style={{ marginBottom: '1.5rem' }}>
+                                <label className="form-label">Matrícula</label>
+                                <input type="text" value={matricula} onChange={e => setMatricula(e.target.value)}
+                                    className="input" placeholder="Ej. 20230001" autoFocus
                                     autoComplete="off"
-                                    placeholder="alumno@uttecam.edu.mx" autoFocus />
+                                    style={{ fontSize: '1.125rem', borderColor: recognizedName ? 'var(--ut-green)' : '#9ca3af', borderWidth: recognizedName ? '2px' : '1.5px' }} />
+                                {recognizedName && (
+                                    <p style={{ color: 'var(--ut-green)', fontSize: '0.875rem', marginTop: '0.5rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--ut-green)', display: 'inline-block' }} />
+                                        Hola, {recognizedName}
+                                    </p>
+                                )}
                             </div>
-                        </div>
-                        <button type="submit" disabled={!email || loading} className="btn btn-primary"
-                            style={{ width: '100%', fontSize: '1.125rem' }}>
-                            {loading ? 'Enviando...' : 'Enviar Código'}
-                        </button>
-                    </form>
-                )}
+                            <button type="submit" disabled={!matricula || loading} className="btn btn-primary"
+                                style={{ width: '100%', fontSize: '1.125rem' }}>
+                                {loading ? 'Verificando...' : <><span>Continuar</span><ArrowRight size={20} /></>}
+                            </button>
+                        </form>
+                    )}
 
-                {/* ── ONBOARDING PASO 3: CÓDIGO ── */}
-                {!adminMode && flow === 'verify' && (
-                    <form onSubmit={handleVerifySubmit}>
-                        <div style={{ marginBottom: '1.5rem' }}>
-                            <label className="form-label">Código de Verificación</label>
-                            <div style={{ position: 'relative' }}>
-                                <ShieldCheck size={20} style={{ position: 'absolute', top: '50%', left: '1rem', transform: 'translateY(-50%)', color: '#9ca3af' }} />
-                                <input type="text" value={verificationCode} onChange={e => setVerificationCode(e.target.value)}
-                                    className="input" style={{ paddingLeft: '3rem', letterSpacing: '0.25rem', fontWeight: 'bold' }}
-                                    placeholder="123456" maxLength={6} autoFocus />
+                    {/* ── PASO LOGIN: CONTRASEÑA NORMAL ── */}
+                    {!adminMode && flow === 'onboarding_password' && (
+                        <form onSubmit={handlePasswordLogin}>
+                            <div style={{ marginBottom: '1.5rem' }}>
+                                <label className="form-label">Contraseña</label>
+                                <div style={{ position: 'relative' }}>
+                                    <Lock size={20} style={{ position: 'absolute', top: '50%', left: '1rem', transform: 'translateY(-50%)', color: '#9ca3af' }} />
+                                    <input type="password" value={password} onChange={e => setPassword(e.target.value)}
+                                        className="input" style={{ paddingLeft: '3rem' }}
+                                        autoComplete="current-password"
+                                        placeholder="Tu contraseña" autoFocus />
+                                </div>
                             </div>
-                        </div>
-                        <button type="submit" disabled={!verificationCode || loading} className="btn btn-primary"
-                            style={{ width: '100%', fontSize: '1.125rem' }}>
-                            {loading ? 'Verificando...' : 'Verificar Código'}
-                        </button>
-                        <button type="button" onClick={() => { setFlow('email'); setVerificationCode(''); }}
-                            style={{ width: '100%', marginTop: '1rem', background: 'none', border: 'none', color: '#4f46e5', cursor: 'pointer', fontSize: '0.875rem' }}>
-                            ¿No recibiste el código? Reenviar
-                        </button>
-                    </form>
-                )}
+                            <button type="submit" disabled={!password || loading} className="btn btn-primary"
+                                style={{ width: '100%', fontSize: '1.125rem' }}>
+                                {loading ? 'Entrando...' : <><span>Entrar</span><ArrowRight size={20} /></>}
+                            </button>
+                        </form>
+                    )}
 
-                {/* ── ONBOARDING PASO 4: CONTRASEÑA NUEVA ── */}
-                {!adminMode && flow === 'password' && (
-                    <form onSubmit={handleSetPassword}>
-                        <div style={{ marginBottom: '1rem' }}>
-                            <label className="form-label">Nueva Contraseña</label>
-                            <div style={{ position: 'relative' }}>
-                                <Lock size={20} style={{ position: 'absolute', top: '50%', left: '1rem', transform: 'translateY(-50%)', color: '#9ca3af' }} />
-                                <input type="password" value={password} onChange={e => setPassword(e.target.value)}
-                                    className="input" style={{ paddingLeft: '3rem' }}
-                                    placeholder="Mínimo 6 caracteres" autoFocus />
+                    {/* ── ONBOARDING PASO 2: EMAIL ── */}
+                    {!adminMode && flow === 'email' && (
+                        <form onSubmit={handleEmailSubmit}>
+                            <div style={{ marginBottom: '1.5rem' }}>
+                                <label className="form-label">Correo Electrónico</label>
+                                <div style={{ position: 'relative' }}>
+                                    <Mail size={20} style={{ position: 'absolute', top: '50%', left: '1rem', transform: 'translateY(-50%)', color: '#9ca3af' }} />
+                                    <input type="email" value={email} onChange={e => setEmail(e.target.value)}
+                                        className="input" style={{ paddingLeft: '3rem' }}
+                                        autoComplete="off"
+                                        placeholder="alumno@uttecam.edu.mx" autoFocus />
+                                </div>
                             </div>
-                        </div>
-                        <div style={{ marginBottom: '1.5rem' }}>
-                            <label className="form-label">Confirmar Contraseña</label>
-                            <div style={{ position: 'relative' }}>
-                                <Key size={20} style={{ position: 'absolute', top: '50%', left: '1rem', transform: 'translateY(-50%)', color: '#9ca3af' }} />
-                                <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)}
-                                    className="input" style={{ paddingLeft: '3rem' }}
-                                    placeholder="Repite la contraseña" />
-                            </div>
-                            {password && confirmPassword && password !== confirmPassword && (
-                                <p style={{ color: 'red', fontSize: '0.75rem', marginTop: '0.25rem' }}>Las contraseñas no coinciden</p>
-                            )}
-                        </div>
-                        <button type="submit"
-                            disabled={!password || !confirmPassword || password !== confirmPassword || loading}
-                            className="btn btn-primary" style={{ width: '100%', fontSize: '1.125rem' }}>
-                            {loading ? 'Guardando...' : 'Finalizar Registro'}
-                        </button>
-                    </form>
-                )}
+                            <button type="submit" disabled={!email || loading} className="btn btn-primary"
+                                style={{ width: '100%', fontSize: '1.125rem' }}>
+                                {loading ? 'Enviando...' : 'Enviar Código'}
+                            </button>
+                        </form>
+                    )}
 
-                <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid #f3f4f6' }}>
-                    <p style={{ fontSize: '0.875rem', color: '#9ca3af', textAlign: 'center' }}>
-                        Universidad Tecnológica de Tecamachalco
-                    </p>
+                    {/* ── ONBOARDING PASO 3: CÓDIGO ── */}
+                    {!adminMode && flow === 'verify' && (
+                        <form onSubmit={handleVerifySubmit}>
+                            <div style={{ marginBottom: '1.5rem' }}>
+                                <label className="form-label">Código de Verificación</label>
+                                <div style={{ position: 'relative' }}>
+                                    <ShieldCheck size={20} style={{ position: 'absolute', top: '50%', left: '1rem', transform: 'translateY(-50%)', color: '#9ca3af' }} />
+                                    <input type="text" value={verificationCode} onChange={e => setVerificationCode(e.target.value)}
+                                        className="input" style={{ paddingLeft: '3rem', letterSpacing: '0.25rem', fontWeight: 'bold' }}
+                                        placeholder="123456" maxLength={6} autoFocus />
+                                </div>
+                            </div>
+                            <button type="submit" disabled={!verificationCode || loading} className="btn btn-primary"
+                                style={{ width: '100%', fontSize: '1.125rem' }}>
+                                {loading ? 'Verificando...' : 'Verificar Código'}
+                            </button>
+                            <button type="button" onClick={() => { setFlow('email'); setVerificationCode(''); }}
+                                style={{ width: '100%', marginTop: '1rem', background: 'none', border: 'none', color: '#4f46e5', cursor: 'pointer', fontSize: '0.875rem' }}>
+                                ¿No recibiste el código? Reenviar
+                            </button>
+                        </form>
+                    )}
+
+                    {/* ── ONBOARDING PASO 4: CONTRASEÑA NUEVA ── */}
+                    {!adminMode && flow === 'password' && (
+                        <form onSubmit={handleSetPassword}>
+                            <div style={{ marginBottom: '1rem' }}>
+                                <label className="form-label">Nueva Contraseña</label>
+                                <div style={{ position: 'relative' }}>
+                                    <Lock size={20} style={{ position: 'absolute', top: '50%', left: '1rem', transform: 'translateY(-50%)', color: '#9ca3af' }} />
+                                    <input type="password" value={password} onChange={e => setPassword(e.target.value)}
+                                        className="input" style={{ paddingLeft: '3rem' }}
+                                        placeholder="Mínimo 6 caracteres" autoFocus />
+                                </div>
+                            </div>
+                            <div style={{ marginBottom: '1.5rem' }}>
+                                <label className="form-label">Confirmar Contraseña</label>
+                                <div style={{ position: 'relative' }}>
+                                    <Key size={20} style={{ position: 'absolute', top: '50%', left: '1rem', transform: 'translateY(-50%)', color: '#9ca3af' }} />
+                                    <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)}
+                                        className="input" style={{ paddingLeft: '3rem' }}
+                                        placeholder="Repite la contraseña" />
+                                </div>
+                                {password && confirmPassword && password !== confirmPassword && (
+                                    <p style={{ color: 'red', fontSize: '0.75rem', marginTop: '0.25rem' }}>Las contraseñas no coinciden</p>
+                                )}
+                            </div>
+                            <button type="submit"
+                                disabled={!password || !confirmPassword || password !== confirmPassword || loading}
+                                className="btn btn-primary" style={{ width: '100%', fontSize: '1.125rem' }}>
+                                {loading ? 'Guardando...' : 'Finalizar Registro'}
+                            </button>
+                        </form>
+                    )}
+
+                    <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid #f3f4f6' }}>
+                        <p style={{ fontSize: '0.875rem', color: '#9ca3af', textAlign: 'center' }}>
+                            Universidad Tecnológica de Tecamachalco
+                        </p>
+                    </div>
                 </div>
-            </div>
 
-            {/* Right Side - Visual */}
-            <div className="login-visual-section" style={{ justifyContent: 'flex-start', gap: '2rem' }}>
-                <div style={{ position: 'relative', zIndex: 10 }}>
-                    <h3 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem' }}>Tu camino profesional</h3>
-                    <p style={{ color: 'rgba(255,255,255,0.9)' }}>Gestiona tu proceso de estadía profesional de manera ágil.</p>
-                </div>
+                {/* Right Side - Visual */}
+                <div className="login-visual-section" style={{ justifyContent: 'flex-start', gap: '2rem' }}>
+                    <div style={{ position: 'relative', zIndex: 10 }}>
+                        <h3 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem' }}>Tu camino profesional</h3>
+                        <p style={{ color: 'rgba(255,255,255,0.9)' }}>Gestiona tu proceso de estadía profesional de manera ágil.</p>
+                    </div>
 
-                <div style={{ position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                    {['Carga tu documentación', 'Espera aprobación', 'Entrega tu expediente físico'].map((step, i) => (
-                        <div key={i} style={{
-                            background: 'rgba(255,255,255,0.1)', padding: '1rem', borderRadius: '0.75rem',
-                            backdropFilter: 'blur(4px)', border: '1px solid rgba(255,255,255,0.1)'
-                        }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                <div style={{
-                                    width: 32, height: 32, borderRadius: '50%', background: 'var(--ut-orange)',
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 'bold'
-                                }}>{i + 1}</div>
-                                <p style={{ fontWeight: 500 }}>{step}</p>
+                    <div style={{ position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                        {['Carga tu documentación', 'Espera aprobación', 'Entrega tu expediente físico'].map((step, i) => (
+                            <div key={i} style={{
+                                background: 'rgba(255,255,255,0.1)', padding: '1rem', borderRadius: '0.75rem',
+                                backdropFilter: 'blur(4px)', border: '1px solid rgba(255,255,255,0.1)'
+                            }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                    <div style={{
+                                        width: 32, height: 32, borderRadius: '50%', background: 'var(--ut-orange)',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 'bold'
+                                    }}>{i + 1}</div>
+                                    <p style={{ fontWeight: 500 }}>{step}</p>
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        ))}
+                    </div>
                 </div>
-            </div>
 
-            <style>{`
+                <style>{`
                 .form-label {
                     display: block;
                     font-size: 0.875rem;
@@ -489,6 +490,7 @@ export default function LoginView({ onLogin, onAdminLogin }) {
                     margin-bottom: 0.5rem;
                 }
             `}</style>
+            </div>
         </div>
     );
 }

@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Building, Search, MapPin, Phone, Mail, FileText, CheckCircle, Filter } from 'lucide-react';
+import { Building, Search, MapPin, Phone, Mail, FileText, CheckCircle, Filter, Users } from 'lucide-react';
 import Modal from '../components/Modal';
 import ToastContainer from '../components/Toast';
 import { useToast } from '../hooks/useToast';
 import { authFetch } from '../auth';
 
-// Copied from AdminDashboard for consistency (In a real app, this would be a shared constant)
 const CAREERS = [
     { id: 'ing-soft', name: 'Ingeniería en Desarrollo y Gestión de Software' },
     { id: 'ing-red', name: 'Ingeniería en Redes Inteligentes y Ciberseguridad' },
@@ -37,9 +36,9 @@ const CAREERS = [
 ];
 
 const getMockCompanies = () => [
-    { id: 1, name: 'Volkswagen de México', address: 'Autopista México-Puebla Km 116', contact: 'Lic. Juan Pérez', email: 'rh@vw.com.mx', careerId: 'ing-man', maxStudents: 5 },
-    { id: 2, name: 'Audi México', address: 'San José Chiapa', contact: 'Ing. María González', email: 'practicas@audi.mx', careerId: 'ing-mec', maxStudents: 3 },
-    { id: 3, name: 'Softtek', address: 'Parque Tecnológico', contact: 'Lic. Ana Ruiz', email: 'talento@softtek.com', careerId: 'ing-soft', maxStudents: 10 }
+    { id: 1, name: 'Volkswagen de México', address: 'Autopista México-Puebla Km 116', contact: 'Lic. Juan Pérez', email: 'rh@vw.com.mx', careerId: 'ing-man', spots: 5, hasFinancialSupport: true },
+    { id: 2, name: 'Audi México', address: 'San José Chiapa, Puebla', contact: 'Ing. María González', email: 'practicas@audi.mx', careerId: 'ing-mec', spots: 3, hasFinancialSupport: true },
+    { id: 3, name: 'Softtek', address: 'Parque Tecnológico, Puebla', contact: 'Lic. Ana Ruiz', email: 'talento@softtek.com', careerId: 'ing-soft', spots: 10, hasFinancialSupport: false },
 ];
 
 export default function StudentCompanyView({ mode = 'catalog', onSelect, userMatricula }) {
@@ -48,18 +47,12 @@ export default function StudentCompanyView({ mode = 'catalog', onSelect, userMat
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCareerId, setSelectedCareerId] = useState('');
     const [selectedCompanyId, setSelectedCompanyId] = useState(null);
-
-    // Modal States
     const [modalConfig, setModalConfig] = useState({ isOpen: false, title: '', content: null, footer: null, type: 'info' });
 
     useEffect(() => {
         const timer = setTimeout(() => {
-            const params = new URLSearchParams({
-                page: 1,
-                limit: 50,
-                search: searchTerm
-            });
-            authFetch(`/companies?${params.toString()}`)
+            const params = new URLSearchParams({ page: 1, limit: 50, search: searchTerm });
+            authFetch(`/companies?${params}`)
                 .then(res => res.ok ? res.json() : { data: [] })
                 .then(json => {
                     const data = json.data || [];
@@ -67,66 +60,48 @@ export default function StudentCompanyView({ mode = 'catalog', onSelect, userMat
                 })
                 .catch(() => setCompanies(searchTerm ? [] : getMockCompanies()));
         }, 300);
-
         return () => clearTimeout(timer);
     }, [searchTerm]);
 
     useEffect(() => {
-        // Cargar empresa ya seleccionada desde el backend
         if (userMatricula && mode === 'selection') {
             const mat = String(userMatricula).trim().toLowerCase();
             authFetch(`/students/${mat}`)
                 .then(res => res.ok ? res.json() : null)
-                .then(student => {
-                    if (student?.companyId) setSelectedCompanyId(student.companyId);
-                })
+                .then(student => { if (student?.companyId) setSelectedCompanyId(student.companyId); })
                 .catch(() => { });
         }
     }, [userMatricula, mode]);
 
-    const filteredCompanies = companies.filter(c => {
-        const matchesCareer = selectedCareerId ? (c.careerId === selectedCareerId || !c.careerId) : true;
-        return matchesCareer;
-    });
+    const filteredCompanies = companies.filter(c =>
+        selectedCareerId ? (c.careerId === selectedCareerId || !c.careerId) : true
+    );
 
     const handleSelect = (company) => {
-        // Validar si ya tiene una empresa seleccionada (Bloquear cambio)
         if (selectedCompanyId && selectedCompanyId !== company.id) {
             setModalConfig({
-                isOpen: true,
-                title: 'Acción no permitida',
-                type: 'danger',
+                isOpen: true, title: 'Acción no permitida', type: 'danger',
                 content: (
-                    <div style={{ textAlign: 'center' }}>
-                        <div style={{ fontSize: '3rem', marginBottom: '1rem' }}></div>
-                        <p style={{ fontWeight: 600, fontSize: '1.1rem', marginBottom: '0.5rem' }}>Ya tienes una empresa asignada.</p>
-                        <p style={{ color: '#6b7280' }}>
-                            Por reglamento, solo puedes realizar tu estadía en una sola empresa.
-                            Si cometiste un error, contacta al encargado de estadias.
+                    <div style={{ textAlign: 'center', padding: '0.5rem 0' }}>
+                        <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>🚫</div>
+                        <p style={{ fontWeight: 600, marginBottom: '0.5rem' }}>Ya tienes una empresa asignada.</p>
+                        <p style={{ color: '#6b7280', fontSize: '0.875rem' }}>
+                            Solo puedes realizar tu estadía en una empresa. Contacta al encargado si cometiste un error.
                         </p>
                     </div>
                 ),
                 footer: (
-                    <button
-                        onClick={() => setModalConfig({ ...modalConfig, isOpen: false })}
-                        className="btn btn-primary"
-                        style={{ width: '100%', justifyContent: 'center' }}
-                    >
+                    <button onClick={() => setModalConfig(m => ({ ...m, isOpen: false }))} className="btn btn-primary" style={{ width: '100%' }}>
                         Entendido
                     </button>
                 )
             });
             return;
         }
-
-        if (selectedCompanyId === company.id) {
-            // Ya es la actual, solo info
-            return;
-        }
+        if (selectedCompanyId === company.id) return;
 
         setModalConfig({
-            isOpen: true,
-            title: 'Confirmar Selección',
+            isOpen: true, title: 'Confirmar Selección',
             content: (
                 <div>
                     <p>¿Estás seguro que deseas seleccionar a <strong>{company.name}</strong> para tu estadía?</p>
@@ -137,19 +112,8 @@ export default function StudentCompanyView({ mode = 'catalog', onSelect, userMat
             ),
             footer: (
                 <>
-                    <button
-                        onClick={() => setModalConfig({ ...modalConfig, isOpen: false })}
-                        className="btn"
-                        style={{ background: '#f3f4f6', color: '#374151' }}
-                    >
-                        Cancelar
-                    </button>
-                    <button
-                        onClick={() => confirmSelection(company)}
-                        className="btn btn-primary"
-                    >
-                        Confirmar
-                    </button>
+                    <button onClick={() => setModalConfig(m => ({ ...m, isOpen: false }))} className="btn" style={{ background: '#f3f4f6', color: '#374151' }}>Cancelar</button>
+                    <button onClick={() => confirmSelection(company)} className="btn btn-primary">Confirmar</button>
                 </>
             )
         });
@@ -165,29 +129,26 @@ export default function StudentCompanyView({ mode = 'catalog', onSelect, userMat
                 });
                 if (!res.ok) {
                     const data = await res.json();
-                    showToast({ type: 'error', title: 'Error', message: data.message || 'No se pudo guardar la selección.' });
+                    showToast({ type: 'error', title: 'Error', message: data.message || 'No se pudo guardar.' });
                     setModalConfig(m => ({ ...m, isOpen: false }));
                     return;
                 }
-            } catch {
-                // Continuar aunque falle la red (mostrar éxito visual de todas formas)
-            }
+            } catch { }
         }
-
         setSelectedCompanyId(company.id);
         if (onSelect) onSelect(company);
-
         setModalConfig(m => ({ ...m, isOpen: false }));
-        showToast({ type: 'success', title: '¡Empresa Seleccionada!', message: `Has registrado correctamente a ${company.name}.` });
+        showToast({ type: 'success', title: '¡Empresa Seleccionada!', message: `Registraste correctamente a ${company.name}.` });
     };
 
     return (
-        <div className="process-container">
-            <div className="text-center mb-6">
-                <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#1f2937' }}>
+        <div className="scv-container">
+            {/* Header */}
+            <div className="scv-header">
+                <h2 className="scv-title">
                     {mode === 'catalog' ? 'Catálogo de Empresas' : 'Selección de Empresa'}
                 </h2>
-                <p style={{ color: '#6b7280' }}>
+                <p className="scv-subtitle">
                     {mode === 'catalog'
                         ? 'Consulta las empresas con convenio vigente para realizar tu estadía.'
                         : 'Elige la empresa donde realizarás tu estadía profesional.'}
@@ -195,131 +156,114 @@ export default function StudentCompanyView({ mode = 'catalog', onSelect, userMat
             </div>
 
             {/* Filters */}
-            <div className="process-card mb-6" style={{ marginTop: 0 }}>
-                <div className="filter-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <div className="scv-filters-card">
+                <div className="scv-filters-grid">
                     <div style={{ position: 'relative' }}>
-                        <Search size={18} style={{ position: 'absolute', left: 12, top: 12, color: '#9ca3af' }} />
+                        <Search size={17} className="scv-filter-icon" />
                         <input
                             type="text"
                             className="input"
                             placeholder="Buscar empresa..."
                             value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
+                            onChange={e => setSearchTerm(e.target.value)}
                             style={{ paddingLeft: '2.5rem' }}
                         />
                     </div>
-
                     <div style={{ position: 'relative' }}>
-                        <Filter size={18} style={{ position: 'absolute', left: 12, top: 12, color: '#9ca3af' }} />
+                        <Filter size={17} className="scv-filter-icon" />
                         <select
                             className="input"
                             value={selectedCareerId}
-                            onChange={(e) => setSelectedCareerId(e.target.value)}
+                            onChange={e => setSelectedCareerId(e.target.value)}
                             style={{ paddingLeft: '2.5rem' }}
                         >
-                            <option value="">-- Ver todas las carreras --</option>
-                            {CAREERS.map(c => (
-                                <option key={c.id} value={c.id}>{c.name}</option>
-                            ))}
+                            <option value="">-- Todas las carreras --</option>
+                            {CAREERS.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                         </select>
                     </div>
                 </div>
                 {mode === 'selection' && !selectedCareerId && (
-                    <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#D97706', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <span> Selecciona tu carrera para ver las empresas recomendadas.</span>
-                    </div>
+                    <p className="scv-tip">⚠️ Selecciona tu carrera para ver las empresas recomendadas.</p>
                 )}
             </div>
 
-            {/* Results Grid */}
-            <div className="card-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
-                {filteredCompanies.map(company => (
-                    <div
-                        key={company.id}
-                        className="process-card"
-                        style={{
-                            marginTop: 0,
-                            borderLeft: selectedCompanyId === company.id ? '4px solid var(--ut-green)' : 'none',
-                            background: selectedCompanyId === company.id ? '#F0FDF4' : 'white'
-                        }}
-                    >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '1rem' }}>
-                            <div style={{ width: 48, height: 48, background: '#f3f4f6', borderRadius: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#4b5563' }}>
-                                <Building size={24} />
-                            </div>
-                            {mode === 'selection' && (
-                                <button
-                                    onClick={() => handleSelect(company)}
-                                    className={`btn ${selectedCompanyId === company.id ? 'btn-primary' : ''}`}
-                                    style={{
-                                        padding: '0.25rem 0.75rem',
-                                        fontSize: '0.75rem',
-                                        background: selectedCompanyId === company.id ? undefined : '#f3f4f6',
-                                        color: selectedCompanyId === company.id ? undefined : '#374151',
-                                        border: selectedCompanyId === company.id ? undefined : '1px solid #e5e7eb'
-                                    }}
-                                >
-                                    {selectedCompanyId === company.id ? 'Seleccionada' : 'Elegir'}
-                                </button>
-                            )}
-                        </div>
-
-                        <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '0.25rem' }}>{company.name}</h3>
-                        <span className="tag" style={{ fontSize: '0.75rem', background: '#e0f2fe', color: '#0369a1', marginBottom: '1rem', display: 'inline-block' }}>
-                            {CAREERS.find(c => c.id === company.careerId)?.name || 'General'}
-                        </span>
-
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.875rem', color: '#4b5563', marginBottom: '1rem' }}>
-                            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
-                                <MapPin size={16} style={{ marginTop: 2, flexShrink: 0 }} />
-                                <span>{company.address || 'Sin dirección registrada'}</span>
-                            </div>
-                            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                                <Phone size={16} />
-                                <span>{company.contact || 'Sin contacto'}</span>
-                            </div>
-                            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                                <Mail size={16} />
-                                <span>{company.email || 'Sin correo'}</span>
-                            </div>
-                            <div className="flex-between" style={{ marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px dashed #e5e7eb' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <span style={{ fontWeight: 600, color: '#374151' }}>Cupos:</span>
-                                    <span className="tag" style={{ background: '#f3f4f6' }}>{company.spots || '0'}</span>
-                                </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <span style={{ fontWeight: 600, color: '#374151' }}>Apoyo:</span>
-                                    {company.hasFinancialSupport ? (
-                                        <span className="tag" style={{ background: '#DCFCE7', color: '#166534', fontSize: '0.75rem' }}>Sí</span>
-                                    ) : (
-                                        <span className="tag" style={{ background: '#FEE2E2', color: '#991B1B', fontSize: '0.75rem' }}>No</span>
+            {/* Results */}
+            {filteredCompanies.length === 0 ? (
+                <div className="scv-empty">
+                    <Building size={48} style={{ opacity: 0.25, marginBottom: '1rem' }} />
+                    <p>No se encontraron empresas con los criterios seleccionados.</p>
+                </div>
+            ) : (
+                <div className="scv-grid">
+                    {filteredCompanies.map(company => {
+                        const isSelected = selectedCompanyId === company.id;
+                        return (
+                            <div
+                                key={company.id}
+                                className={`scv-card ${isSelected ? 'scv-card--selected' : ''}`}
+                            >
+                                {/* Card Top */}
+                                <div className="scv-card-top">
+                                    <div className={`scv-card-icon ${isSelected ? 'scv-card-icon--active' : ''}`}>
+                                        <Building size={22} />
+                                    </div>
+                                    {mode === 'selection' && (
+                                        <button
+                                            onClick={() => handleSelect(company)}
+                                            className={`btn ${isSelected ? 'btn-primary' : 'scv-select-btn'}`}
+                                        >
+                                            {isSelected ? '✓ Seleccionada' : 'Elegir'}
+                                        </button>
                                     )}
                                 </div>
-                            </div>
-                        </div>
 
-                        {company.fileName && (
-                            <div style={{ marginTop: 'auto', paddingTop: '1rem', borderTop: '1px solid #e5e7eb' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#059669', fontSize: '0.8rem', fontWeight: 500 }}>
-                                    <FileText size={14} />
-                                    Existe convenio vigente
+                                {/* Card Body */}
+                                <h3 className="scv-card-name">{company.name}</h3>
+                                <span className="scv-career-tag">
+                                    {CAREERS.find(c => c.id === company.careerId)?.name || 'General'}
+                                </span>
+
+                                <div className="scv-card-info">
+                                    <div className="scv-info-row">
+                                        <MapPin size={15} className="scv-info-icon" />
+                                        <span>{company.address || 'Sin dirección'}</span>
+                                    </div>
+                                    <div className="scv-info-row">
+                                        <Phone size={15} className="scv-info-icon" />
+                                        <span>{company.contact || 'Sin contacto'}</span>
+                                    </div>
+                                    <div className="scv-info-row">
+                                        <Mail size={15} className="scv-info-icon" />
+                                        <span className="scv-email">{company.email || 'Sin correo'}</span>
+                                    </div>
                                 </div>
-                            </div>
-                        )}
-                    </div>
-                ))}
-            </div>
 
-            {filteredCompanies.length === 0 && (
-                <div style={{ textAlign: 'center', padding: '3rem', color: '#9ca3af' }}>
-                    <Building size={48} style={{ opacity: 0.3, marginBottom: '1rem' }} />
-                    <p>No se encontraron empresas con los criterios seleccionados.</p>
+                                {/* Card Footer */}
+                                <div className="scv-card-footer">
+                                    <div className="scv-footer-item">
+                                        <Users size={14} />
+                                        <span>Cupos: <strong>{company.spots ?? 0}</strong></span>
+                                    </div>
+                                    <span className={`scv-apoyo-tag ${company.hasFinancialSupport ? 'scv-apoyo-tag--si' : 'scv-apoyo-tag--no'}`}>
+                                        Apoyo: {company.hasFinancialSupport ? 'Sí' : 'No'}
+                                    </span>
+                                </div>
+
+                                {company.fileName && (
+                                    <div className="scv-convenio">
+                                        <FileText size={13} />
+                                        Convenio vigente
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
                 </div>
             )}
 
             <Modal
                 isOpen={modalConfig.isOpen}
-                onClose={() => setModalConfig({ ...modalConfig, isOpen: false })}
+                onClose={() => setModalConfig(m => ({ ...m, isOpen: false }))}
                 title={modalConfig.title}
                 footer={modalConfig.footer}
                 type={modalConfig.type}

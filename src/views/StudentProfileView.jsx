@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { User, Lock, Upload, Save, FileText, CheckCircle, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Modal from '../components/Modal';
-import { API_URL } from '../config';
 import { authFetch } from '../auth';
 import ToastContainer from '../components/Toast';
 import { useToast } from '../hooks/useToast';
@@ -13,14 +12,12 @@ export default function StudentProfileView({ userMatricula }) {
     const [passwordData, setPasswordData] = useState({ current: '', new: '', confirm: '' });
     const [cvFile, setCvFile] = useState(null);
     const [loading, setLoading] = useState(false);
-    const [modalConfig, setModalConfig] = useState({ isOpen: false, title: '', content: null, type: 'info' });
     const [studentData, setStudentData] = useState(null);
 
-    // Cargar datos del alumno al montar
     React.useEffect(() => {
         if (userMatricula) {
-            const targetMat = String(userMatricula).trim().toLowerCase();
-            authFetch(`/students/${targetMat}`)
+            const mat = String(userMatricula).trim().toLowerCase();
+            authFetch(`/students/${mat}`)
                 .then(res => res.ok ? res.json() : null)
                 .then(student => { if (student) setStudentData(student); })
                 .catch(() => { });
@@ -34,10 +31,9 @@ export default function StudentProfileView({ userMatricula }) {
             return;
         }
         if (passwordData.new.length < 6) {
-            showToast({ type: 'warning', title: 'Contraseña corta', message: 'La nueva contraseña debe tener al menos 6 caracteres.' });
+            showToast({ type: 'warning', title: 'Contraseña corta', message: 'Mínimo 6 caracteres.' });
             return;
         }
-
         setLoading(true);
         try {
             const mat = String(userMatricula).trim().toLowerCase();
@@ -46,11 +42,10 @@ export default function StudentProfileView({ userMatricula }) {
                 body: JSON.stringify({ currentPassword: passwordData.current, newPassword: passwordData.new })
             });
             const data = await res.json();
-
             if (!res.ok) {
                 showToast({ type: 'error', title: 'Error', message: data.message || 'No se pudo cambiar la contraseña.' });
             } else {
-                showToast({ type: 'success', title: 'Contraseña Actualizada', message: 'Tu contraseña ha sido actualizada correctamente.' });
+                showToast({ type: 'success', title: 'Contraseña Actualizada', message: 'Tu contraseña fue actualizada correctamente.' });
                 setPasswordData({ current: '', new: '', confirm: '' });
             }
         } catch {
@@ -59,128 +54,99 @@ export default function StudentProfileView({ userMatricula }) {
         setLoading(false);
     };
 
-    const handleCvUpload = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            setCvFile(file);
-        }
-    };
-
     const handleSaveCv = () => {
         if (!cvFile) return;
         setLoading(true);
         setTimeout(() => {
             setLoading(false);
-            showToast({ type: 'success', title: 'CV Actualizado', message: 'Tu Curriculum Vitae se ha guardado correctamente.' });
+            showToast({ type: 'success', title: 'CV Actualizado', message: 'Tu CV se guardó correctamente.' });
         }, 1500);
     };
 
+    const initials = studentData?.name
+        ? studentData.name.charAt(0).toUpperCase()
+        : (userMatricula ? String(userMatricula).slice(-2).toUpperCase() : 'AL');
+
     return (
-        <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-            <button
-                onClick={() => navigate(-1)}
-                className="btn"
-                style={{ background: 'none', color: '#6b7280', padding: '0.5rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}
-            >
-                <ArrowLeft size={20} /> Volver
+        <div className="spv-container">
+            {/* Volver */}
+            <button onClick={() => navigate(-1)} className="spv-back-btn">
+                <ArrowLeft size={18} /> Volver
             </button>
 
-            <div className="text-center mb-6">
-                <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#1f2937' }}>Mi Perfil</h2>
-                <p style={{ color: '#6b7280' }}>Gestión de datos personales y seguridad</p>
+            {/* Page Title */}
+            <div className="spv-page-title">
+                <h2>Mi Perfil</h2>
+                <p>Gestiona tus datos personales y seguridad</p>
             </div>
 
-            <div className="process-card mb-6">
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem', borderBottom: '1px solid #f3f4f6', paddingBottom: '1rem' }}>
-                    <User color="var(--ut-orange)" size={24} />
-                    Información del Alumno
-                </h3>
+            {/* Info Card */}
+            <div className="spv-info-card">
+                <div className="spv-info-card-header">
+                    <User size={20} style={{ color: 'var(--ut-orange)' }} />
+                    <span>Información del Alumno</span>
+                </div>
 
-                <div className="profile-info-grid" style={{ display: 'grid', gridTemplateColumns: 'min-content 1fr', gap: '2rem', alignItems: 'start' }}>
-
-                    {/* Columna Izquierda: Avatar y Matrícula */}
-                    <div style={{ textAlign: 'center' }}>
-                        <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'var(--ut-green)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', fontWeight: 'bold', margin: '0 auto 1rem ease' }}>
-                            {studentData?.name ? studentData.name.charAt(0) : (userMatricula ? userMatricula.slice(-2) : 'AL')}
-                        </div>
-                        <p style={{ fontSize: '0.75rem', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Matrícula</p>
-                        <p style={{ fontSize: '1.25rem', fontWeight: 700, fontFamily: 'monospace' }}>{userMatricula || '-----------'}</p>
+                <div className="spv-info-body">
+                    {/* Avatar */}
+                    <div className="spv-avatar-col">
+                        <div className="spv-avatar">{initials}</div>
+                        <p className="spv-matricula-label">Matrícula</p>
+                        <p className="spv-matricula">{userMatricula || '—'}</p>
                     </div>
 
-                    {/* Columna Derecha: Datos Académicos */}
-                    <div className="profile-details-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem 1rem' }}>
-                        <div style={{ gridColumn: '1 / -1' }}>
-                            <label style={{ display: 'block', fontSize: '0.875rem', color: '#6b7280', marginBottom: '0.25rem' }}>Nombre Completo</label>
-                            <div style={{ fontSize: '1.125rem', fontWeight: 600, color: '#111827' }}>
-                                {studentData?.name || 'Nombre no registrado'}
-                            </div>
+                    {/* Data */}
+                    <div className="spv-data-grid">
+                        <div className="spv-data-field spv-data-field--full">
+                            <label>Nombre Completo</label>
+                            <p>{studentData?.name || 'No registrado'}</p>
                         </div>
-
-                        <div>
-                            <label style={{ display: 'block', fontSize: '0.875rem', color: '#6b7280', marginBottom: '0.25rem' }}>Carrera</label>
-                            <div style={{ fontWeight: 500 }}>
-                                {studentData?.careerName || studentData?.careerAsync || 'No asignada'}
-                            </div>
+                        <div className="spv-data-field">
+                            <label>Carrera</label>
+                            <p>{studentData?.careerName || studentData?.careerAsync || 'No asignada'}</p>
                         </div>
-
-                        <div>
-                            <label style={{ display: 'block', fontSize: '0.875rem', color: '#6b7280', marginBottom: '0.25rem' }}>Grado y Grupo</label>
-                            <div style={{ fontWeight: 500 }}>
-                                {studentData?.grade || '--'} {studentData?.group ? `"${studentData.group}"` : ''}
-                            </div>
+                        <div className="spv-data-field">
+                            <label>Grado y Grupo</label>
+                            <p>{studentData?.grade || '--'} {studentData?.group ? `"${studentData.group}"` : ''}</p>
                         </div>
-
-                        <div>
-                            <label style={{ display: 'block', fontSize: '0.875rem', color: '#6b7280', marginBottom: '0.25rem' }}>Turno</label>
-                            <div style={{ fontWeight: 500 }}>
-                                {studentData?.shift || '--'}
-                            </div>
+                        <div className="spv-data-field">
+                            <label>Turno</label>
+                            <p>{studentData?.shift || '--'}</p>
                         </div>
-
-                        <div>
-                            <label style={{ display: 'block', fontSize: '0.875rem', color: '#6b7280', marginBottom: '0.25rem' }}>Generación</label>
-                            <div style={{ fontWeight: 500 }}>
-                                {studentData?.generation || '--'}
-                            </div>
+                        <div className="spv-data-field">
+                            <label>Generación</label>
+                            <p>{studentData?.generation || '--'}</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
-                {/* Cambio de Contraseña */}
-                <div className="process-card" style={{ marginTop: 0 }}>
-                    <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <Lock size={20} color="#6b7280" />
-                        Seguridad
-                    </h3>
-                    <form onSubmit={handlePasswordChange}>
-                        <div style={{ marginBottom: '1rem' }}>
-                            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>Contraseña Actual</label>
-                            <input
-                                type="password"
-                                className="input"
-                                value={passwordData.current}
-                                onChange={e => setPasswordData({ ...passwordData, current: e.target.value })}
-                            />
+            {/* Security + CV */}
+            <div className="spv-bottom-grid">
+                {/* Cambio de contraseña */}
+                <div className="spv-section-card">
+                    <div className="spv-section-header">
+                        <Lock size={18} style={{ color: '#6b7280' }} />
+                        <span>Seguridad</span>
+                    </div>
+                    <form onSubmit={handlePasswordChange} className="spv-form">
+                        <div>
+                            <label className="spv-label">Contraseña Actual</label>
+                            <input type="password" className="input" value={passwordData.current}
+                                onChange={e => setPasswordData({ ...passwordData, current: e.target.value })} />
                         </div>
-                        <div style={{ marginBottom: '1rem' }}>
-                            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>Nueva Contraseña</label>
-                            <input
-                                type="password"
-                                className="input"
-                                value={passwordData.new}
-                                onChange={e => setPasswordData({ ...passwordData, new: e.target.value })}
-                            />
+                        <div>
+                            <label className="spv-label">Nueva Contraseña</label>
+                            <input type="password" className="input" value={passwordData.new}
+                                onChange={e => setPasswordData({ ...passwordData, new: e.target.value })} />
                         </div>
-                        <div style={{ marginBottom: '1.5rem' }}>
-                            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>Confirmar Nuevamente</label>
-                            <input
-                                type="password"
-                                className="input"
-                                value={passwordData.confirm}
-                                onChange={e => setPasswordData({ ...passwordData, confirm: e.target.value })}
-                            />
+                        <div>
+                            <label className="spv-label">Confirmar Contraseña</label>
+                            <input type="password" className="input" value={passwordData.confirm}
+                                onChange={e => setPasswordData({ ...passwordData, confirm: e.target.value })} />
+                            {passwordData.new && passwordData.confirm && passwordData.new !== passwordData.confirm && (
+                                <p style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.25rem' }}>Las contraseñas no coinciden</p>
+                            )}
                         </div>
                         <button
                             type="submit"
@@ -193,58 +159,47 @@ export default function StudentProfileView({ userMatricula }) {
                     </form>
                 </div>
 
-                {/* Carga de CV */}
-                <div className="process-card" style={{ marginTop: 0 }}>
-                    <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <FileText size={20} color="#6b7280" />
-                        Curriculum Vitae
-                    </h3>
-                    <p style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '1.5rem' }}>
+                {/* CV Upload */}
+                <div className="spv-section-card">
+                    <div className="spv-section-header">
+                        <FileText size={18} style={{ color: '#6b7280' }} />
+                        <span>Curriculum Vitae</span>
+                    </div>
+                    <p className="spv-cv-hint">
                         Sube tu CV para que las empresas puedan conocer tu perfil profesional.
                     </p>
-
-                    <div style={{ border: '2px dashed #e5e7eb', borderRadius: '0.75rem', padding: '1.5rem', textAlign: 'center', position: 'relative' }}>
-                        <input
-                            type="file"
-                            accept=".pdf"
-                            onChange={handleCvUpload}
-                            style={{ position: 'absolute', width: '100%', height: '100%', top: 0, left: 0, opacity: 0, cursor: 'pointer' }}
-                        />
-                        <div style={{ marginBottom: '1rem' }}>
-                            {cvFile ? <CheckCircle size={40} color="var(--ut-green)" style={{ margin: '0 auto' }} /> : <Upload size={40} color="#d1d5db" style={{ margin: '0 auto' }} />}
+                    <label className="spv-cv-drop">
+                        <input type="file" accept=".pdf" style={{ display: 'none' }}
+                            onChange={e => { if (e.target.files[0]) setCvFile(e.target.files[0]); }} />
+                        <div className="spv-cv-drop-icon">
+                            {cvFile
+                                ? <CheckCircle size={38} style={{ color: 'var(--ut-green)' }} />
+                                : <Upload size={38} style={{ color: '#d1d5db' }} />}
                         </div>
-                        <p style={{ fontWeight: 500, marginBottom: '0.25rem' }}>
+                        <p className="spv-cv-drop-text">
                             {cvFile ? cvFile.name : 'Haz clic o arrastra tu archivo aquí'}
                         </p>
-                        <p style={{ fontSize: '0.75rem', color: '#9ca3af' }}>Formatos PDF (Max. 5MB)</p>
-                    </div>
-
-                    <div style={{ marginTop: '1.5rem' }}>
-                        <button
-                            onClick={handleSaveCv}
-                            disabled={!cvFile || loading}
-                            className="btn"
-                            style={{ width: '100%', background: cvFile ? 'var(--ut-green)' : '#f3f4f6', color: cvFile ? 'white' : '#9ca3af', cursor: cvFile ? 'pointer' : 'not-allowed' }}
-                        >
-                            {loading ? 'Subiendo...' : (
-                                <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-                                    <Save size={16} /> Guardar CV
-                                </span>
-                            )}
-                        </button>
-                    </div>
+                        <p className="spv-cv-drop-sub">PDF (Max. 5MB)</p>
+                    </label>
+                    <button
+                        onClick={handleSaveCv}
+                        disabled={!cvFile || loading}
+                        className="btn"
+                        style={{
+                            width: '100%',
+                            marginTop: '1rem',
+                            background: cvFile ? 'var(--ut-green)' : '#f3f4f6',
+                            color: cvFile ? 'white' : '#9ca3af',
+                            cursor: cvFile ? 'pointer' : 'not-allowed',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem'
+                        }}
+                    >
+                        <Save size={16} />
+                        {loading ? 'Subiendo...' : 'Guardar CV'}
+                    </button>
                 </div>
             </div>
 
-            <Modal
-                isOpen={modalConfig.isOpen}
-                onClose={() => setModalConfig({ ...modalConfig, isOpen: false })}
-                title={modalConfig.title}
-                type={modalConfig.type}
-                footer={modalConfig.footer}
-            >
-                {modalConfig.content}
-            </Modal>
             <ToastContainer toasts={toasts} onRemove={removeToast} />
         </div>
     );

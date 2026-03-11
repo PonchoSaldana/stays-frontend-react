@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Search, FolderOpen, ArrowLeft, FileText, CheckCircle, Clock, Settings, Shield, UserPlus, UserX, UserCheck, LogOut, Database, Upload, XCircle, Send, MessageSquare, Building, File, Trash2, Download, PieChart as PieChartIcon, RefreshCw, Edit, GraduationCap, Briefcase, CloudUpload, Menu, X, AlertTriangle } from 'lucide-react';
+import { Users, Search, FolderOpen, ArrowLeft, FileText, CheckCircle, Clock, Settings, Shield, UserPlus, UserX, UserCheck, LogOut, Database, Upload, XCircle, Send, MessageSquare, Building, File, Trash2, Download, PieChart as PieChartIcon, RefreshCw, Edit, GraduationCap, Briefcase, CloudUpload, Menu, X, AlertTriangle, ToggleLeft, ToggleRight, Layers } from 'lucide-react';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { read, utils, writeFile } from 'xlsx';
 import logoUt from '../assets/logo-ut.png';
@@ -44,7 +44,7 @@ const CAREERS = [
 
 
 
-export default function AdminDashboard() {
+export default function AdminDashboard({ onProcessChange }) {
     const [activeTab, setActiveTab] = useState('supervision');
     const [adminSidebarOpen, setAdminSidebarOpen] = useState(false);
     const { toasts, showToast, removeToast } = useToast();
@@ -606,6 +606,205 @@ export default function AdminDashboard() {
         }, 500);
     };
 
+    // --- State para Configuración de Procesos ---
+    const [activeProcess, setActiveProcess] = useState(null); // null | 1 | 2 | 3
+    const [savingProcess, setSavingProcess] = useState(false);
+
+    // Cargar proceso activo al montar
+    useEffect(() => {
+        authFetch('/config/process')
+            .then(r => r.ok ? r.json() : { activeProcess: null })
+            .then(data => setActiveProcess(data.activeProcess))
+            .catch(() => { });
+    }, []);
+
+    const handleSetProcess = async (processNum) => {
+        // Si el mismo proceso ya está activo, lo desactiva (toggle)
+        const newVal = activeProcess === processNum ? null : processNum;
+        setSavingProcess(true);
+        try {
+            const res = await authFetch('/config/process', {
+                method: 'PUT',
+                body: JSON.stringify({ activeProcess: newVal })
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setActiveProcess(data.activeProcess);
+                if (onProcessChange) onProcessChange(data.activeProcess);
+                showToast({
+                    type: 'success',
+                    title: newVal ? `Proceso ${newVal} activado` : 'Proceso desactivado',
+                    message: newVal
+                        ? `El proceso "${PROCESS_NAMES[newVal]}" ahora está visible para los alumnos.`
+                        : 'Ningún proceso está activo. Los alumnos verán el estado de espera.'
+                });
+            } else {
+                const err = await res.json();
+                showToast({ type: 'error', title: 'Error', message: err.message || 'No se pudo actualizar el proceso.' });
+            }
+        } catch {
+            showToast({ type: 'error', title: 'Error de conexión', message: 'No se pudo conectar con el servidor.' });
+        } finally {
+            setSavingProcess(false);
+        }
+    };
+
+    const PROCESS_NAMES = {
+        1: 'Catálogo de Empresas',
+        2: 'Selección de Empresa',
+        3: 'Entrega de Documentos',
+    };
+
+    const PROCESS_DESCRIPTIONS = {
+        1: 'Los alumnos pueden consultar el catálogo de empresas con convenio vigente.',
+        2: 'Los alumnos pueden seleccionar la empresa donde realizarán su estadía.',
+        3: 'Los alumnos pueden entregar sus documentos de inicio de estadía.',
+    };
+
+    const PROCESS_ICONS = {
+        1: Building,
+        2: Search,
+        3: FileText,
+    };
+
+    const renderProcessConfig = () => (
+        <div className="layout-fade-in" style={{ maxWidth: '800px', margin: '0 auto' }}>
+            <div className="flex-between mb-6">
+                <div>
+                    <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#1f2937' }}>Control de Procesos</h2>
+                    <p style={{ color: '#6b7280' }}>Activa el proceso que los alumnos verán en su portal en este momento.</p>
+                </div>
+                {activeProcess && (
+                    <span style={{ background: '#ECFDF5', color: '#059669', border: '1px solid #A7F3D0', borderRadius: '2rem', padding: '0.4rem 1rem', fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <span style={{ width: 8, height: 8, background: '#10B981', borderRadius: '50%', display: 'inline-block' }} />
+                        Proceso {activeProcess} activo
+                    </span>
+                )}
+            </div>
+
+            {/* Tarjetas de procesos */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                {[1, 2, 3].map(num => {
+                    const isActive = activeProcess === num;
+                    const Icon = PROCESS_ICONS[num];
+                    return (
+                        <div
+                            key={num}
+                            style={{
+                                background: 'white',
+                                borderRadius: '1rem',
+                                padding: '1.75rem',
+                                border: isActive ? '2px solid var(--ut-green)' : '2px solid #e5e7eb',
+                                boxShadow: isActive ? '0 4px 20px rgba(0,155,77,0.12)' : '0 2px 8px rgba(0,0,0,0.04)',
+                                transition: 'all 0.25s ease',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                gap: '1.5rem'
+                            }}
+                        >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', flex: 1 }}>
+                                <div style={{
+                                    width: 56,
+                                    height: 56,
+                                    borderRadius: '14px',
+                                    background: isActive ? 'var(--ut-green)' : '#f3f4f6',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    color: isActive ? 'white' : '#6b7280',
+                                    transition: 'all 0.25s'
+                                }}>
+                                    <Icon size={26} />
+                                </div>
+                                <div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                                        <span style={{ fontSize: '0.75rem', fontWeight: 700, color: isActive ? 'var(--ut-green)' : '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Proceso {num}</span>
+                                        {isActive && <span style={{ background: '#DCFCE7', color: '#166534', fontSize: '0.65rem', fontWeight: 700, padding: '0.1rem 0.5rem', borderRadius: '1rem', textTransform: 'uppercase' }}>Activo</span>}
+                                    </div>
+                                    <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: '#1f2937', marginBottom: '0.25rem' }}>{PROCESS_NAMES[num]}</h3>
+                                    <p style={{ color: '#6b7280', fontSize: '0.875rem' }}>{PROCESS_DESCRIPTIONS[num]}</p>
+                                </div>
+                            </div>
+
+                            {/* Toggle Button */}
+                            <button
+                                onClick={() => handleSetProcess(num)}
+                                disabled={savingProcess}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.5rem',
+                                    padding: '0.65rem 1.4rem',
+                                    borderRadius: '0.75rem',
+                                    border: 'none',
+                                    background: isActive ? 'var(--ut-green)' : '#f3f4f6',
+                                    color: isActive ? 'white' : '#374151',
+                                    fontWeight: 600,
+                                    fontSize: '0.875rem',
+                                    cursor: savingProcess ? 'not-allowed' : 'pointer',
+                                    transition: 'all 0.2s',
+                                    flexShrink: 0,
+                                    opacity: savingProcess ? 0.6 : 1,
+                                    fontFamily: 'inherit'
+                                }}
+                            >
+                                {isActive ? <ToggleRight size={20} /> : <ToggleLeft size={20} />}
+                                {isActive ? 'Activo' : 'Activar'}
+                            </button>
+                        </div>
+                    );
+                })}
+            </div>
+
+            {/* Botón desactivar todo */}
+            {activeProcess && (
+                <div style={{ marginTop: '2rem', textAlign: 'center' }}>
+                    <button
+                        onClick={() => handleSetProcess(activeProcess)} // toggle off
+                        disabled={savingProcess}
+                        style={{
+                            background: 'none',
+                            border: 'none',
+                            color: '#EF4444',
+                            cursor: 'pointer',
+                            fontSize: '0.875rem',
+                            fontWeight: 500,
+                            textDecoration: 'underline',
+                            opacity: savingProcess ? 0.5 : 1
+                        }}
+                    >
+                        Desactivar todos los procesos
+                    </button>
+                </div>
+            )}
+
+            {/* Información del estado actual */}
+            <div style={{
+                marginTop: '2.5rem',
+                background: activeProcess ? '#ECFDF5' : '#FFF7ED',
+                border: `1px solid ${activeProcess ? '#A7F3D0' : '#FED7AA'}`,
+                borderRadius: '1rem',
+                padding: '1.25rem 1.5rem',
+                display: 'flex',
+                gap: '1rem',
+                alignItems: 'flex-start'
+            }}>
+                <div style={{ fontSize: '1.5rem', flexShrink: 0 }}>{activeProcess ? '✅' : '⚠️'}</div>
+                <div>
+                    <p style={{ fontWeight: 600, color: activeProcess ? '#065F46' : '#92400E', marginBottom: '0.25rem' }}>
+                        {activeProcess ? `Proceso ${activeProcess} — ${PROCESS_NAMES[activeProcess]}` : 'Ningún proceso activo'}
+                    </p>
+                    <p style={{ color: activeProcess ? '#047857' : '#B45309', fontSize: '0.875rem' }}>
+                        {activeProcess
+                            ? `Los alumnos ven actualmente: "${PROCESS_DESCRIPTIONS[activeProcess]}"`
+                            : 'Los alumnos ven una pantalla de espera y no pueden acceder a ningún proceso.'}
+                    </p>
+                </div>
+            </div>
+        </div>
+    );
+
     // --- State para Perfil ---
     const [newPassword, setNewPassword] = useState('');
 
@@ -1031,6 +1230,14 @@ export default function AdminDashboard() {
                     {isRoot && (
                         <>
                             <button
+                                onClick={() => { setActiveTab('procesos'); closeAdminSidebar(); }}
+                                className={`nav-item ${activeTab === 'procesos' ? 'active' : ''}`}
+                                style={{ border: 'none', background: activeTab === 'procesos' ? undefined : 'transparent', width: '100%', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
+                            >
+                                <Layers size={18} /> Control de Procesos
+                            </button>
+
+                            <button
                                 onClick={() => { setActiveTab('admins'); closeAdminSidebar(); }}
                                 className={`nav-item ${activeTab === 'admins' ? 'active' : ''}`}
                                 style={{ border: 'none', background: activeTab === 'admins' ? undefined : 'transparent', width: '100%', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
@@ -1075,6 +1282,7 @@ export default function AdminDashboard() {
 
             {/* Main Content */}
             <main className="admin-main-content">
+                {activeTab === 'procesos' && isRoot && renderProcessConfig()}
                 {activeTab === 'supervision' && renderSupervisionView()}
 
                 {activeTab === 'database' && (

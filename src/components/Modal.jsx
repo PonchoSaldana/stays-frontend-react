@@ -1,24 +1,30 @@
 import React, { useEffect } from 'react';
 import { X } from 'lucide-react';
 
+// componente modal reutilizable con soporte para tres partes: header, body y footer
+// el prop `type` cambia el color del header a rojo cuando es 'danger'
 export default function Modal({ isOpen, onClose, title, children, footer, type = 'info' }) {
+    // no renderiza nada si el modal está cerrado
     if (!isOpen) return null;
 
-    // Close on escape key
+    // cierra el modal al presionar la tecla escape
     useEffect(() => {
         const handleEsc = (e) => {
             if (e.key === 'Escape') onClose();
         };
         window.addEventListener('keydown', handleEsc);
+        // limpia el listener al desmontar el componente
         return () => window.removeEventListener('keydown', handleEsc);
     }, [onClose]);
 
     return (
+        // fondo oscuro semitransparente; click en el fondo cierra el modal
         <div style={{
             position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
             backgroundColor: 'rgba(0, 0, 0, 0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center',
             zIndex: 1000, backdropFilter: 'blur(4px)'
         }} onClick={onClose}>
+            {/* contenedor del modal; stopPropagation evita que cierre al hacer click dentro */}
             <div
                 style={{
                     backgroundColor: 'white', borderRadius: '0.75rem', width: '90%', maxWidth: '500px',
@@ -27,7 +33,7 @@ export default function Modal({ isOpen, onClose, title, children, footer, type =
                 }}
                 onClick={e => e.stopPropagation()}
             >
-                {/* Header */}
+                {/* header con título y botón de cerrar */}
                 <div style={{
                     padding: '1.25rem 1.5rem', borderBottom: '1px solid #e5e7eb',
                     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
@@ -47,12 +53,12 @@ export default function Modal({ isOpen, onClose, title, children, footer, type =
                     </button>
                 </div>
 
-                {/* Body */}
+                {/* body: contenido dinámico pasado como children */}
                 <div style={{ padding: '1.5rem', color: '#4b5563', fontSize: '1rem', lineHeight: '1.5' }}>
                     {children}
                 </div>
 
-                {/* Footer */}
+                {/* footer opcional con botones de acción */}
                 {footer && (
                     <div
                         className="modal-footer"
@@ -65,6 +71,7 @@ export default function Modal({ isOpen, onClose, title, children, footer, type =
                     </div>
                 )}
             </div>
+            {/* animación de entrada del modal */}
             <style>{`
                 @keyframes fadeIn {
                     from { opacity: 0; transform: scale(0.95); }

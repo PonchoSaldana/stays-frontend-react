@@ -21,22 +21,15 @@ const GENERATED_DOCS = [
     "Documento 1", "Documento 2", "Documento 3"
 ];
 
-const FINAL_DOCS = [
-    "Carta de Liberación", "Constancia de Término de Estadía", "Certificado de Competencias"
-];
-
 export default function ProcessView({ userMatricula, stageName }) {
     const navigate = useNavigate();
     const { toasts, showToast, removeToast } = useToast();
-    // Estado local para simulacion de persistencia
     const [uploads1, setUploads1] = useState(() => JSON.parse(sessionStorage.getItem('up1') || '{}'));
     const [uploads2, setUploads2] = useState(() => JSON.parse(sessionStorage.getItem('up2') || '{}'));
-
     const [checkStatus, setCheckStatus] = useState({});
 
-    // Estados para edición y previsualización de documentos
     const [editingDoc, setEditingDoc] = useState(null);
-    const [modalMode, setModalMode] = useState('preview'); // 'preview' | 'edit'
+    const [modalMode, setModalMode] = useState('preview');
     const [docData, setDocData] = useState({
         studentName: 'Alumno Ficticio',
         matricula: userMatricula,
@@ -46,7 +39,6 @@ export default function ProcessView({ userMatricula, stageName }) {
     });
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-    // Calcula el progreso visual basado en la etapa actual
     const getProgress = (st) => {
         switch (st) {
             case 'upload_1': return (Object.keys(uploads1).length / INITIAL_DOCS.length) * 30;
@@ -58,25 +50,19 @@ export default function ProcessView({ userMatricula, stageName }) {
             default: return 0;
         }
     };
-
     const progress = getProgress(stageName);
 
-    // Simula auto-guardado en sessionStorage
     useEffect(() => {
         sessionStorage.setItem('up1', JSON.stringify(uploads1));
         sessionStorage.setItem('up2', JSON.stringify(uploads2));
     }, [uploads1, uploads2]);
 
-    // Efectos para transiciones automáticas y animaciones
     useEffect(() => {
         if (stageName === 'check_1') {
-            // Simulate simple checking process
             let delay = 0;
             INITIAL_DOCS.forEach(doc => {
                 delay += 200;
-                setTimeout(() => {
-                    setCheckStatus(prev => ({ ...prev, [doc]: 'ok' }));
-                }, delay);
+                setTimeout(() => setCheckStatus(prev => ({ ...prev, [doc]: 'ok' })), delay);
             });
             setTimeout(() => navigate('/estadia/generacion-documentos'), 3000);
         }
@@ -84,49 +70,23 @@ export default function ProcessView({ userMatricula, stageName }) {
             let delay = 0;
             GENERATED_DOCS.forEach(doc => {
                 delay += 200;
-                setTimeout(() => {
-                    setCheckStatus(prev => ({ ...prev, [doc]: 'ok' }));
-                }, delay);
+                setTimeout(() => setCheckStatus(prev => ({ ...prev, [doc]: 'ok' })), delay);
             });
             setTimeout(() => navigate('/estadia/finalizado'), 2500);
         }
-
         if (stageName === 'finish') {
-            confetti({
-                particleCount: 150,
-                spread: 70,
-                origin: { y: 0.6 },
-                colors: ['#009B4D', '#FF7900', '#ffffff']
-            });
+            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#009B4D', '#FF7900', '#ffffff'] });
         }
     }, [stageName, navigate]);
 
-    // Manejador de subida de documentos iniciales
     const handleUpload1 = (docLabel, file) => {
         setUploads1(prev => ({ ...prev, [docLabel]: 'uploading' }));
-        setTimeout(() => {
-            setUploads1(prev => ({ ...prev, [docLabel]: 'success' }));
-        }, 800);
-    };
-
-    const handleValidation1 = () => {
-        navigate('/estadia/revision-inicial');
-    };
-
-    // Avanza a la pantalla de descarga de formatos
-    const handleGenerate = () => {
-        navigate('/estadia/documentos-finales');
+        setTimeout(() => setUploads1(prev => ({ ...prev, [docLabel]: 'success' })), 800);
     };
 
     const handleUpload2 = (docLabel, file) => {
         setUploads2(prev => ({ ...prev, [docLabel]: 'uploading' }));
-        setTimeout(() => {
-            setUploads2(prev => ({ ...prev, [docLabel]: 'success' }));
-        }, 800);
-    };
-
-    const handleValidation2 = () => {
-        navigate('/estadia/revision-final');
+        setTimeout(() => setUploads2(prev => ({ ...prev, [docLabel]: 'success' })), 800);
     };
 
     const handleOpenPreview = (docName) => {
@@ -135,71 +95,65 @@ export default function ProcessView({ userMatricula, stageName }) {
         setIsEditModalOpen(true);
     };
 
-    const handleSwitchToEdit = () => {
-        setModalMode('edit');
-    };
-
-    const handleSaveEdit = () => {
-        setModalMode('preview');
-    };
-
     const handleApproveAndDownload = () => {
-        // Aquí iría la lógica real de generación usando docData + docxtemplater
-        console.log("Generando documento", editingDoc, "con datos:", docData);
         setIsEditModalOpen(false);
-        // Simular descarga
-        const link = document.createElement('a');
-        link.href = '#';
-        link.setAttribute('download', `${editingDoc}.pdf`);
-        document.body.appendChild(link);
-        // link.click(); // Comentado visualmente
-        document.body.removeChild(link);
-
-        // Simular tiempo de generación
         setTimeout(() => {
-            showToast({
-                type: 'success',
-                title: 'Documento generado',
-                message: `El documento "${editingDoc}" fue aprobado y descargado correctamente.`,
-            });
+            showToast({ type: 'success', title: 'Documento generado', message: `"${editingDoc}" fue aprobado correctamente.` });
         }, 500);
     };
 
+    const uploadedCount1 = Object.keys(uploads1).length;
+    const uploadedCount2 = Object.keys(uploads2).length;
+
     return (
-        <div className="process-container">
-            <div className="text-center mb-6">
-                <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#111827' }}>Gestión de Estadías</h2>
-                <p style={{ color: '#6b7280', fontSize: '0.9rem' }}>Alumno: <span style={{ color: 'var(--ut-green)', fontWeight: 600, fontFamily: 'monospace' }}>{userMatricula}</span></p>
+        <div className="pv-container">
+            {/* Header */}
+            <div className="pv-header">
+                <h2 className="pv-title">Gestión de Estadías</h2>
+                <p className="pv-subtitle">
+                    Matrícula: <span className="pv-subtitle-bold">{userMatricula}</span>
+                </p>
             </div>
 
-            <AvatarPath progress={progress} currentStage={
-                stageName === 'upload_1' ? 'Cargando Documentos' :
-                    stageName.includes('check') ? 'Validando' :
-                        stageName === 'generate_1' ? 'Generando' :
-                            stageName === 'finish' ? '¡Felicidades!' : 'Procesando'
-            } />
+            {/* Avatar Progress */}
+            <AvatarPath progress={progress} currentStage={stageName} />
 
             <AnimatePresence mode="wait">
                 <motion.div
                     key={stageName}
-                    initial={{ opacity: 0, y: 20 }}
+                    initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    className="process-card"
+                    exit={{ opacity: 0, y: -16 }}
+                    transition={{ duration: 0.3 }}
+                    className="pv-card"
                 >
-                    {/* STAGE 1: INITIAL UPLOAD */}
+                    {/* ── ETAPA 1: SUBIR DOCUMENTOS INICIALES ── */}
                     {stageName === 'upload_1' && (
                         <div>
-                            <div className="flex-between stage-header mb-6">
-                                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <FileText color="var(--ut-orange)" />
-                                    1. Documentación de Inicio de Estadía
-                                </h3>
-                                <span className="tag">
-                                    {Object.keys(uploads1).length} / {INITIAL_DOCS.length}
+                            <div className="pv-stage-header">
+                                <div className="pv-stage-title-row">
+                                    <div className="pv-stage-icon" style={{ background: '#FFF7ED', color: 'var(--ut-orange)' }}>
+                                        <FileText size={22} />
+                                    </div>
+                                    <div>
+                                        <p className="pv-stage-label">Etapa 1</p>
+                                        <h3 className="pv-stage-title">Documentación Inicial</h3>
+                                    </div>
+                                </div>
+                                <span className="pv-badge">
+                                    {uploadedCount1} / {INITIAL_DOCS.length}
                                 </span>
                             </div>
-                            <div className="grid-2">
+
+                            {/* Progress mini bar */}
+                            <div className="pv-mini-bar">
+                                <div
+                                    className="pv-mini-bar-fill"
+                                    style={{ width: `${(uploadedCount1 / INITIAL_DOCS.length) * 100}%` }}
+                                />
+                            </div>
+
+                            <div className="pv-docs-grid">
                                 {INITIAL_DOCS.map(doc => (
                                     <FileUploader
                                         key={doc}
@@ -210,11 +164,17 @@ export default function ProcessView({ userMatricula, stageName }) {
                                     />
                                 ))}
                             </div>
-                            <div className="flex-end" style={{ marginTop: '2rem' }}>
+
+                            <div className="pv-action-row">
+                                <p className="pv-hint">
+                                    {uploadedCount1 < INITIAL_DOCS.length
+                                        ? `Faltan ${INITIAL_DOCS.length - uploadedCount1} documento(s)`
+                                        : '¡Todos los documentos cargados! Puedes continuar.'}
+                                </p>
                                 <button
-                                    onClick={handleValidation1}
-                                    disabled={Object.keys(uploads1).length < INITIAL_DOCS.length}
-                                    className="btn btn-primary"
+                                    onClick={() => navigate('/estadia/revision-inicial')}
+                                    disabled={uploadedCount1 < INITIAL_DOCS.length}
+                                    className="btn btn-primary pv-submit-btn"
                                 >
                                     Enviar a Validación
                                 </button>
@@ -222,70 +182,47 @@ export default function ProcessView({ userMatricula, stageName }) {
                         </div>
                     )}
 
-                    {/* CHECKING SCREENS */}
+                    {/* ── REVISIÓN ── */}
                     {(stageName === 'check_1' || stageName === 'check_2') && (
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '3rem 0', textAlign: 'center' }}>
-                            <div className="mb-4">
-                                <Loader className="animate-spin" style={{ color: 'var(--ut-green)', width: 64, height: 64 }} />
+                        <div className="pv-check-screen">
+                            <div className="pv-check-spinner">
+                                <Loader className="animate-spin" size={48} style={{ color: 'var(--ut-green)' }} />
                             </div>
-                            <h3 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem' }}>Validando Documentos...</h3>
-                            <p style={{ color: '#6b7280', maxWidth: 400 }}>
+                            <h3 className="pv-check-title">Validando Documentos...</h3>
+                            <p className="pv-check-sub">
                                 El departamento de estadías está verificando tu información.
                             </p>
-                            <div style={{ marginTop: '2rem', width: '100%', maxWidth: 400 }}>
+                            <div className="pv-check-list">
                                 {(stageName === 'check_1' ? INITIAL_DOCS : GENERATED_DOCS).map(doc => (
-                                    <div key={doc} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', borderBottom: '1px solid #f3f4f6', padding: '0.5rem 0' }}>
-                                        <span>{doc}</span>
-                                        {checkStatus[doc] === 'ok' ? (
-                                            <CheckCheck color="var(--ut-green)" size={16} />
-                                        ) : (
-                                            <span style={{ width: 16, height: 16, borderRadius: '50%', border: '2px solid #e5e7eb' }}></span>
-                                        )}
+                                    <div key={doc} className="pv-check-item">
+                                        <span className="pv-check-item-name">{doc}</span>
+                                        {checkStatus[doc] === 'ok'
+                                            ? <CheckCheck size={16} style={{ color: 'var(--ut-green)', flexShrink: 0 }} />
+                                            : <span className="pv-check-dot" />}
                                     </div>
                                 ))}
                             </div>
                         </div>
                     )}
 
-                    {/* STAGE 3: GENERATE DOCS */}
+                    {/* ── ETAPA 3: DOCUMENTOS GENERADOS ── */}
                     {stageName === 'generate_1' && (
-                        <div className="text-center" style={{ padding: '1rem 0' }}>
-                            <div style={{ width: 64, height: 64, background: '#dcfce7', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem auto', color: 'var(--ut-green)' }}>
+                        <div className="pv-generate-screen">
+                            <div className="pv-success-icon">
                                 <CheckCheck size={32} />
                             </div>
-                            <h3 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.75rem' }}>¡Documentación Autorizada!</h3>
-                            <p style={{ color: '#6b7280', marginBottom: '2rem', maxWidth: 600, margin: '0 auto 2.5rem auto', fontSize: '1rem' }}>
-                                Verifica que los datos sean correctos y edita el contenido si es necesario antes de descargar los formatos.
+                            <h3 className="pv-generate-title">¡Documentación Autorizada!</h3>
+                            <p className="pv-generate-sub">
+                                Verifica que los datos sean correctos y edita el contenido si es necesario antes de descargar.
                             </p>
 
-                            <div className="grid-2" style={{ marginBottom: '2.5rem' }}>
+                            <div className="pv-gen-docs-grid">
                                 {GENERATED_DOCS.map(doc => (
-                                    <div key={doc} style={{
-                                        background: 'white',
-                                        padding: '2rem',
-                                        borderRadius: '1rem',
-                                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        alignItems: 'center',
-                                        textAlign: 'center',
-                                        border: '1px solid #f3f4f6'
-                                    }}>
-                                        <div style={{
-                                            width: 56, height: 56,
-                                            background: '#F97316',
-                                            borderRadius: '1rem',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            color: 'white',
-                                            marginBottom: '1rem'
-                                        }}>
+                                    <div key={doc} className="pv-gen-doc-card">
+                                        <div className="pv-gen-doc-icon">
                                             <FileText size={28} />
                                         </div>
-                                        <h4 style={{ fontSize: '1.125rem', fontWeight: 700, color: '#111827', marginBottom: '1rem' }}>
-                                            {doc}
-                                        </h4>
+                                        <h4 className="pv-gen-doc-name">{doc}</h4>
                                         <button
                                             onClick={() => handleOpenPreview(doc)}
                                             className="btn btn-primary"
@@ -297,29 +234,45 @@ export default function ProcessView({ userMatricula, stageName }) {
                                 ))}
                             </div>
 
-                            <button onClick={handleGenerate} className="btn btn-primary" style={{ maxWidth: '400px' }}>
-                                Continuar (Subir Reportes)
-                                <Download size={18} />
+                            <button
+                                onClick={() => navigate('/estadia/documentos-finales')}
+                                className="btn btn-primary pv-continue-btn"
+                            >
+                                Continuar <Download size={18} />
                             </button>
                         </div>
                     )}
 
-                    {/* STAGE 4: RE-UPLOAD */}
+                    {/* ── ETAPA 4: SUBIR DOCUMENTOS FINALES ── */}
                     {stageName === 'upload_2' && (
                         <div>
-                            <div className="flex-between stage-header mb-6">
-                                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <FileText color="var(--ut-orange)" />
-                                    2. Carga de Documentos Finales
-                                </h3>
-                                <span className="tag">
-                                    {Object.keys(uploads2).length} / {GENERATED_DOCS.length}
+                            <div className="pv-stage-header">
+                                <div className="pv-stage-title-row">
+                                    <div className="pv-stage-icon" style={{ background: '#FFF7ED', color: 'var(--ut-orange)' }}>
+                                        <FileText size={22} />
+                                    </div>
+                                    <div>
+                                        <p className="pv-stage-label">Etapa 4</p>
+                                        <h3 className="pv-stage-title">Documentos Finales</h3>
+                                    </div>
+                                </div>
+                                <span className="pv-badge">
+                                    {uploadedCount2} / {GENERATED_DOCS.length}
                                 </span>
                             </div>
-                            <p style={{ marginBottom: '1.5rem', color: '#6b7280', fontSize: '0.9rem' }}>
-                                Sube los documentos generados debidamente requisitados y firmados.
+
+                            <p className="pv-hint" style={{ marginBottom: '1.25rem' }}>
+                                Sube los documentos debidamente requisitados y firmados.
                             </p>
-                            <div style={{ maxWidth: 600, margin: '0 auto', display: 'grid', gap: '1rem' }}>
+
+                            <div className="pv-mini-bar">
+                                <div
+                                    className="pv-mini-bar-fill"
+                                    style={{ width: `${(uploadedCount2 / GENERATED_DOCS.length) * 100}%` }}
+                                />
+                            </div>
+
+                            <div className="pv-docs-grid" style={{ marginTop: '1rem' }}>
                                 {GENERATED_DOCS.map(doc => (
                                     <FileUploader
                                         key={doc}
@@ -330,11 +283,17 @@ export default function ProcessView({ userMatricula, stageName }) {
                                     />
                                 ))}
                             </div>
-                            <div className="flex-end" style={{ marginTop: '2rem' }}>
+
+                            <div className="pv-action-row">
+                                <p className="pv-hint">
+                                    {uploadedCount2 < GENERATED_DOCS.length
+                                        ? `Faltan ${GENERATED_DOCS.length - uploadedCount2} documento(s)`
+                                        : '¡Listo para validar!'}
+                                </p>
                                 <button
-                                    onClick={handleValidation2}
-                                    disabled={Object.keys(uploads2).length < GENERATED_DOCS.length}
-                                    className="btn btn-primary"
+                                    onClick={() => navigate('/estadia/revision-final')}
+                                    disabled={uploadedCount2 < GENERATED_DOCS.length}
+                                    className="btn btn-primary pv-submit-btn"
                                 >
                                     Validar Documentos
                                 </button>
@@ -342,40 +301,35 @@ export default function ProcessView({ userMatricula, stageName }) {
                         </div>
                     )}
 
-
-
-                    {/* STAGE 7: FINISH */}
+                    {/* ── FINALIZADO ── */}
                     {stageName === 'finish' && (
-                        <div className="text-center" style={{ padding: '2rem 0' }}>
-                            <div style={{ display: 'inline-block', padding: '1rem', borderRadius: '50%', background: '#dcfce7', color: 'var(--ut-green)', marginBottom: '1.5rem' }}>
+                        <div className="pv-finish-screen">
+                            <div className="pv-finish-icon">
                                 <CheckCheck size={48} />
                             </div>
-                            <h2 style={{ fontSize: '1.75rem', fontWeight: 800, marginBottom: '1rem', color: 'var(--ut-green)', lineHeight: 1.2 }}>¡Entrega de documentos concluida!</h2>
-                            <p style={{ fontSize: '1.125rem', color: '#4b5563', marginBottom: '2.5rem' }}>
+                            <h2 className="pv-finish-title">¡Entrega de documentos concluida!</h2>
+                            <p className="pv-finish-sub">
                                 Has finalizado exitosamente el proceso de estadías.
                             </p>
 
-                            <div style={{
-                                background: 'white',
-                                borderRadius: '1.5rem',
-                                padding: '2rem',
-                                maxWidth: '600px',
-                                margin: '0 auto 3rem auto',
-                                border: '2px solid #FED7AA',
-                                boxShadow: '0 10px 30px -10px rgba(251, 146, 60, 0.2)'
-                            }}>
-                                <h3 style={{ color: '#C2410C', fontWeight: 800, fontSize: '1.25rem', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-                                    <AlertTriangle size={24} />
-                                    Siguiente paso
-                                </h3>
-                                <p style={{ color: '#9A3412', fontSize: '1rem', lineHeight: '1.6' }}>
-                                    Por favor acude a la Dirección de Carrera o al Departamento de Estadías para <strong>entregar tu expediente físico</strong> completo para su resguardo final.
-                                </p>
+                            <div className="pv-finish-alert">
+                                <div className="pv-finish-alert-icon">
+                                    <AlertTriangle size={22} />
+                                </div>
+                                <div>
+                                    <p className="pv-finish-alert-title">Siguiente paso</p>
+                                    <p className="pv-finish-alert-body">
+                                        Acude a la Dirección de Carrera o al Departamento de Estadías para
+                                        <strong> entregar tu expediente físico</strong> completo para su resguardo final.
+                                    </p>
+                                </div>
                             </div>
 
-
-
-                            <button onClick={() => { sessionStorage.clear(); window.location.href = '/login'; }} className="btn" style={{ color: '#6b7280' }}>
+                            <button
+                                onClick={() => { sessionStorage.clear(); window.location.href = '/login'; }}
+                                className="btn"
+                                style={{ color: '#6b7280', marginTop: '0.5rem' }}
+                            >
                                 Cerrar Sesión
                             </button>
                         </div>
@@ -383,15 +337,15 @@ export default function ProcessView({ userMatricula, stageName }) {
                 </motion.div>
             </AnimatePresence>
 
-            {/* Modal de Previsualización y Edición */}
+            {/* Modal de Previsualización */}
             <Modal
                 isOpen={isEditModalOpen}
                 onClose={() => setIsEditModalOpen(false)}
-                title={modalMode === 'preview' ? `Vista Previa: ${editingDoc}` : `Editar Datos: ${editingDoc}`}
+                title={modalMode === 'preview' ? `Vista Previa: ${editingDoc}` : `Editar: ${editingDoc}`}
                 footer={
                     modalMode === 'preview' ? (
                         <>
-                            <button onClick={handleSwitchToEdit} className="btn" style={{ background: '#F59E0B', color: 'white', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <button onClick={() => setModalMode('edit')} className="btn" style={{ background: '#F59E0B', color: 'white', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                 <Edit size={16} /> Editar
                             </button>
                             <button onClick={handleApproveAndDownload} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -400,68 +354,56 @@ export default function ProcessView({ userMatricula, stageName }) {
                         </>
                     ) : (
                         <>
-                            <button onClick={() => setModalMode('preview')} className="btn" style={{ background: '#f3f4f6' }}>Cancelar Edición</button>
-                            <button onClick={handleSaveEdit} className="btn btn-primary">Guardar Cambios</button>
+                            <button onClick={() => setModalMode('preview')} className="btn" style={{ background: '#f3f4f6' }}>Cancelar</button>
+                            <button onClick={() => setModalMode('preview')} className="btn btn-primary">Guardar Cambios</button>
                         </>
                     )
                 }
             >
                 {modalMode === 'preview' ? (
-                    <div style={{ background: '#f9fafb', padding: '1.5rem', borderRadius: '0.5rem', border: '1px solid #e5e7eb' }}>
-                        <div style={{ marginBottom: '1rem', borderBottom: '1px dashed #d1d5db', paddingBottom: '0.5rem', fontWeight: 600, color: '#374151', textAlign: 'center' }}>
-                            DOCUMENTO PRELIMINAR
-                        </div>
-                        <div className="grid-2" style={{ gap: '1rem', fontSize: '0.9rem' }}>
-                            <div style={{ fontWeight: 600, color: '#6b7280' }}>Alumno:</div>
-                            <div style={{ fontWeight: 500 }}>{docData.studentName}</div>
-
-                            <div style={{ fontWeight: 600, color: '#6b7280' }}>Matrícula:</div>
-                            <div style={{ fontWeight: 500 }}>{docData.matricula}</div>
-
-                            <div style={{ fontWeight: 600, color: '#6b7280' }}>Empresa:</div>
-                            <div style={{ fontWeight: 500 }}>{docData.companyName}</div>
-
-                            <div style={{ fontWeight: 600, color: '#6b7280' }}>Proyecto:</div>
-                            <div style={{ fontWeight: 500 }}>{docData.projectTitle}</div>
-
-                            <div style={{ fontWeight: 600, color: '#6b7280' }}>Asesor:</div>
-                            <div style={{ fontWeight: 500 }}>{docData.advisor}</div>
-                        </div>
-                        <div style={{ marginTop: '1.5rem', fontSize: '0.75rem', color: '#9ca3af', textAlign: 'center', fontStyle: 'italic' }}>
-                            * Este es un visor de datos preliminar. El formato final .pdf tendrá el diseño oficial de la universidad.
+                    <div style={{ background: '#f9fafb', padding: '1.25rem', borderRadius: '0.5rem', border: '1px solid #e5e7eb' }}>
+                        <p style={{ fontWeight: 600, textAlign: 'center', marginBottom: '0.75rem', color: '#374151' }}>DOCUMENTO PRELIMINAR</p>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem 1rem', fontSize: '0.875rem' }}>
+                            {[
+                                ['Alumno', docData.studentName],
+                                ['Matrícula', docData.matricula],
+                                ['Empresa', docData.companyName],
+                                ['Proyecto', docData.projectTitle],
+                                ['Asesor', docData.advisor],
+                            ].map(([label, value]) => (
+                                <React.Fragment key={label}>
+                                    <div style={{ fontWeight: 600, color: '#6b7280' }}>{label}:</div>
+                                    <div style={{ fontWeight: 500 }}>{value}</div>
+                                </React.Fragment>
+                            ))}
                         </div>
                     </div>
                 ) : (
-                    <div>
-                        <p style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '1rem' }}>
-                            Corrige los datos necesarios. Estos cambios se reflejarán en el documento generado.
-                        </p>
-                        <div style={{ display: 'grid', gap: '1rem' }}>
-                            <div>
-                                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.25rem' }}>Nombre del Alumno</label>
-                                <input type="text" className="input" value={docData.studentName} onChange={e => setDocData({ ...docData, studentName: e.target.value })} />
+                    <div style={{ display: 'grid', gap: '1rem' }}>
+                        {[
+                            { label: 'Nombre del Alumno', key: 'studentName', disabled: false },
+                            { label: 'Matrícula', key: 'matricula', disabled: true },
+                            { label: 'Empresa', key: 'companyName', disabled: false },
+                            { label: 'Proyecto', key: 'projectTitle', disabled: false },
+                            { label: 'Asesor Empresarial', key: 'advisor', disabled: false },
+                        ].map(field => (
+                            <div key={field.key}>
+                                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.25rem' }}>{field.label}</label>
+                                <input
+                                    type="text"
+                                    className="input"
+                                    value={docData[field.key]}
+                                    disabled={field.disabled}
+                                    style={field.disabled ? { background: '#f3f4f6' } : {}}
+                                    onChange={e => setDocData({ ...docData, [field.key]: e.target.value })}
+                                />
                             </div>
-                            <div>
-                                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.25rem' }}>Matrícula</label>
-                                <input type="text" className="input" value={docData.matricula} disabled style={{ background: '#f3f4f6' }} />
-                            </div>
-                            <div>
-                                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.25rem' }}>Empresa</label>
-                                <input type="text" className="input" value={docData.companyName} onChange={e => setDocData({ ...docData, companyName: e.target.value })} />
-                            </div>
-                            <div>
-                                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.25rem' }}>Proyecto</label>
-                                <input type="text" className="input" value={docData.projectTitle} onChange={e => setDocData({ ...docData, projectTitle: e.target.value })} />
-                            </div>
-                            <div>
-                                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.25rem' }}>Asesor Empresarial</label>
-                                <input type="text" className="input" value={docData.advisor} onChange={e => setDocData({ ...docData, advisor: e.target.value })} />
-                            </div>
-                        </div>
+                        ))}
                     </div>
                 )}
             </Modal>
+
             <ToastContainer toasts={toasts} onRemove={removeToast} />
-        </div >
+        </div>
     );
 }
