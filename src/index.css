@@ -327,12 +327,8 @@ body {
   }
 }
 
-/* Badge del proceso activo: ocultar en pantallas muy pequeñas */
-@media (max-width: 400px) {
-  .process-badge {
-    display: none;
-  }
-}
+
+
 
 /* ══════════════════════════════════════════════
    ADMIN DASHBOARD LAYOUT

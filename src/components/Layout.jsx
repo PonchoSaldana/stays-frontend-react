@@ -5,8 +5,7 @@ import Modal from './Modal';
 import { useState } from 'react';
 
 // layout principal que envuelve todas las vistas de alumnos
-// maneja el header, el footer y el modal de confirmación de cierre de sesión
-export default function Layout({ children, onLogout, user, isAdmin, activeProcess }) {
+export default function Layout({ children, onLogout, user, isAdmin }) {
   // controla la visibilidad del modal de logout
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const location = useLocation();
@@ -14,16 +13,6 @@ export default function Layout({ children, onLogout, user, isAdmin, activeProces
 
   // el header no se muestra en la pantalla de login ni en el panel de admin
   const showHeader = location.pathname !== '/login' && (!isAdmin || location.pathname.startsWith('/estadia'));
-
-  // determina si el usuario está en el área de alumnos (no admin, no login)
-  const isStudentArea = !isAdmin && location.pathname.startsWith('/estadia') && location.pathname !== '/login';
-
-  // nombres legibles de cada proceso para mostrar en el badge del header
-  const PROCESS_LABELS = {
-    1: 'Catálogo de Empresas',
-    2: 'Selección de Empresa',
-    3: 'Entrega de Documentos',
-  };
 
   return (
     <div className="layout-container">
@@ -40,25 +29,6 @@ export default function Layout({ children, onLogout, user, isAdmin, activeProces
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              {/* badge que muestra el proceso activo en el header del alumno */}
-              {isStudentArea && activeProcess && (
-                <span className="process-badge" style={{
-                  background: '#ECFDF5',
-                  color: '#059669',
-                  border: '1px solid #A7F3D0',
-                  borderRadius: '2rem',
-                  padding: '0.3rem 0.9rem',
-                  fontSize: '0.78rem',
-                  fontWeight: 600,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.4rem'
-                }}>
-                  {/* punto pulsante para indicar que el proceso está activo */}
-                  <span style={{ width: 8, height: 8, background: '#10B981', borderRadius: '50%', display: 'inline-block', animation: 'pulse 2s infinite' }} />
-                  {PROCESS_LABELS[activeProcess]}
-                </span>
-              )}
 
               {user && (
                 <>
