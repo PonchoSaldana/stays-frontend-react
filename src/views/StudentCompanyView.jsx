@@ -51,12 +51,17 @@ export default function StudentCompanyView({ mode = 'catalog', onSelect, userMat
 
     useEffect(() => {
         const timer = setTimeout(() => {
-            const params = new URLSearchParams({ page: 1, limit: 50, search: searchTerm });
+            const params = new URLSearchParams({ 
+                page: 1, 
+                limit: 100, 
+                search: searchTerm,
+                careerId: selectedCareerId 
+            });
             authFetch(`/companies?${params}`)
                 .then(res => res.ok ? res.json() : { data: [] })
                 .then(json => {
                     const data = json.data || [];
-                    setCompanies(data.length > 0 ? data : (searchTerm ? [] : getMockCompanies()));
+                    setCompanies(data.length > 0 ? data : (searchTerm || selectedCareerId ? [] : getMockCompanies()));
                 })
                 .catch(() => setCompanies(searchTerm ? [] : getMockCompanies()));
         }, 300);
@@ -73,9 +78,19 @@ export default function StudentCompanyView({ mode = 'catalog', onSelect, userMat
         }
     }, [userMatricula, mode]);
 
-    const filteredCompanies = companies.filter(c =>
-        selectedCareerId ? (c.careerId === selectedCareerId || !c.careerId) : true
-    );
+    const filteredCompanies = companies.filter(c => {
+        if (!selectedCareerId) return true;
+        
+        const careerName = CAREERS.find(car => car.id === selectedCareerId)?.name || '';
+        const companyCareer = (c.careerId || '').toLowerCase();
+        const targetCareer = selectedCareerId.toLowerCase();
+        const targetCareerName = careerName.toLowerCase();
+
+        // Filtro flexible: coincide con el ID interno O con el nombre de la carrera en el Excel
+        return companyCareer.includes(targetCareer) || 
+               companyCareer.includes(targetCareerName) ||
+               targetCareerName.includes(companyCareer);
+    });
 
     const handleSelect = (company) => {
         if (selectedCompanyId && selectedCompanyId !== company.id) {
