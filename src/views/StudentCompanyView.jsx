@@ -220,7 +220,7 @@ export default function StudentCompanyView({ mode = 'catalog', onSelect, userMat
                                 {/* Card Body */}
                                 <h3 className="scv-card-name">{company.name}</h3>
                                 <span className="scv-career-tag">
-                                    {CAREERS.find(c => c.id === company.careerId)?.name || 'General'}
+                                    {CAREERS.find(c => c.id === company.careerId)?.name || company.careerId || 'General'}
                                 </span>
 
                                 <div className="scv-card-info">
