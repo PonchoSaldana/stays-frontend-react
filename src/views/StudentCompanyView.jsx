@@ -243,7 +243,7 @@ export default function StudentCompanyView({ mode = 'catalog', onSelect, userMat
                                     <div className="scv-card-footer">
                                         <div className="scv-footer-item">
                                             <Users size={14} />
-                                            <span>Plazas: <strong>{company.spots ?? 0}</strong></span>
+                                            <span>Vacantes: <strong>{company.spots ?? 0}</strong></span>
                                         </div>
                                         <span className={`scv-apoyo-tag ${company.hasFinancialSupport ? 'scv-apoyo-tag--si' : 'scv-apoyo-tag--no'}`}>
                                             Apoyo: {company.hasFinancialSupport ? 'Sí' : 'No'}
