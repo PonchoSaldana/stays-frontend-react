@@ -5,7 +5,7 @@ import Modal from './Modal';
 import { useState } from 'react';
 
 // layout principal que envuelve todas las vistas de alumnos
-export default function Layout({ children, onLogout, user, isAdmin }) {
+export default function Layout({ children, onLogout, user, isAdmin, activeProcess }) {
   // controla la visibilidad del modal de logout
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const location = useLocation();
@@ -52,8 +52,20 @@ export default function Layout({ children, onLogout, user, isAdmin }) {
                   </button>
                 </>
               )}
-              {/* punto decorativo con el color naranja institucional */}
-              <div style={{ width: 8, height: 8, background: 'var(--ut-orange)', borderRadius: '50%', flexShrink: 0 }}></div>
+              {/* punto indicador de proceso activo: verde = proceso activo, naranja = sin proceso */}
+              <div
+                title={activeProcess ? `Proceso ${activeProcess} activo` : 'Sin proceso activo'}
+                style={{
+                  width: 10,
+                  height: 10,
+                  background: activeProcess ? '#22c55e' : 'var(--ut-orange)',
+                  borderRadius: '50%',
+                  flexShrink: 0,
+                  boxShadow: activeProcess ? '0 0 0 0 rgba(34,197,94,0.5)' : 'none',
+                  animation: activeProcess ? 'dot-pulse 2s ease-in-out infinite' : 'none',
+                  transition: 'background 0.4s ease, box-shadow 0.4s ease',
+                }}
+              />
             </div>
           </div>
         </header>

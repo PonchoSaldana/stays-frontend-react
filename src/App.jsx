@@ -119,7 +119,7 @@ function App() {
   );
 
   return (
-    <Layout onLogout={handleLogout} user={userMatricula || adminUser} isAdmin={!!adminUser}>
+    <Layout onLogout={handleLogout} user={userMatricula || adminUser} isAdmin={!!adminUser} activeProcess={activeProcess}>
       <Routes>
         {/* pantalla de login compartida para alumnos y admins */}
         <Route path="/login" element={<LoginView onLogin={handleLogin} onAdminLogin={handleAdminLogin} />} />
@@ -173,7 +173,7 @@ function NoProcessView() {
         Actualmente no hay ningún proceso de estadía habilitado.
         El departamento de estadías te notificará cuando se abra el siguiente proceso.
       </p>
-    
+
     </div>
   );
 }
