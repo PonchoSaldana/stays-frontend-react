@@ -134,11 +134,11 @@ function App() {
 
         {/* ruta legacy de espera, redirige a inicio para centralizar la lógica de procesos */}
         <Route path="/estadia/sin-proceso" element={
-          <Protected><Navigate to="/estadia/inicio" replace /></Protected>
+          <Protected userMatricula={userMatricula}><Navigate to="/estadia/inicio" replace /></Protected>
         } />
 
         {/* perfil del alumno */}
-        <Route path="/mi-perfil" element={<Protected><StudentProfileView userMatricula={userMatricula} /></Protected>} />
+        <Route path="/mi-perfil" element={<Protected userMatricula={userMatricula}><StudentProfileView userMatricula={userMatricula} /></Protected>} />
       </Routes>
     </Layout>
   );
