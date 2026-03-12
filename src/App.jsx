@@ -17,12 +17,11 @@ function ProtectedProcess({ children, requiredProcess, userMatricula, activeProc
   // esperar a que el backend confirme el proceso antes de decidir
   if (!processLoaded) return null;
   // proceso correcto → mostrar contenido
-  if (activeProcess === requiredProcess) return children;
-  // hay proceso activo pero es diferente al de esta ruta → redirigir al inicio
-  // (el inicio redirige al proceso correcto automáticamente)
-  if (activeProcess) return <Navigate to="/estadia/inicio" replace />;
-  // no hay ningún proceso activo → vista de espera
-  return <Navigate to="/estadia/sin-proceso" replace />;
+  if (Number(activeProcess) === Number(requiredProcess)) return children;
+  
+  // cualquier otro caso (proceso incorrecto, o no hay proceso activo) → redirigir al inicio 
+  // (el inicio re-evaluará de forma inteligente a dónde mandarnos)
+  return <Navigate to="/estadia/inicio" replace />;
 }
 
 // ── App principal ────────────────────────────────────────────────────────────
@@ -141,15 +140,17 @@ function App() {
         <Route path="/estadia/inicio" element={
           <Protected>
             {!processLoaded ? null :
-              activeProcess === 1 ? <Navigate to="/estadia/catalogo-empresas" replace /> :
-                activeProcess === 2 ? <Navigate to="/estadia/seleccion-empresa" replace /> :
-                  activeProcess === 3 ? <Navigate to="/estadia/documentos-iniciales" replace /> :
+              Number(activeProcess) === 1 ? <Navigate to="/estadia/catalogo-empresas" replace /> :
+                Number(activeProcess) === 2 ? <Navigate to="/estadia/seleccion-empresa" replace /> :
+                  Number(activeProcess) === 3 ? <Navigate to="/estadia/documentos-iniciales" replace /> :
                     <NoProcessView />}
           </Protected>
         } />
 
-        {/* vista de espera cuando no hay proceso activo */}
-        <Route path="/estadia/sin-proceso" element={<Protected><NoProcessView /></Protected>} />
+        {/* ruta legacy de espera, redirige a inicio para centralizar la lógica de procesos */}
+        <Route path="/estadia/sin-proceso" element={
+          <Protected><Navigate to="/estadia/inicio" replace /></Protected>
+        } />
 
         {/* perfil del alumno */}
         <Route path="/mi-perfil" element={<Protected><StudentProfileView userMatricula={userMatricula} /></Protected>} />
