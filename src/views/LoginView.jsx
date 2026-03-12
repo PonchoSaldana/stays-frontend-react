@@ -336,7 +336,7 @@ export default function LoginView({ onLogin, onAdminLogin }) {
                         <form onSubmit={handleMatriculaSubmit}>
                             <div style={{ marginBottom: '1.5rem' }}>
                                 <label className="form-label">Matrícula</label>
-                                <input type="text" value={matricula} onChange={e => setMatricula(e.target.value.replace(/\D/g, ''))}
+                                <input type="text" inputMode="numeric" pattern="[0-9]*" value={matricula} onChange={e => setMatricula(e.target.value.replace(/\D/g, ''))}
                                     className="input" placeholder="Ej. 20230001" autoFocus
                                     autoComplete="off"
                                     style={{ fontSize: '1.125rem', borderColor: recognizedName ? 'var(--ut-green)' : '#9ca3af', borderWidth: recognizedName ? '2px' : '1.5px' }} />
