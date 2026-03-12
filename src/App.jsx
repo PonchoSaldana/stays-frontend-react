@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Routes, Route, useNavigate, Navigate, useLocation } from 'react-router-dom';
 import Layout from './components/Layout';
 import AdminDashboard from './views/AdminDashboard';
@@ -8,27 +8,21 @@ import StudentCompanyView from './views/StudentCompanyView';
 import StudentProfileView from './views/StudentProfileView';
 import { API_URL } from './config';
 
-// ── ProtectedProcess: definido FUERA de App para evitar re-crearse en cada render ──
-// congela la decisión de acceso cuando el componente se monta por primera vez.
-// si el admin cambia el proceso mientras el alumno ya está dentro, NO lo expulsa.
-// solo un refresh manual o navegación a otra ruta vuelve a validar.
+// ── ProtectedProcess: reevalúa el proceso activo en cada render ──
+// si el admin cambia el proceso, el alumno es redirigido automáticamente
+// al proceso correcto (a través de /estadia/inicio).
 function ProtectedProcess({ children, requiredProcess, userMatricula, activeProcess, processLoaded }) {
-  // ref para guardar si el acceso fue concedido al entrar; null = aún sin evaluar
-  const accessGranted = useRef(null);
-
-  // evaluar acceso solo una vez: cuando processLoaded sea true
-  if (accessGranted.current === null && processLoaded) {
-    accessGranted.current = (!!userMatricula && activeProcess === requiredProcess);
-  }
-
   // sin sesión → login
   if (!userMatricula) return <Navigate to="/login" replace />;
   // esperar a que el backend confirme el proceso antes de decidir
   if (!processLoaded) return null;
-  // acceso denegado al entrar → sin-proceso
-  if (!accessGranted.current) return <Navigate to="/estadia/sin-proceso" replace />;
-  // acceso concedido: permanece en la vista aunque el proceso cambie después
-  return children;
+  // proceso correcto → mostrar contenido
+  if (activeProcess === requiredProcess) return children;
+  // hay proceso activo pero es diferente al de esta ruta → redirigir al inicio
+  // (el inicio redirige al proceso correcto automáticamente)
+  if (activeProcess) return <Navigate to="/estadia/inicio" replace />;
+  // no hay ningún proceso activo → vista de espera
+  return <Navigate to="/estadia/sin-proceso" replace />;
 }
 
 // ── App principal ────────────────────────────────────────────────────────────
@@ -61,8 +55,8 @@ function App() {
 
   useEffect(() => {
     fetchActiveProcess();
-    // refresca cada 30 segundos (solo actualiza el state, no redirige si ya estás dentro)
-    const interval = setInterval(fetchActiveProcess, 30000);
+    // refresca cada 5 segundos para reflejar cambios de proceso casi en tiempo real
+    const interval = setInterval(fetchActiveProcess, 5000);
     return () => clearInterval(interval);
   }, []);
 
