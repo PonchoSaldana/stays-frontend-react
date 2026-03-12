@@ -790,7 +790,7 @@ export default function AdminDashboard({ onProcessChange }) {
                 gap: '1rem',
                 alignItems: 'flex-start'
             }}>
-                <div style={{ fontSize: '1.5rem', flexShrink: 0 }}>{activeProcess ? '' : ''}</div>
+                <div style={{ fontSize: '1.5rem', flexShrink: 0 }}>{activeProcess ? '' : '⚠️'}</div>
                 <div>
                     <p style={{ fontWeight: 600, color: activeProcess ? '#065F46' : '#92400E', marginBottom: '0.25rem' }}>
                         {activeProcess ? `Proceso ${activeProcess} — ${PROCESS_NAMES[activeProcess]}` : 'Ningún proceso activo'}
@@ -1374,7 +1374,7 @@ export default function AdminDashboard({ onProcessChange }) {
 
                                         {previewType === 'students' && selectedFile ? (
                                             <>
-                                                <span style={{ fontWeight: 600, color: '#059669', fontSize: '1rem', marginBottom: '0.25rem' }}>✓ Archivo Cargado</span>
+                                                <span style={{ fontWeight: 600, color: '#059669', fontSize: '1rem', marginBottom: '0.25rem' }}> Archivo Cargado</span>
                                                 <span style={{ fontSize: '0.8rem', color: '#10B981', marginBottom: '0.5rem', textAlign: 'center' }}>{selectedFile.name}</span>
                                                 <p style={{ color: '#6B7280', fontSize: '0.75rem', textAlign: 'center', maxWidth: '80%', margin: 0 }}>
                                                     {previewData.length} registros detectados<br />
@@ -1383,7 +1383,7 @@ export default function AdminDashboard({ onProcessChange }) {
                                             </>
                                         ) : pagination.total > 0 ? (
                                             <>
-                                                <span style={{ fontWeight: 600, color: '#059669', fontSize: '1rem', marginBottom: '0.25rem' }}>✓ Base de Datos Activa</span>
+                                                <span style={{ fontWeight: 600, color: '#059669', fontSize: '1rem', marginBottom: '0.25rem' }}> Base de Datos Activa</span>
                                                 <span style={{ fontSize: '0.8rem', color: '#10B981', marginBottom: '0.5rem' }}>{pagination.total} alumnos registrados</span>
                                                 <p style={{ color: '#6B7280', fontSize: '0.75rem', textAlign: 'center', maxWidth: '80%' }}>
                                                     Haz clic para <strong>actualizar</strong> o <strong>agregar</strong> más alumnos
@@ -1513,7 +1513,7 @@ export default function AdminDashboard({ onProcessChange }) {
 
                                         {previewType === 'companies' && selectedFile ? (
                                             <>
-                                                <span style={{ fontWeight: 600, color: '#059669', fontSize: '1rem', marginBottom: '0.25rem' }}>✓ Archivo Cargado</span>
+                                                <span style={{ fontWeight: 600, color: '#059669', fontSize: '1rem', marginBottom: '0.25rem' }}> Archivo Cargado</span>
                                                 <span style={{ fontSize: '0.8rem', color: '#10B981', marginBottom: '0.5rem', textAlign: 'center' }}>{selectedFile.name}</span>
                                                 <p style={{ color: '#6B7280', fontSize: '0.75rem', textAlign: 'center', maxWidth: '80%', margin: 0 }}>
                                                     {previewData.length} registros detectados<br />
@@ -1522,7 +1522,7 @@ export default function AdminDashboard({ onProcessChange }) {
                                             </>
                                         ) : totalCompanies > 0 ? (
                                             <>
-                                                <span style={{ fontWeight: 600, color: '#059669', fontSize: '1rem', marginBottom: '0.25rem' }}>✓ Base de Datos Activa</span>
+                                                <span style={{ fontWeight: 600, color: '#059669', fontSize: '1rem', marginBottom: '0.25rem' }}> Base de Datos Activa</span>
                                                 <span style={{ fontSize: '0.8rem', color: '#10B981', marginBottom: '0.5rem' }}>{totalCompanies} empresas registradas</span>
                                                 <p style={{ color: '#6B7280', fontSize: '0.75rem', textAlign: 'center', maxWidth: '80%' }}>
                                                     Haz clic para <strong>actualizar</strong> o <strong>agregar</strong> más empresas
@@ -1697,7 +1697,7 @@ export default function AdminDashboard({ onProcessChange }) {
                                         if (!found) return <span style={{ color: '#DC2626' }}>No se encontró ningún estudiante con esa matrícula. Asegúrate de haber cargado el Excel.</span>;
                                         return (
                                             <div>
-                                                <p style={{ color: '#059669', fontWeight: 600, marginBottom: '0.5rem' }}>✓ Alumno encontrado:</p>
+                                                <p style={{ color: '#059669', fontWeight: 600, marginBottom: '0.5rem' }}> Alumno encontrado:</p>
                                                 <div className="grid-3" style={{ gap: '0.5rem' }}>
                                                     {Object.entries(found).map(([key, val]) => (
                                                         <div key={key} style={{ background: 'white', padding: '0.5rem', borderRadius: '0.25rem', border: '1px solid #E5E7EB' }}>

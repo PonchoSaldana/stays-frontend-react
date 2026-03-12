@@ -212,7 +212,7 @@ export default function StudentCompanyView({ mode = 'catalog', onSelect, userMat
                                             onClick={() => handleSelect(company)}
                                             className={`btn ${isSelected ? 'btn-primary' : 'scv-select-btn'}`}
                                         >
-                                            {isSelected ? '✓ Seleccionada' : 'Elegir'}
+                                            {isSelected ? ' Seleccionada' : 'Elegir'}
                                         </button>
                                     )}
                                 </div>
