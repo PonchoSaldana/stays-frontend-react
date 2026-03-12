@@ -790,7 +790,7 @@ export default function AdminDashboard({ onProcessChange }) {
                 gap: '1rem',
                 alignItems: 'flex-start'
             }}>
-                <div style={{ fontSize: '1.5rem', flexShrink: 0 }}>{activeProcess ? '' : '⚠️'}</div>
+                <div style={{ fontSize: '1.5rem', flexShrink: 0 }}>{activeProcess ? '' : '️'}</div>
                 <div>
                     <p style={{ fontWeight: 600, color: activeProcess ? '#065F46' : '#92400E', marginBottom: '0.25rem' }}>
                         {activeProcess ? `Proceso ${activeProcess} — ${PROCESS_NAMES[activeProcess]}` : 'Ningún proceso activo'}
@@ -1412,7 +1412,7 @@ export default function AdminDashboard({ onProcessChange }) {
                                         onClick={() => {
                                             setModalConfig({
                                                 isOpen: true,
-                                                title: '⚠️ Eliminar Base de Alumnos',
+                                                title: '️ Eliminar Base de Alumnos',
                                                 type: 'danger',
                                                 content: (
                                                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', textAlign: 'center', padding: '0.5rem 0' }}>
@@ -1551,7 +1551,7 @@ export default function AdminDashboard({ onProcessChange }) {
                                         onClick={() => {
                                             setModalConfig({
                                                 isOpen: true,
-                                                title: '⚠️ Eliminar Catálogo de Empresas',
+                                                title: '️ Eliminar Catálogo de Empresas',
                                                 type: 'danger',
                                                 content: (
                                                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', textAlign: 'center', padding: '0.5rem 0' }}>

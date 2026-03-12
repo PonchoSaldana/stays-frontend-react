@@ -81,7 +81,7 @@ export default function Layout({ children, onLogout, user, isAdmin, activeProces
       {/* pie de página institucional */}
       <footer className="main-footer">
         <div>
-          <p>© {new Date().getFullYear()} Universidad Tecnológica de Tecamachalco</p>
+          <p> {new Date().getFullYear()} Universidad Tecnológica de Tecamachalco</p>
           <p>Innovación y Excelencia Tecnológica</p>
         </div>
       </footer>
