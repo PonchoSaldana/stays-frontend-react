@@ -8,9 +8,6 @@ import StudentCompanyView from './views/StudentCompanyView';
 import StudentProfileView from './views/StudentProfileView';
 import { API_URL } from './config';
 
-// ── ProtectedProcess: reevalúa el proceso activo en cada render ──
-// si el admin cambia el proceso, el alumno es redirigido automáticamente
-// al proceso correcto (a través de /estadia/inicio).
 function ProtectedProcess({ children, requiredProcess, userMatricula, activeProcess, processLoaded }) {
   // sin sesión → login
   if (!userMatricula) return <Navigate to="/login" replace />;
@@ -23,6 +20,18 @@ function ProtectedProcess({ children, requiredProcess, userMatricula, activeProc
   // (el inicio re-evaluará de forma inteligente a dónde mandarnos)
   return <Navigate to="/estadia/inicio" replace />;
 }
+
+// guarda simple: requiree alumno autenticado
+const Protected = ({ children, userMatricula }) => {
+  if (!userMatricula) return <Navigate to="/login" replace />;
+  return children;
+};
+
+// guarda simple: requiere admin autenticado
+const ProtectedAdmin = ({ children, adminUser }) => {
+  if (!adminUser) return <Navigate to="/login" replace />;
+  return children;
+};
 
 // ── App principal ────────────────────────────────────────────────────────────
 function App() {
@@ -87,30 +96,6 @@ function App() {
     navigate('/login');
   };
 
-  // guarda simple: requiree alumno autenticado
-  const Protected = ({ children }) => {
-    if (!userMatricula) return <Navigate to="/login" replace />;
-    return children;
-  };
-
-  // guarda simple: requiere admin autenticado
-  const ProtectedAdmin = ({ children }) => {
-    if (!adminUser) return <Navigate to="/login" replace />;
-    return children;
-  };
-
-  // helper para reducir verbosidad en el JSX de rutas con ProtectedProcess
-  const PP = ({ rp, children }) => (
-    <ProtectedProcess
-      requiredProcess={rp}
-      userMatricula={userMatricula}
-      activeProcess={activeProcess}
-      processLoaded={processLoaded}
-    >
-      {children}
-    </ProtectedProcess>
-  );
-
   return (
     <Layout onLogout={handleLogout} user={userMatricula || adminUser} isAdmin={!!adminUser} activeProcess={activeProcess}>
       <Routes>
@@ -120,25 +105,25 @@ function App() {
         <Route path="/" element={<Navigate to={userMatricula ? "/estadia/inicio" : (adminUser ? "/admin/dashboard" : "/login")} replace />} />
 
         {/* panel de administración */}
-        <Route path="/admin/dashboard" element={<ProtectedAdmin><AdminDashboard onProcessChange={setActiveProcess} /></ProtectedAdmin>} />
+        <Route path="/admin/dashboard" element={<ProtectedAdmin adminUser={adminUser}><AdminDashboard onProcessChange={setActiveProcess} /></ProtectedAdmin>} />
 
         {/* proceso 1: catálogo de empresas */}
-        <Route path="/estadia/catalogo-empresas" element={<PP rp={1}><StudentCompanyView mode="catalog" userMatricula={userMatricula} /></PP>} />
+        <Route path="/estadia/catalogo-empresas" element={<ProtectedProcess requiredProcess={1} userMatricula={userMatricula} activeProcess={activeProcess} processLoaded={processLoaded}><StudentCompanyView mode="catalog" userMatricula={userMatricula} /></ProtectedProcess>} />
 
         {/* proceso 2: selección de empresa */}
-        <Route path="/estadia/seleccion-empresa" element={<PP rp={2}><StudentCompanyView mode="selection" userMatricula={userMatricula} /></PP>} />
+        <Route path="/estadia/seleccion-empresa" element={<ProtectedProcess requiredProcess={2} userMatricula={userMatricula} activeProcess={activeProcess} processLoaded={processLoaded}><StudentCompanyView mode="selection" userMatricula={userMatricula} /></ProtectedProcess>} />
 
         {/* proceso 3: entrega de documentos — múltiples sub-etapas */}
-        <Route path="/estadia/documentos-iniciales" element={<PP rp={3}><ProcessView stageName="upload_1" userMatricula={userMatricula} /></PP>} />
-        <Route path="/estadia/revision-inicial" element={<PP rp={3}><ProcessView stageName="check_1" userMatricula={userMatricula} /></PP>} />
-        <Route path="/estadia/generacion-documentos" element={<PP rp={3}><ProcessView stageName="generate_1" userMatricula={userMatricula} /></PP>} />
-        <Route path="/estadia/documentos-finales" element={<PP rp={3}><ProcessView stageName="upload_2" userMatricula={userMatricula} /></PP>} />
-        <Route path="/estadia/revision-final" element={<PP rp={3}><ProcessView stageName="check_2" userMatricula={userMatricula} /></PP>} />
-        <Route path="/estadia/finalizado" element={<PP rp={3}><ProcessView stageName="finish" userMatricula={userMatricula} /></PP>} />
+        <Route path="/estadia/documentos-iniciales" element={<ProtectedProcess requiredProcess={3} userMatricula={userMatricula} activeProcess={activeProcess} processLoaded={processLoaded}><ProcessView stageName="upload_1" userMatricula={userMatricula} /></ProtectedProcess>} />
+        <Route path="/estadia/revision-inicial" element={<ProtectedProcess requiredProcess={3} userMatricula={userMatricula} activeProcess={activeProcess} processLoaded={processLoaded}><ProcessView stageName="check_1" userMatricula={userMatricula} /></ProtectedProcess>} />
+        <Route path="/estadia/generacion-documentos" element={<ProtectedProcess requiredProcess={3} userMatricula={userMatricula} activeProcess={activeProcess} processLoaded={processLoaded}><ProcessView stageName="generate_1" userMatricula={userMatricula} /></ProtectedProcess>} />
+        <Route path="/estadia/documentos-finales" element={<ProtectedProcess requiredProcess={3} userMatricula={userMatricula} activeProcess={activeProcess} processLoaded={processLoaded}><ProcessView stageName="upload_2" userMatricula={userMatricula} /></ProtectedProcess>} />
+        <Route path="/estadia/revision-final" element={<ProtectedProcess requiredProcess={3} userMatricula={userMatricula} activeProcess={activeProcess} processLoaded={processLoaded}><ProcessView stageName="check_2" userMatricula={userMatricula} /></ProtectedProcess>} />
+        <Route path="/estadia/finalizado" element={<ProtectedProcess requiredProcess={3} userMatricula={userMatricula} activeProcess={activeProcess} processLoaded={processLoaded}><ProcessView stageName="finish" userMatricula={userMatricula} /></ProtectedProcess>} />
 
         {/* redirección inteligente al entrar al área de alumnos según el proceso activo */}
         <Route path="/estadia/inicio" element={
-          <Protected>
+          <Protected userMatricula={userMatricula}>
             {!processLoaded ? null :
               Number(activeProcess) === 1 ? <Navigate to="/estadia/catalogo-empresas" replace /> :
                 Number(activeProcess) === 2 ? <Navigate to="/estadia/seleccion-empresa" replace /> :
