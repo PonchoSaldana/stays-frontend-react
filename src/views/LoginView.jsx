@@ -391,15 +391,8 @@ export default function LoginView({ onLogin, onAdminLogin }) {
                     {!adminMode && flow === 'onboarding_password' && (
                         <form onSubmit={handlePasswordLogin}>
                             <div style={{ marginBottom: '1.5rem' }}>
-                                <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <label className="form-label">
                                     Contraseña
-                                    <button 
-                                        type="button" 
-                                        onClick={handleForgotPassword}
-                                        className="forgot-password-btn"
-                                    >
-                                        ¿Olvidaste tu contraseña?
-                                    </button>
                                 </label>
                                 <div style={{ position: 'relative' }}>
                                     <Lock size={20} style={{ position: 'absolute', top: '50%', left: '1rem', transform: 'translateY(-50%)', color: '#9ca3af' }} />
@@ -413,6 +406,15 @@ export default function LoginView({ onLogin, onAdminLogin }) {
                                         style={{ position: 'absolute', top: '50%', right: '1rem', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#9ca3af', cursor: 'pointer', padding: 0 }}
                                     >
                                         {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                    </button>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.65rem' }}>
+                                    <button 
+                                        type="button" 
+                                        onClick={handleForgotPassword}
+                                        className="forgot-password-btn-bottom"
+                                    >
+                                        ¿Olvidaste tu contraseña?
                                     </button>
                                 </div>
                             </div>
@@ -545,19 +547,20 @@ export default function LoginView({ onLogin, onAdminLogin }) {
                     color: #374151;
                     margin-bottom: 0.5rem;
                 }
-                .forgot-password-btn {
+                .forgot-password-btn-bottom {
                     background: none;
                     border: none;
                     color: #4f46e5;
-                    font-size: 0.8125rem;
+                    font-size: 0.875rem;
                     font-weight: 600;
                     cursor: pointer;
                     padding: 0;
-                    transition: color 0.2s ease, text-decoration 0.2s ease;
+                    transition: all 0.2s ease;
                 }
-                .forgot-password-btn:hover {
-                    color: #3730a3;
+                .forgot-password-btn-bottom:hover {
+                    color: #312e81;
                     text-decoration: underline;
+                    transform: translateY(-1px);
                 }
             `}</style>
             </div>
