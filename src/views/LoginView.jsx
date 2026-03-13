@@ -396,7 +396,7 @@ export default function LoginView({ onLogin, onAdminLogin }) {
                                     <button 
                                         type="button" 
                                         onClick={handleForgotPassword}
-                                        style={{ background: 'none', border: 'none', color: '#4f46e5', fontSize: '0.75rem', cursor: 'pointer', padding: 0 }}
+                                        className="forgot-password-btn"
                                     >
                                         ¿Olvidaste tu contraseña?
                                     </button>
@@ -544,6 +544,20 @@ export default function LoginView({ onLogin, onAdminLogin }) {
                     font-weight: 500;
                     color: #374151;
                     margin-bottom: 0.5rem;
+                }
+                .forgot-password-btn {
+                    background: none;
+                    border: none;
+                    color: #4f46e5;
+                    font-size: 0.8125rem;
+                    font-weight: 600;
+                    cursor: pointer;
+                    padding: 0;
+                    transition: color 0.2s ease, text-decoration 0.2s ease;
+                }
+                .forgot-password-btn:hover {
+                    color: #3730a3;
+                    text-decoration: underline;
                 }
             `}</style>
             </div>
