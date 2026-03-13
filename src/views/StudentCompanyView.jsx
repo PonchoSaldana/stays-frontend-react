@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Building, Search, MapPin, Phone, Mail, FileText, CheckCircle, Filter, Users } from 'lucide-react';
+import { Building, Search, MapPin, Phone, Mail, FileText, CheckCircle, Filter, Users, Code, Factory, Briefcase, Calculator, Leaf, FlaskConical } from 'lucide-react';
 import Modal from '../components/Modal';
 import ToastContainer from '../components/Toast';
 import { useToast } from '../hooks/useToast';
@@ -34,6 +34,26 @@ const CAREERS = [
     { id: 'tsu-agr', name: 'TSU en Agricultura Sustentable y Protegida' },
     { id: 'tsu-qui', name: 'TSU en Química Área Tecnología Ambiental' },
 ];
+
+const getCareerIcon = (careerText) => {
+    if (!careerText) return Building;
+    const text = String(careerText).toLowerCase();
+    
+    // TI / Software / Redes
+    if (text.includes('soft') || text.includes('redes') || text.includes('ti ') || text.includes('ciber')) return Code;
+    // Química / Tecnología Ambiental
+    if (text.includes('quí') || text.includes('qui') || text.includes('amb')) return FlaskConical;
+    // Bio / Agricultura / Alimentarios
+    if (text.includes('bio') || text.includes('agr') || text.includes('ali')) return Leaf;
+    // Contaduría / Finanzas
+    if (text.includes('con') || text.includes('fin') || text.includes('fisc')) return Calculator;
+    // Negocios / Administración / Proyectos / Mercadotecnia / Capital
+    if (text.includes('neg') || text.includes('adm') || text.includes('cap') || text.includes('proy') || text.includes('merca')) return Briefcase;
+    // Industrial / Manufactura / Mecatrónica / Procesos / Mantenimiento
+    if (text.includes('ind') || text.includes('man') || text.includes('mec') || text.includes('auto') || text.includes('proc')) return Factory;
+
+    return Building;
+};
 
 const getMockCompanies = () => [
     { id: 1, name: 'Volkswagen de México', address: 'Autopista México-Puebla Km 116', contact: 'Lic. Juan Pérez', email: 'rh@vw.com.mx', careerId: 'ing-man', spots: 5, hasFinancialSupport: true },
@@ -212,6 +232,9 @@ export default function StudentCompanyView({ mode = 'catalog', onSelect, userMat
                 <div className="scv-grid">
                     {filteredCompanies.map(company => {
                         const isSelected = selectedCompanyId === company.id;
+                        const careerText = CAREERS.find(c => c.id === company.careerId)?.name || company.careerId;
+                        const CareerIcon = getCareerIcon(careerText);
+                        
                         return (
                             <div
                                 key={company.id}
@@ -220,7 +243,7 @@ export default function StudentCompanyView({ mode = 'catalog', onSelect, userMat
                                 {/* Card Top */}
                                 <div className="scv-card-top">
                                     <div className={`scv-card-icon ${isSelected ? 'scv-card-icon--active' : ''}`}>
-                                        <Building size={22} />
+                                        <CareerIcon size={22} />
                                     </div>
                                     {mode === 'selection' && (
                                         <button
