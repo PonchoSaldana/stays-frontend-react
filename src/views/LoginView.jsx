@@ -462,7 +462,8 @@ export default function LoginView({ onLogin, onAdminLogin }) {
                                 {loading ? 'Verificando...' : 'Verificar Código'}
                             </button>
                             <button type="button" onClick={() => { setFlow('email'); setVerificationCode(''); }}
-                                style={{ width: '100%', marginTop: '1rem', background: 'none', border: 'none', color: '#4f46e5', cursor: 'pointer', fontSize: '0.875rem' }}>
+                                className="resend-code-btn"
+                                style={{ width: '100%', marginTop: '1rem' }}>
                                 ¿No recibiste el código? Reenviar
                             </button>
                         </form>
@@ -561,6 +562,20 @@ export default function LoginView({ onLogin, onAdminLogin }) {
                     color: #00763a;
                     text-decoration: underline;
                     transform: translateY(-1px);
+                }
+                .resend-code-btn {
+                    background: none;
+                    border: none;
+                    color: var(--ut-green);
+                    cursor: pointer;
+                    font-size: 0.875rem;
+                    font-weight: 500;
+                    padding: 0;
+                    transition: all 0.2s ease;
+                }
+                .resend-code-btn:hover {
+                    color: #00763a;
+                    text-decoration: underline;
                 }
             `}</style>
             </div>
