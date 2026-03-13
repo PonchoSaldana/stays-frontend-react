@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowRight, GraduationCap, Mail, Lock, ShieldCheck, ArrowLeft, Key } from 'lucide-react';
+import { ArrowRight, GraduationCap, Mail, Lock, ShieldCheck, ArrowLeft, Key, Eye, EyeOff } from 'lucide-react';
 import logoUt from '../assets/logo-ut.png';
 import { API_URL } from '../config';
 
@@ -8,6 +8,7 @@ export default function LoginView({ onLogin, onAdminLogin }) {
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
 
     // Estado administrativo
     const [adminMode, setAdminMode] = useState(false);
@@ -144,6 +145,38 @@ export default function LoginView({ onLogin, onAdminLogin }) {
 
         } catch (err) {
             setError('Error de conexión con el servidor');
+        }
+        setLoading(false);
+    };
+
+    // ─── RECUPERACIÓN DE CONTRASEÑA ───────────────────────────────────────────
+    const handleForgotPassword = async () => {
+        setError('');
+        if (!matricula) {
+            setError('Por favor ingresa tu matrícula primero para recuperar la contraseña.');
+            setFlow('login');
+            return;
+        }
+        setLoading(true);
+        try {
+            const res = await fetch(`${API_URL}/auth/forgot-password`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ matricula: String(matricula).trim() })
+            });
+            const data = await res.json();
+            
+            if (!res.ok) {
+                setError(data.message || 'No se pudo iniciar la recuperación.');
+                setLoading(false);
+                return;
+            }
+
+            // Si se envió el código con éxito, pasamos al flujo de verificación
+            setEmail(data.email || 'tu correo registrado'); // Guardamos el email (enmascarado usualmente) para mostrarlo
+            setFlow('verify');
+        } catch {
+            setError('Error de conexión al solicitar recuperación.');
         }
         setLoading(false);
     };
@@ -358,13 +391,29 @@ export default function LoginView({ onLogin, onAdminLogin }) {
                     {!adminMode && flow === 'onboarding_password' && (
                         <form onSubmit={handlePasswordLogin}>
                             <div style={{ marginBottom: '1.5rem' }}>
-                                <label className="form-label">Contraseña</label>
+                                <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    Contraseña
+                                    <button 
+                                        type="button" 
+                                        onClick={handleForgotPassword}
+                                        style={{ background: 'none', border: 'none', color: '#4f46e5', fontSize: '0.75rem', cursor: 'pointer', padding: 0 }}
+                                    >
+                                        ¿Olvidaste tu contraseña?
+                                    </button>
+                                </label>
                                 <div style={{ position: 'relative' }}>
                                     <Lock size={20} style={{ position: 'absolute', top: '50%', left: '1rem', transform: 'translateY(-50%)', color: '#9ca3af' }} />
-                                    <input type="password" value={password} onChange={e => setPassword(e.target.value)}
-                                        className="input" style={{ paddingLeft: '3rem' }}
+                                    <input type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)}
+                                        className="input" style={{ paddingLeft: '3rem', paddingRight: '3rem' }}
                                         autoComplete="current-password"
                                         placeholder="Tu contraseña" autoFocus />
+                                    <button 
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        style={{ position: 'absolute', top: '50%', right: '1rem', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#9ca3af', cursor: 'pointer', padding: 0 }}
+                                    >
+                                        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                    </button>
                                 </div>
                             </div>
                             <button type="submit" disabled={!password || loading} className="btn btn-primary"
@@ -424,17 +473,24 @@ export default function LoginView({ onLogin, onAdminLogin }) {
                                 <label className="form-label">Nueva Contraseña</label>
                                 <div style={{ position: 'relative' }}>
                                     <Lock size={20} style={{ position: 'absolute', top: '50%', left: '1rem', transform: 'translateY(-50%)', color: '#9ca3af' }} />
-                                    <input type="password" value={password} onChange={e => setPassword(e.target.value)}
-                                        className="input" style={{ paddingLeft: '3rem' }}
+                                    <input type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)}
+                                        className="input" style={{ paddingLeft: '3rem', paddingRight: '3rem' }}
                                         placeholder="Mínimo 6 caracteres" autoFocus />
+                                    <button 
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        style={{ position: 'absolute', top: '50%', right: '1rem', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#9ca3af', cursor: 'pointer', padding: 0 }}
+                                    >
+                                        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                    </button>
                                 </div>
                             </div>
                             <div style={{ marginBottom: '1.5rem' }}>
                                 <label className="form-label">Confirmar Contraseña</label>
                                 <div style={{ position: 'relative' }}>
                                     <Key size={20} style={{ position: 'absolute', top: '50%', left: '1rem', transform: 'translateY(-50%)', color: '#9ca3af' }} />
-                                    <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)}
-                                        className="input" style={{ paddingLeft: '3rem' }}
+                                    <input type={showPassword ? "text" : "password"} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)}
+                                        className="input" style={{ paddingLeft: '3rem', paddingRight: '3rem' }}
                                         placeholder="Repite la contraseña" />
                                 </div>
                                 {password && confirmPassword && password !== confirmPassword && (
