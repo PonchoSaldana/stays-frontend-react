@@ -550,7 +550,7 @@ export default function LoginView({ onLogin, onAdminLogin }) {
                 .forgot-password-btn-bottom {
                     background: none;
                     border: none;
-                    color: #4f46e5;
+                    color: var(--ut-green);
                     font-size: 0.875rem;
                     font-weight: 600;
                     cursor: pointer;
@@ -558,7 +558,7 @@ export default function LoginView({ onLogin, onAdminLogin }) {
                     transition: all 0.2s ease;
                 }
                 .forgot-password-btn-bottom:hover {
-                    color: #312e81;
+                    color: #00763a;
                     text-decoration: underline;
                     transform: translateY(-1px);
                 }
