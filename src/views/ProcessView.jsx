@@ -56,16 +56,21 @@ export default function ProcessView({ userMatricula, stageName }) {
     const progress = getProgress(stageName);
 
     useEffect(() => {
+        if (!userMatricula) return;
+
         const fetchExistingDocs = async () => {
+             console.log('Fetching documents for:', userMatricula);
             try {
                 const res = await authFetch(`/documents/student/${userMatricula}`);
                 if (res.ok) {
                     const docs = await res.json();
+                    console.log('Documents found:', docs.length);
                     const up1 = {};
                     const up2 = {};
                     docs.forEach(d => {
-                        if (d.stage === 'upload_1') up1[d.documentName] = 'success';
-                        if (d.stage === 'upload_2') up2[d.documentName] = 'success';
+                        const status = d.status === 'Rechazado' ? 'error' : 'success';
+                        if (d.stage === 'upload_1') up1[d.documentName] = status;
+                        if (d.stage === 'upload_2') up2[d.documentName] = status;
                     });
                     setUploads1(up1);
                     setUploads2(up2);
@@ -77,7 +82,7 @@ export default function ProcessView({ userMatricula, stageName }) {
             }
         };
         fetchExistingDocs();
-    }, [userMatricula]);
+    }, [userMatricula, stageName]);
 
     useEffect(() => {
         if (stageName === 'check_1') {

@@ -185,6 +185,9 @@ export default function AdminDashboard({ onProcessChange }) {
     const [uploadError, setUploadError] = useState(null);
     const [isImporting, setIsImporting] = useState(false);
     const [rejectAction, setRejectAction] = useState({ id: null, comment: '' });
+    const [viewingDocsStudent, setViewingDocsStudent] = useState(null);
+    const [studentDocs, setStudentDocs] = useState([]);
+    const [loadingDocs, setLoadingDocs] = useState(false);
 
     // --- Handlers de Acciones ---
 
@@ -212,6 +215,26 @@ export default function AdminDashboard({ onProcessChange }) {
 
     const cancelReject = () => {
         setRejectAction({ id: null, comment: '' });
+    };
+
+    const handleViewExp = async (student) => {
+        setViewingDocsStudent(student);
+        setLoadingDocs(true);
+        setStudentDocs([]);
+        try {
+            const res = await authFetch(`/documents/student/${student.matricula}`);
+            if (res.ok) {
+                const docs = await res.json();
+                setStudentDocs(docs);
+            } else {
+                showToast({ type: 'error', title: 'Error', message: 'No se pudieron cargar los documentos.' });
+            }
+        } catch (error) {
+            console.error(error);
+            showToast({ type: 'error', title: 'Error de conexión', message: 'Error cargando documentos.' });
+        } finally {
+            setLoadingDocs(false);
+        }
     };
 
     // --- State para Gestión de Admins ---
@@ -1154,7 +1177,11 @@ export default function AdminDashboard({ onProcessChange }) {
                                                             >
                                                                 <XCircle size={18} />
                                                             </button>
-                                                            <button className="btn" style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', background: '#F3F4F6', color: '#374151' }}>
+                                                            <button
+                                                                onClick={() => handleViewExp(student)}
+                                                                className="btn"
+                                                                style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', background: '#F3F4F6', color: '#374151' }}
+                                                            >
                                                                 Ver Exp.
                                                             </button>
                                                         </div>
@@ -2296,6 +2323,69 @@ export default function AdminDashboard({ onProcessChange }) {
                     )
                 }
             </main >
+
+            <Modal
+                isOpen={!!viewingDocsStudent}
+                onClose={() => setViewingDocsStudent(null)}
+                title={`Expediente: ${viewingDocsStudent?.name}`}
+                maxWidth="600px"
+            >
+                <div style={{ padding: '0.5rem' }}>
+                    <div style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem', background: '#f9fafb', borderRadius: '0.5rem' }}>
+                        <div style={{ width: 44, height: 44, background: 'var(--ut-green)', color: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
+                            {viewingDocsStudent?.name?.[0]?.toUpperCase()}
+                        </div>
+                        <div>
+                            <p style={{ fontWeight: 600 }}>{viewingDocsStudent?.name}</p>
+                            <p style={{ fontSize: '0.75rem', color: '#6b7280' }}>Matrícula: {viewingDocsStudent?.matricula} • {viewingDocsStudent?.careerName}</p>
+                        </div>
+                    </div>
+
+                    <h4 style={{ fontSize: '0.875rem', fontWeight: 600, color: '#374151', marginBottom: '1rem' }}>Documentos Cargados ({studentDocs.length})</h4>
+
+                    {loadingDocs ? (
+                        <div style={{ textAlign: 'center', padding: '2rem' }}>
+                            <RefreshCw className="animate-spin" size={24} color="var(--ut-green)" />
+                            <p style={{ fontSize: '0.875rem', color: '#6b7280', marginTop: '0.5rem' }}>Cargando documentos...</p>
+                        </div>
+                    ) : studentDocs.length === 0 ? (
+                        <div style={{ textAlign: 'center', padding: '2rem', border: '1px dashed #e5e7eb', borderRadius: '0.5rem' }}>
+                            <FileText size={40} style={{ color: '#d1d5db', marginBottom: '0.75rem' }} />
+                            <p style={{ fontSize: '0.875rem', color: '#9ca3af' }}>No hay documentos registrados para este alumno.</p>
+                        </div>
+                    ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '400px', overflowY: 'auto', paddingRight: '0.5rem' }}>
+                            {studentDocs.map(doc => (
+                                <div key={doc.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem', border: '1px solid #f3f4f6', borderRadius: '0.5rem', background: 'white', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                        <div style={{ width: 36, height: 36, background: '#f0fdf4', color: 'var(--ut-green)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            <FileText size={20} />
+                                        </div>
+                                        <div>
+                                            <p style={{ fontSize: '0.875rem', fontWeight: 600, color: '#1f2937' }}>{doc.documentName}</p>
+                                            <p style={{ fontSize: '0.7rem', color: '#9ca3af' }}>Subido el {new Date(doc.createdAt).toLocaleDateString()} • {doc.stage}</p>
+                                        </div>
+                                    </div>
+                                    <a 
+                                        href={`http://localhost:3001/api/documents/${doc.id}/download?token=${sessionStorage.getItem('ut_admin_token') || sessionStorage.getItem('ut_admin_session')}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="btn"
+                                        style={{ padding: '0.4rem 0.6rem', fontSize: '0.75rem', background: '#f3f4f6', color: '#374151', minWidth: 'auto' }}
+                                        title="Descargar archivo"
+                                    >
+                                        <Download size={14} />
+                                    </a>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'flex-end' }}>
+                        <button onClick={() => setViewingDocsStudent(null)} className="btn btn-primary" style={{ padding: '0.6rem 1.5rem' }}>Cerrar Expediente</button>
+                    </div>
+                </div>
+            </Modal>
 
             <Modal
                 isOpen={modalConfig.isOpen}
