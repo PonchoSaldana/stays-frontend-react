@@ -4,18 +4,19 @@ import { X } from 'lucide-react';
 // componente modal reutilizable con soporte para tres partes: header, body y footer
 // el prop `type` cambia el color del header a rojo cuando es 'danger'
 export default function Modal({ isOpen, onClose, title, children, footer, type = 'info' }) {
-    // no renderiza nada si el modal está cerrado
-    if (!isOpen) return null;
-
     // cierra el modal al presionar la tecla escape
     useEffect(() => {
+        if (!isOpen) return;
         const handleEsc = (e) => {
             if (e.key === 'Escape') onClose();
         };
         window.addEventListener('keydown', handleEsc);
         // limpia el listener al desmontar el componente
         return () => window.removeEventListener('keydown', handleEsc);
-    }, [onClose]);
+    }, [isOpen, onClose]);
+
+    // no renderiza nada si el modal está cerrado
+    if (!isOpen) return null;
 
     return (
         // fondo oscuro semitransparente; click en el fondo cierra el modal

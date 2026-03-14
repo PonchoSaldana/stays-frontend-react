@@ -94,7 +94,7 @@ export default function LoginView({ onLogin, onAdminLogin }) {
                 setFlow('onboarding_password');
             }
 
-        } catch (err) {
+        } catch {
             setError('Error de conexión con el servidor');
         }
         setLoading(false);
@@ -143,7 +143,7 @@ export default function LoginView({ onLogin, onAdminLogin }) {
             sessionStorage.setItem('ut_token', data.token);
             onLogin(data.user.matricula, data.user);
 
-        } catch (err) {
+        } catch {
             setError('Error de conexión con el servidor');
         }
         setLoading(false);

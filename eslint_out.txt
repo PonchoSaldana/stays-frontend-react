@@ -1,0 +1,64 @@
+
+C:\Users\Alfonso\OneDrive\Documentos\Stays\stays-frontend-react\src\App.jsx
+   2:48  error  'useLocation' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      no-unused-vars
+  65:5   error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  63 |
+  64 |   useEffect(() => {
+> 65 |     fetchActiveProcess();
+     |     ^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  66 |     // refresca cada 5 segundos para reflejar cambios de proceso casi en tiempo real
+  67 |     const interval = setInterval(fetchActiveProcess, 5000);
+  68 |     return () => clearInterval(interval);  react-hooks/set-state-in-effect
+
+C:\Users\Alfonso\OneDrive\Documentos\Stays\stays-frontend-react\src\components\AvatarPath.jsx
+   2:10  error  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           no-unused-vars
+  10:48  error  'currentStage' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                no-unused-vars
+  19:13  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  17 |     useEffect(() => {
+  18 |         if (progress !== visualProgress) {
+> 19 |             setIsMoving(true);
+     |             ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  20 |             setVisualProgress(progress);
+  21 |             // después de 1 segundo, vuelve a la imagen de quieto
+  22 |             const timer = setTimeout(() => {  react-hooks/set-state-in-effect
+
+C:\Users\Alfonso\OneDrive\Documentos\Stays\stays-frontend-react\src\components\FileUploader.jsx
+  1:17  error  'useState' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Users\Alfonso\OneDrive\Documentos\Stays\stays-frontend-react\src\components\Modal.jsx
+  11:5  error  React Hook "useEffect" is called conditionally. React Hooks must be called in the exact same order in every component render  react-hooks/rules-of-hooks
+
+C:\Users\Alfonso\OneDrive\Documentos\Stays\stays-frontend-react\src\views\AdminDashboard.jsx
+   82:8   warning  React Hook useEffect has a missing dependency: 'fetchCareerStudents'. Either include it or remove the dependency array                         react-hooks/exhaustive-deps
+   91:8   warning  React Hook useEffect has missing dependencies: 'fetchCareerStudents' and 'selectedCareer'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  160:18  error    'error' is defined but never used                                                                                                              no-unused-vars
+
+C:\Users\Alfonso\OneDrive\Documentos\Stays\stays-frontend-react\src\views\LoginView.jsx
+   97:18  error  'err' is defined but never used  no-unused-vars
+  146:18  error  'err' is defined but never used  no-unused-vars
+
+C:\Users\Alfonso\OneDrive\Documentos\Stays\stays-frontend-react\src\views\ProcessView.jsx
+   2:10  error  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+  82:38  error  'file' is defined but never used                                               no-unused-vars
+  87:38  error  'file' is defined but never used                                               no-unused-vars
+
+C:\Users\Alfonso\OneDrive\Documentos\Stays\stays-frontend-react\src\views\StudentCompanyView.jsx
+   89:8   warning  React Hook useEffect has a missing dependency: 'selectedCareerId'. Either include it or remove the dependency array. You can also replace multiple useState variables with useReducer if 'setCompanies' needs the current value of 'selectedCareerId'  react-hooks/exhaustive-deps
+  171:21  error    Empty block statement                                                                                                                                                                                                                                  no-empty
+
+✖ 17 problems (14 errors, 3 warnings)
+

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Routes, Route, useNavigate, Navigate, useLocation } from 'react-router-dom';
+import { Routes, Route, useNavigate, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import AdminDashboard from './views/AdminDashboard';
 import LoginView from './views/LoginView';
@@ -62,6 +62,7 @@ function App() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchActiveProcess();
     // refresca cada 5 segundos para reflejar cambios de proceso casi en tiempo real
     const interval = setInterval(fetchActiveProcess, 5000);

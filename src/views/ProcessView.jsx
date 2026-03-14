@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCheck, Download, FileText, Loader, AlertTriangle, Eye, Edit } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -79,12 +80,12 @@ export default function ProcessView({ userMatricula, stageName }) {
         }
     }, [stageName, navigate]);
 
-    const handleUpload1 = (docLabel, file) => {
+    const handleUpload1 = (docLabel) => {
         setUploads1(prev => ({ ...prev, [docLabel]: 'uploading' }));
         setTimeout(() => setUploads1(prev => ({ ...prev, [docLabel]: 'success' })), 800);
     };
 
-    const handleUpload2 = (docLabel, file) => {
+    const handleUpload2 = (docLabel) => {
         setUploads2(prev => ({ ...prev, [docLabel]: 'uploading' }));
         setTimeout(() => setUploads2(prev => ({ ...prev, [docLabel]: 'success' })), 800);
     };

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { UploadCloud, CheckCircle, XCircle, File, Loader2 } from 'lucide-react';
 
 // componente de carga de archivos individual para cada documento requerido

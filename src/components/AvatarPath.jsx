@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+// eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import { User, FileText, CheckCircle, PenTool, Flag, FileCheck } from 'lucide-react';
 // imágenes del personaje según su estado de movimiento
@@ -7,7 +8,7 @@ import motocleRunning from '../assets/motocle-running.png';
 import motocleTrophy from '../assets/motocle-trophy.png';
 
 // barra de progreso animada con un personaje (motocle) que se mueve según el avance
-export default function AvatarPath({ progress, currentStage }) {
+export default function AvatarPath({ progress }) {
     // progreso visual suavizado para la animación
     const [visualProgress, setVisualProgress] = useState(0);
     // indica si el motocle está en movimiento (cambia la imagen)
@@ -16,6 +17,7 @@ export default function AvatarPath({ progress, currentStage }) {
     // cuando el progreso externo cambia, animamos el personaje y lo ponemos en movimiento
     useEffect(() => {
         if (progress !== visualProgress) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setIsMoving(true);
             setVisualProgress(progress);
             // después de 1 segundo, vuelve a la imagen de quieto

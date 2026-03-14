@@ -86,7 +86,7 @@ export default function StudentCompanyView({ mode = 'catalog', onSelect, userMat
                 .catch(() => setCompanies(searchTerm ? [] : getMockCompanies()));
         }, 300);
         return () => clearTimeout(timer);
-    }, [searchTerm]);
+    }, [searchTerm, selectedCareerId]);
 
     useEffect(() => {
         if (userMatricula && mode === 'selection') {
@@ -168,7 +168,9 @@ export default function StudentCompanyView({ mode = 'catalog', onSelect, userMat
                     setModalConfig(m => ({ ...m, isOpen: false }));
                     return;
                 }
-            } catch { }
+            } catch {
+                // silent
+            }
         }
         setSelectedCompanyId(company.id);
         if (onSelect) onSelect(company);

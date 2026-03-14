@@ -157,7 +157,7 @@ export default function AdminDashboard({ onProcessChange }) {
                 setCompanies(json.data || []);
                 setTotalCompanies(json.total || 0);
             }
-        } catch (error) {
+        } catch {
             // Error de red
         }
     };
