@@ -9,6 +9,7 @@ import confetti from 'canvas-confetti';
 import Modal from '../components/Modal';
 import ToastContainer from '../components/Toast';
 import { useToast } from '../hooks/useToast';
+import { authFetch } from '../auth';
 
 // LISTA DE DOCUMENTOS PARA ESTADÍAS
 const INITIAL_DOCS = [
@@ -25,9 +26,10 @@ const GENERATED_DOCS = [
 export default function ProcessView({ userMatricula, stageName }) {
     const navigate = useNavigate();
     const { toasts, showToast, removeToast } = useToast();
-    const [uploads1, setUploads1] = useState(() => JSON.parse(sessionStorage.getItem('up1') || '{}'));
-    const [uploads2, setUploads2] = useState(() => JSON.parse(sessionStorage.getItem('up2') || '{}'));
+    const [uploads1, setUploads1] = useState({});
+    const [uploads2, setUploads2] = useState({});
     const [checkStatus, setCheckStatus] = useState({});
+    const [loading, setLoading] = useState(true);
 
     const [editingDoc, setEditingDoc] = useState(null);
     const [modalMode, setModalMode] = useState('preview');
@@ -54,9 +56,28 @@ export default function ProcessView({ userMatricula, stageName }) {
     const progress = getProgress(stageName);
 
     useEffect(() => {
-        sessionStorage.setItem('up1', JSON.stringify(uploads1));
-        sessionStorage.setItem('up2', JSON.stringify(uploads2));
-    }, [uploads1, uploads2]);
+        const fetchExistingDocs = async () => {
+            try {
+                const res = await authFetch(`/documents/student/${userMatricula}`);
+                if (res.ok) {
+                    const docs = await res.json();
+                    const up1 = {};
+                    const up2 = {};
+                    docs.forEach(d => {
+                        if (d.stage === 'upload_1') up1[d.documentName] = 'success';
+                        if (d.stage === 'upload_2') up2[d.documentName] = 'success';
+                    });
+                    setUploads1(up1);
+                    setUploads2(up2);
+                }
+            } catch (err) {
+                console.error('Error fetching docs:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchExistingDocs();
+    }, [userMatricula]);
 
     useEffect(() => {
         if (stageName === 'check_1') {
@@ -80,15 +101,37 @@ export default function ProcessView({ userMatricula, stageName }) {
         }
     }, [stageName, navigate]);
 
-    const handleUpload1 = (docLabel) => {
-        setUploads1(prev => ({ ...prev, [docLabel]: 'uploading' }));
-        setTimeout(() => setUploads1(prev => ({ ...prev, [docLabel]: 'success' })), 800);
+    const handleUpload = async (docLabel, file, stage, setUploads) => {
+        setUploads(prev => ({ ...prev, [docLabel]: 'uploading' }));
+
+        const formData = new FormData();
+        formData.append('matricula', userMatricula);
+        formData.append('stage', stage);
+        formData.append('documentName', docLabel);
+        formData.append('file', file);
+
+        try {
+            const res = await authFetch('/documents/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (res.ok) {
+                setUploads(prev => ({ ...prev, [docLabel]: 'success' }));
+                showToast({ type: 'success', title: 'Archivo guardado', message: `"${docLabel}" se ha subido correctamente.` });
+            } else {
+                const err = await res.json();
+                setUploads(prev => ({ ...prev, [docLabel]: 'error' }));
+                showToast({ type: 'error', title: 'Error al subir', message: err.message || 'No se pudo guardar el archivo.' });
+            }
+        } catch {
+            setUploads(prev => ({ ...prev, [docLabel]: 'error' }));
+            showToast({ type: 'error', title: 'Error de red', message: 'No se pudo conectar con el servidor.' });
+        }
     };
 
-    const handleUpload2 = (docLabel) => {
-        setUploads2(prev => ({ ...prev, [docLabel]: 'uploading' }));
-        setTimeout(() => setUploads2(prev => ({ ...prev, [docLabel]: 'success' })), 800);
-    };
+    const handleUpload1 = (docLabel, file) => handleUpload(docLabel, file, 'upload_1', setUploads1);
+    const handleUpload2 = (docLabel, file) => handleUpload(docLabel, file, 'upload_2', setUploads2);
 
     const handleOpenPreview = (docName) => {
         setEditingDoc(docName);

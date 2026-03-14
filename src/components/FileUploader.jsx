@@ -12,20 +12,11 @@ export default function FileUploader({ id, label, status, onUpload, disabled }) 
         }
     };
 
-    // en modo demo, un clic en la tarjeta simula la subida del archivo
-    const handleDemoClick = () => {
-        if (!disabled && (!status || status === 'error')) {
-            const demoFile = { name: "documento_demo.pdf", size: 1024 * 500 };
-            onUpload(id, demoFile);
-        }
-    };
-
     return (
         <div
             className={`uploader-card ${status || ''} ${disabled ? 'disabled' : ''}`}
             style={{ opacity: disabled ? 0.5 : 1, cursor: !disabled ? 'pointer' : 'default' }}
-            onClick={handleDemoClick}
-            title="Modo Demo: Click para simular carga"
+            title={disabled ? 'No disponible' : 'Haz clic para subir documento'}
         >
             {/* ícono que cambia según el estado del documento */}
             <div className="file-status-icon">

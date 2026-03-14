@@ -58,6 +58,8 @@ export default function AdminDashboard({ onProcessChange }) {
     // ── Estado de supervisión ──────────────────────────────────────────────────
     const [selectedCareer, setSelectedCareer] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [companySearch, setCompanySearch] = useState('');
+    const [loadingCompanies, setLoadingCompanies] = useState(false);
 
     // ── Estado de paginación de alumnos por carrera ────────────────────────────
     const [careerStudents, setCareerStudents] = useState([]);   // página actual
@@ -89,6 +91,13 @@ export default function AdminDashboard({ onProcessChange }) {
         }, 400);
         return () => clearTimeout(timer);
     }, [searchTerm]);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            fetchCompanies(companySearch);
+        }, 400);
+        return () => clearTimeout(timer);
+    }, [companySearch]);
 
     /**
      * Carga rápida (sin datos) para obtener counts por carrera.
@@ -149,6 +158,7 @@ export default function AdminDashboard({ onProcessChange }) {
     };
 
     const fetchCompanies = async (search = '') => {
+        setLoadingCompanies(true);
         try {
             const params = new URLSearchParams({ page: 1, limit: 100, search });
             const res = await authFetch(`/companies?${params.toString()}`);
@@ -160,6 +170,7 @@ export default function AdminDashboard({ onProcessChange }) {
         } catch {
             // Error de red
         }
+        setLoadingCompanies(false);
     };
 
     // Alias para compatibilidad con handlers: careerStudents ES la lista activa
@@ -243,15 +254,25 @@ export default function AdminDashboard({ onProcessChange }) {
     const [reasignStudent, setReasignStudent] = useState(null);
     const [reasignNewCompanyId, setReasignNewCompanyId] = useState('');
 
-    const handleSearchForReasign = () => {
+    const handleSearchForReasign = async () => {
         if (!reasignSearch.trim()) return;
 
-        // Búsqueda flexible (matricula o nombre)
+        // 1. Intentar búsqueda local
         const term = reasignSearch.toLowerCase();
-        const found = careerStudents.find(s =>
-            String(s.matricula).includes(term) ||
+        let found = careerStudents.find(s =>
+            String(s.matricula).toLowerCase().includes(term) ||
             s.name.toLowerCase().includes(term)
         );
+
+        // 2. Si no está localmente (por paginación), buscar en el servidor
+        if (!found) {
+            try {
+                const res = await authFetch(`/students/${term}`);
+                if (res.ok) {
+                    found = await res.json();
+                }
+            } catch { /* silencioso */ }
+        }
 
         if (found) {
             setReasignStudent(found);
@@ -261,31 +282,47 @@ export default function AdminDashboard({ onProcessChange }) {
             showToast({
                 type: 'info',
                 title: 'No encontrado',
-                message: `No se encontró ningún estudiante con "${reasignSearch}". Intenta con otro nombre o matrícula.`,
+                message: `No se encontró ningún estudiante con "${reasignSearch}". Intenta con otro nombre o matrícula completa.`,
             });
         }
     };
 
-    const handleReasignSubmit = () => {
+    const handleReasignSubmit = async () => {
         if (!reasignStudent || !reasignNewCompanyId) return;
 
-        // 1. Actualizar alumno localmente
-        setCareerStudents(prev => prev.map(s =>
-            s.id === reasignStudent.id
-                ? { ...s, companyId: reasignNewCompanyId, status: 'Pendiente', comment: 'Reasignación de Estadía realizada por Root.' }
-                : s
-        ));
+        try {
+            // Persistir en el servidor
+            const mat = String(reasignStudent.matricula).trim().toLowerCase();
+            const res = await authFetch(`/students/${mat}/select-company`, {
+                method: 'PUT',
+                body: JSON.stringify({ companyId: reasignNewCompanyId })
+            });
 
-        // 2. Feedback
-        const companyName = companies.find(c => c.id == reasignNewCompanyId)?.name;
+            if (!res.ok) {
+                const errData = await res.json();
+                showToast({ type: 'error', title: 'Error', message: errData.message || 'No se pudo reasignar.' });
+                return;
+            }
 
-        showToast({
-            type: 'success',
-            title: 'Reasignación Exitosa',
-            message: `El estudiante ${reasignStudent.name} ha sido reasignado a la empresa ${companyName}.`,
-        });
-        setReasignStudent(null);
-        setReasignSearch('');
+            // Actualizar localmente si está en la lista actual
+            setCareerStudents(prev => prev.map(s =>
+                String(s.matricula).toLowerCase() === mat
+                    ? { ...s, companyId: reasignNewCompanyId, status: 'Empresa Seleccionada' }
+                    : s
+            ));
+
+            const companyName = companies.find(c => c.id == reasignNewCompanyId)?.name;
+            showToast({
+                type: 'success',
+                title: 'Reasignación Exitosa',
+                message: `El estudiante ${reasignStudent.name} ha sido reasignado a ${companyName}.`,
+            });
+            setReasignStudent(null);
+            setReasignSearch('');
+
+        } catch {
+            showToast({ type: 'error', title: 'Error de red', message: 'No se pudo conectar con el servidor.' });
+        }
     };
 
     // Modal State
@@ -571,39 +608,72 @@ export default function AdminDashboard({ onProcessChange }) {
         }
     };
 
-    // Simula descarga de Documentos (ZIP)
-    const handleDownloadDocuments = () => {
-        // En un entorno real, esto llamaría a un endpoint del backend que genera un ZIP
-        setTimeout(() => {
-            setModalConfig({
-                isOpen: true,
+    // Descarga real de Documentos (ZIP)
+    const handleDownloadDocuments = async () => {
+        try {
+            const token = sessionStorage.getItem('ut_admin_token');
+            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+
+            // Usamos un enlace directo para que el navegador maneje la descarga del stream
+            const downloadUrl = `${apiUrl}/import/download-zip?token=${token}`;
+            window.location.href = downloadUrl;
+
+            showToast({
+                type: 'info',
                 title: 'Descarga Iniciada',
-                type: 'success',
-                content: (
-                    <div style={{ textAlign: 'center' }}>
-                        <div style={{ margin: '0 auto 1rem', width: 48, height: 48, background: '#D1FAE5', color: '#059669', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <FolderOpen size={24} />
-                        </div>
-                        <p style={{ fontSize: '1rem', fontWeight: 600, color: '#1f2937' }}>Generando paquete ZIP...</p>
-                        <p style={{ color: '#6b7280', marginTop: '0.5rem' }}>
-                            Se ha iniciado la descarga del archivo comprimido con los expedientes de todos los alumnos.
-                        </p>
-                        <p style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '1rem' }}>
-                            (Simulación: En producción esto descargará un .zip real)
-                        </p>
-                    </div>
-                ),
-                footer: (
-                    <button
-                        onClick={() => setModalConfig({ ...modalConfig, isOpen: false })}
-                        className="btn"
-                        style={{ background: '#10B981', color: 'white', width: '100%', justifyContent: 'center' }}
-                    >
-                        Entendido
-                    </button>
-                )
+                message: 'El servidor está preparando el archivo ZIP. La descarga comenzará pronto.'
             });
-        }, 500);
+        } catch (err) {
+            console.error(err);
+            showToast({ type: 'error', title: 'Error', message: 'No se pudo iniciar la descarga del ZIP.' });
+        }
+    };
+
+    const handleClearAllDocuments = () => {
+        setModalConfig({
+            isOpen: true,
+            title: '⚠️ Limpieza Crítica de Documentos',
+            type: 'danger',
+            content: (
+                <div style={{ textAlign: 'center' }}>
+                    <div style={{ margin: '0 auto 1rem', width: 48, height: 48, background: '#FEE2E2', color: '#DC2626', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Trash2 size={24} />
+                    </div>
+                    <p style={{ fontWeight: 600, color: '#991B1B' }}>¡Atención!</p>
+                    <p style={{ color: '#6b7280', marginTop: '0.5rem', fontSize: '0.9rem' }}>
+                        Esta acción borrará <strong>TODOS los archivos físicos</strong> (PDFs, imágenes, etc.) y los registros en la base de datos de los expedientes de alumnos.
+                    </p>
+                    <p style={{ color: '#DC2626', fontWeight: 600, marginTop: '1rem', fontSize: '0.8rem' }}>
+                        ¡Solo procede si ya hiciste un respaldo!
+                    </p>
+                </div>
+            ),
+            footer: (
+                <div style={{ display: 'flex', gap: '0.5rem', width: '100%' }}>
+                    <button onClick={() => setModalConfig(prev => ({ ...prev, isOpen: false }))} className="btn" style={{ flex: 1, background: '#f3f4f6' }}>Cancelar</button>
+                    <button
+                        className="btn"
+                        style={{ flex: 1, background: '#DC2626', color: 'white' }}
+                        onClick={async () => {
+                            setModalConfig(prev => ({ ...prev, isOpen: false }));
+                            try {
+                                const res = await authFetch('/import/clear-documents', { method: 'DELETE' });
+                                if (res.ok) {
+                                    showToast({ type: 'success', title: 'Limpieza Exitosa', message: 'Todos los documentos han sido eliminados del servidor.' });
+                                } else {
+                                    const err = await res.json();
+                                    showToast({ type: 'error', title: 'Error', message: err.message });
+                                }
+                            } catch {
+                                showToast({ type: 'error', title: 'Error de red', message: 'No se pudo conectar con el servidor.' });
+                            }
+                        }}
+                    >
+                        Sí, borrar todo
+                    </button>
+                </div>
+            )
+        });
     };
 
     // --- State para Configuración de Procesos ---
@@ -1326,6 +1396,16 @@ export default function AdminDashboard({ onProcessChange }) {
                                         <FolderOpen size={18} />
                                         Descargar Docs (ZIP)
                                     </button>
+                                    {isRoot && (
+                                        <button
+                                            onClick={handleClearAllDocuments}
+                                            className="btn"
+                                            style={{ background: '#FECACA', color: '#DC2626', display: 'flex', alignItems: 'center', gap: '0.5rem', border: '1px solid #FCA5A5' }}
+                                        >
+                                            <Trash2 size={18} />
+                                            Limpiar Docs
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -1900,10 +1980,26 @@ export default function AdminDashboard({ onProcessChange }) {
                                     <h2 style={{ fontSize: '1.5rem', fontWeight: 700 }}>Catálogo de Empresas</h2>
                                     <p style={{ color: '#6b7280' }}>Gestión de convenios y datos de empresas vinculadas</p>
                                 </div>
-                                <button onClick={() => setIsCreatingCompany(!isCreatingCompany)} className="btn btn-primary">
-                                    <Building size={18} />
-                                    {isCreatingCompany ? 'Cancelar' : 'Nueva Empresa'}
-                                </button>
+                                <div style={{ display: 'flex', gap: '1rem' }}>
+                                    <div style={{ position: 'relative', width: '300px' }}>
+                                        <Search size={18} style={{ position: 'absolute', left: 12, top: 12, color: '#9ca3af' }} />
+                                        <input
+                                            type="text"
+                                            className="input"
+                                            placeholder="Buscar empresa por nombre..."
+                                            style={{ paddingLeft: '2.5rem' }}
+                                            value={companySearch}
+                                            onChange={(e) => setCompanySearch(e.target.value)}
+                                        />
+                                        {loadingCompanies && (
+                                            <RefreshCw size={14} className="animate-spin" style={{ position: 'absolute', right: 12, top: 14, color: '#9ca3af' }} />
+                                        )}
+                                    </div>
+                                    <button onClick={() => setIsCreatingCompany(!isCreatingCompany)} className="btn btn-primary">
+                                        <Building size={18} />
+                                        {isCreatingCompany ? 'Cancelar' : 'Nueva Empresa'}
+                                    </button>
+                                </div>
                             </div>
 
                             {isCreatingCompany && (
