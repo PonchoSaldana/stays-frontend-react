@@ -364,7 +364,7 @@ export default function LoginView({ onLogin, onAdminLogin }) {
                         </form>
                     )}
 
-                    {/* ── PASO 1: MATRÍCULA ── */}
+                    {/* ──MATRÍCULA ── */}
                     {!adminMode && flow === 'login' && (
                         <form onSubmit={handleMatriculaSubmit}>
                             <div style={{ marginBottom: '1.5rem' }}>

@@ -108,13 +108,13 @@ function App() {
         {/* panel de administración */}
         <Route path="/admin/dashboard" element={<ProtectedAdmin adminUser={adminUser}><AdminDashboard onProcessChange={setActiveProcess} /></ProtectedAdmin>} />
 
-        {/* proceso 1: catálogo de empresas */}
+        {/* : catálogo de empresas */}
         <Route path="/estadia/catalogo-empresas" element={<ProtectedProcess requiredProcess={1} userMatricula={userMatricula} activeProcess={activeProcess} processLoaded={processLoaded}><StudentCompanyView mode="catalog" userMatricula={userMatricula} /></ProtectedProcess>} />
 
-        {/* proceso 2: selección de empresa */}
+        {/* selección de empresa */}
         <Route path="/estadia/seleccion-empresa" element={<ProtectedProcess requiredProcess={2} userMatricula={userMatricula} activeProcess={activeProcess} processLoaded={processLoaded}><StudentCompanyView mode="selection" userMatricula={userMatricula} /></ProtectedProcess>} />
 
-        {/* proceso 3: entrega de documentos — múltiples sub-etapas */}
+        {/* entrega de documentos — múltiples sub-etapas */}
         <Route path="/estadia/documentos-iniciales" element={<ProtectedProcess requiredProcess={3} userMatricula={userMatricula} activeProcess={activeProcess} processLoaded={processLoaded}><ProcessView stageName="upload_1" userMatricula={userMatricula} /></ProtectedProcess>} />
         <Route path="/estadia/revision-inicial" element={<ProtectedProcess requiredProcess={3} userMatricula={userMatricula} activeProcess={activeProcess} processLoaded={processLoaded}><ProcessView stageName="check_1" userMatricula={userMatricula} /></ProtectedProcess>} />
         <Route path="/estadia/generacion-documentos" element={<ProtectedProcess requiredProcess={3} userMatricula={userMatricula} activeProcess={activeProcess} processLoaded={processLoaded}><ProcessView stageName="generate_1" userMatricula={userMatricula} /></ProtectedProcess>} />

@@ -1,6 +1,6 @@
-# Sistema de Titulación UT Tecamachalco (Frontend Demo)
+# Sistema de Gestión de estadías, UT Tecamachalco (Frontend)
 
-Este proyecto es una demostración visual del proceso de titulación para la UT Tecamachalco.
+Este proyecto es una demostración visual del proceso de entrega y revisón de documentos para estadías para la UT Tecamachalco.
 
 ## Tecnologías
 - **Vite + React**: Framework ligero y rápido.
