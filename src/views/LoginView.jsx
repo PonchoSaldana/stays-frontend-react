@@ -227,8 +227,20 @@ export default function LoginView({ onLogin, onAdminLogin }) {
     const handleSetPassword = async (e) => {
         e.preventDefault();
         setError('');
+        
+        const isValid = password.length >= 8 && 
+                        /[A-Z]/.test(password) && 
+                        /[a-z]/.test(password) && 
+                        /[0-9]/.test(password) && 
+                        /[!@#$%^&*(),.?":{}|<>]/.test(password);
+
+        if (!isValid) {
+            setError('La contraseña no cumple con todos los requisitos de seguridad'); 
+            return; 
+        }
+        
         if (password !== confirmPassword) { setError('Las contraseñas no coinciden'); return; }
-        if (password.length < 6) { setError('La contraseña debe tener al menos 6 caracteres'); return; }
+        
         setLoading(true);
         try {
             const res = await fetch(`${API_URL}/auth/set-password`, {
@@ -478,7 +490,7 @@ export default function LoginView({ onLogin, onAdminLogin }) {
                                     <Lock size={20} style={{ position: 'absolute', top: '50%', left: '1rem', transform: 'translateY(-50%)', color: '#9ca3af' }} />
                                     <input type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)}
                                         className="input" style={{ paddingLeft: '3rem', paddingRight: '3rem' }}
-                                        placeholder="Mínimo 6 caracteres" autoFocus />
+                                        placeholder="Mínimo 8 caracteres" autoFocus />
                                     <button 
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
@@ -488,6 +500,29 @@ export default function LoginView({ onLogin, onAdminLogin }) {
                                     </button>
                                 </div>
                             </div>
+                            
+                            {/* REQUISITOS DE CONTRASEÑA */}
+                            <div style={{ marginBottom: '1.5rem', background: '#f9fafb', padding: '1rem', borderRadius: '0.5rem', border: '1px solid #e5e7eb' }}>
+                                <p style={{ fontSize: '0.75rem', fontWeight: 600, color: '#374151', marginBottom: '0.5rem' }}>Tu contraseña debe contener:</p>
+                                <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                    <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: password.length >= 8 ? '#16a34a' : '#6b7280' }}>
+                                        {password.length >= 8 ? <ShieldCheck size={14} /> : <div style={{width: 14, height: 14, border: '1px solid currentColor', borderRadius: '50%'}}/>} Mínimo 8 caracteres
+                                    </li>
+                                    <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: /[A-Z]/.test(password) ? '#16a34a' : '#6b7280' }}>
+                                        {/[A-Z]/.test(password) ? <ShieldCheck size={14} /> : <div style={{width: 14, height: 14, border: '1px solid currentColor', borderRadius: '50%'}}/>} Al menos una mayúscula
+                                    </li>
+                                    <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: /[a-z]/.test(password) ? '#16a34a' : '#6b7280' }}>
+                                        {/[a-z]/.test(password) ? <ShieldCheck size={14} /> : <div style={{width: 14, height: 14, border: '1px solid currentColor', borderRadius: '50%'}}/>} Al menos una minúscula
+                                    </li>
+                                    <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: /[0-9]/.test(password) ? '#16a34a' : '#6b7280' }}>
+                                        {/[0-9]/.test(password) ? <ShieldCheck size={14} /> : <div style={{width: 14, height: 14, border: '1px solid currentColor', borderRadius: '50%'}}/>} Al menos un número
+                                    </li>
+                                    <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: /[!@#$%^&*(),.?":{}|<>]/.test(password) ? '#16a34a' : '#6b7280' }}>
+                                        {/[!@#$%^&*(),.?":{}|<>]/.test(password) ? <ShieldCheck size={14} /> : <div style={{width: 14, height: 14, border: '1px solid currentColor', borderRadius: '50%'}}/>} Un carácter especial (!@#$%...)
+                                    </li>
+                                </ul>
+                            </div>
+
                             <div style={{ marginBottom: '1.5rem' }}>
                                 <label className="form-label">Confirmar Contraseña</label>
                                 <div style={{ position: 'relative' }}>
@@ -501,7 +536,13 @@ export default function LoginView({ onLogin, onAdminLogin }) {
                                 )}
                             </div>
                             <button type="submit"
-                                disabled={!password || !confirmPassword || password !== confirmPassword || loading}
+                                disabled={
+                                    !password || 
+                                    !confirmPassword || 
+                                    password !== confirmPassword || 
+                                    loading ||
+                                    !(password.length >= 8 && /[A-Z]/.test(password) && /[a-z]/.test(password) && /[0-9]/.test(password) && /[!@#$%^&*(),.?":{}|<>]/.test(password))
+                                }
                                 className="btn btn-primary" style={{ width: '100%', fontSize: '1.125rem' }}>
                                 {loading ? 'Guardando...' : 'Finalizar Registro'}
                             </button>

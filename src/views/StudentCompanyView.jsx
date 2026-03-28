@@ -4,36 +4,9 @@ import Modal from '../components/Modal';
 import ToastContainer from '../components/Toast';
 import { useToast } from '../hooks/useToast';
 import { authFetch } from '../auth';
+import { API_URL } from '../config';
 
-const CAREERS = [
-    { id: 'ing-soft', name: 'Ingeniería en Desarrollo y Gestión de Software' },
-    { id: 'ing-red', name: 'Ingeniería en Redes Inteligentes y Ciberseguridad' },
-    { id: 'ing-ind', name: 'Ingeniería Industrial' },
-    { id: 'ing-mec', name: 'Ingeniería Mecatrónica' },
-    { id: 'ing-proc', name: 'Ingeniería en Procesos y Operaciones Industriales' },
-    { id: 'ing-man', name: 'Ingeniería en Mantenimiento Industrial' },
-    { id: 'ing-bio', name: 'Ingeniería en Procesos Bioalimentarios' },
-    { id: 'ing-agr', name: 'Ingeniería en Agricultura Sustentable y Protegida' },
-    { id: 'ing-neg', name: 'Ingeniería en Negocios y Gestión Empresarial' },
-    { id: 'ing-proy', name: 'Ingeniería en Gestión de Proyectos' },
-    { id: 'ing-fin', name: 'Ingeniería Financiera y Fiscal' },
-    { id: 'lic-con', name: 'Licenciatura en Contaduría' },
-    { id: 'lic-inn', name: 'Licenciatura en Innovación de Negocios y Mercadotecnia' },
-    { id: 'lic-cap', name: 'Licenciatura en Gestión del Capital Humano' },
-    { id: 'tsu-ti-soft', name: 'TSU en TI Área Desarrollo de Software Multiplataforma' },
-    { id: 'tsu-ti-red', name: 'TSU en TI Área Infraestructura de Redes Digitales' },
-    { id: 'tsu-pi-man', name: 'TSU en Procesos Industriales Área Manufactura' },
-    { id: 'tsu-pi-auto', name: 'TSU en Procesos Industriales Área Automotriz' },
-    { id: 'tsu-man-ind', name: 'TSU en Mantenimiento Área Industrial' },
-    { id: 'tsu-mec-auto', name: 'TSU en Mecatrónica Área Automatización' },
-    { id: 'tsu-dn-mer', name: 'TSU en Desarrollo de Negocios Área Mercadotecnia' },
-    { id: 'tsu-adm-cap', name: 'TSU en Administración Área Capital Humano' },
-    { id: 'tsu-adm-proy', name: 'TSU en Administración Área Formulación y Evaluación de Proyectos' },
-    { id: 'tsu-con', name: 'TSU en Contaduría' },
-    { id: 'tsu-ali', name: 'TSU en Procesos Alimentarios' },
-    { id: 'tsu-agr', name: 'TSU en Agricultura Sustentable y Protegida' },
-    { id: 'tsu-qui', name: 'TSU en Química Área Tecnología Ambiental' },
-];
+// Careers se cargarán dinámicamente
 
 const getCareerIcon = (careerText) => {
     if (!careerText) return Building;
@@ -68,6 +41,14 @@ export default function StudentCompanyView({ mode = 'catalog', onSelect, userMat
     const [selectedCareerId, setSelectedCareerId] = useState('');
     const [selectedCompanyId, setSelectedCompanyId] = useState(null);
     const [modalConfig, setModalConfig] = useState({ isOpen: false, title: '', content: null, footer: null, type: 'info' });
+    const [CAREERS, setCAREERS] = useState([]);
+
+    useEffect(() => {
+        fetch(`${API_URL}/careers`)
+            .then(res => res.json())
+            .then(data => setCAREERS(data || []))
+            .catch(() => {});
+    }, []);
 
     useEffect(() => {
         const timer = setTimeout(() => {

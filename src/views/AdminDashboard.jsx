@@ -9,38 +9,7 @@ import { useToast } from '../hooks/useToast';
 import { API_URL } from '../config';
 import { authFetch } from '../auth';
 
-const CAREERS = [
-    // --- Ingenierías y Licenciaturas ---
-    { id: 'ing-soft', name: 'Ingeniería en Desarrollo y Gestión de Software', type: 'Ingeniería' },
-    { id: 'ing-red', name: 'Ingeniería en Redes Inteligentes y Ciberseguridad', type: 'Ingeniería' },
-    { id: 'ing-ind', name: 'Ingeniería Industrial', type: 'Ingeniería' },
-    { id: 'ing-mec', name: 'Ingeniería Mecatrónica', type: 'Ingeniería' },
-    { id: 'ing-proc', name: 'Ingeniería en Procesos y Operaciones Industriales', type: 'Ingeniería' },
-    { id: 'ing-man', name: 'Ingeniería en Mantenimiento Industrial', type: 'Ingeniería' },
-    { id: 'ing-bio', name: 'Ingeniería en Procesos Bioalimentarios', type: 'Ingeniería' },
-    { id: 'ing-agr', name: 'Ingeniería en Agricultura Sustentable y Protegida', type: 'Ingeniería' },
-    { id: 'ing-neg', name: 'Ingeniería en Negocios y Gestión Empresarial', type: 'Ingeniería' },
-    { id: 'ing-proy', name: 'Ingeniería en Gestión de Proyectos', type: 'Ingeniería' },
-    { id: 'ing-fin', name: 'Ingeniería Financiera y Fiscal', type: 'Ingeniería' },
-    { id: 'lic-con', name: 'Licenciatura en Contaduría', type: 'Licenciatura' },
-    { id: 'lic-inn', name: 'Licenciatura en Innovación de Negocios y Mercadotecnia', type: 'Licenciatura' },
-    { id: 'lic-cap', name: 'Licenciatura en Gestión del Capital Humano', type: 'Licenciatura' },
-
-    // --- Técnico Superior Universitario (TSU) ---
-    { id: 'tsu-ti-soft', name: 'TSU en TI Área Desarrollo de Software Multiplataforma', type: 'TSU' },
-    { id: 'tsu-ti-red', name: 'TSU en TI Área Infraestructura de Redes Digitales', type: 'TSU' },
-    { id: 'tsu-pi-man', name: 'TSU en Procesos Industriales Área Manufactura', type: 'TSU' },
-    { id: 'tsu-pi-auto', name: 'TSU en Procesos Industriales Área Automotriz', type: 'TSU' },
-    { id: 'tsu-man-ind', name: 'TSU en Mantenimiento Área Industrial', type: 'TSU' },
-    { id: 'tsu-mec-auto', name: 'TSU en Mecatrónica Área Automatización', type: 'TSU' },
-    { id: 'tsu-dn-mer', name: 'TSU en Desarrollo de Negocios Área Mercadotecnia', type: 'TSU' },
-    { id: 'tsu-adm-cap', name: 'TSU en Administración Área Capital Humano', type: 'TSU' },
-    { id: 'tsu-adm-proy', name: 'TSU en Administración Área Formulación y Evaluación de Proyectos', type: 'TSU' },
-    { id: 'tsu-con', name: 'TSU en Contaduría', type: 'TSU' },
-    { id: 'tsu-ali', name: 'TSU en Procesos Alimentarios', type: 'TSU' },
-    { id: 'tsu-agr', name: 'TSU en Agricultura Sustentable y Protegida', type: 'TSU' },
-    { id: 'tsu-qui', name: 'TSU en Química Área Tecnología Ambiental', type: 'TSU' },
-];
+// Careers se cargarán desde el backend dinámicamente.
 
 
 
@@ -54,8 +23,10 @@ export default function AdminDashboard({ onProcessChange }) {
     // Configuración del Usuario Actual
     const currentUser = JSON.parse(sessionStorage.getItem('ut_admin_session') || '{}');
     const isRoot = (currentUser.username?.toLowerCase() === 'root' || currentUser.role === 'ROOT');
+    const isEncargado = currentUser.role === 'ENCARGADO_CARRERA';
 
     // ── Estado de supervisión ──────────────────────────────────────────────────
+    const [CAREERS, setCAREERS] = useState([]);
     const [selectedCareer, setSelectedCareer] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [companySearch, setCompanySearch] = useState('');
@@ -71,6 +42,11 @@ export default function AdminDashboard({ onProcessChange }) {
 
     // Inicialización de datos (Backend API)
     useEffect(() => {
+        fetch(`${API_URL}/careers`)
+            .then(res => res.json())
+            .then(data => setCAREERS(data || []))
+            .catch(err => console.error('Error fetching careers:', err));
+
         fetchStudentCounts();
         fetchCompanies();
     }, []);
@@ -239,13 +215,25 @@ export default function AdminDashboard({ onProcessChange }) {
 
     // --- State para Gestión de Admins ---
     const [admins, setAdmins] = useState([]);
-    const [newAdmin, setNewAdmin] = useState({ username: '', password: '', role: 'ADMIN' });
+    const [newAdmin, setNewAdmin] = useState({ username: '', password: '', role: 'ADMIN', assignedCareers: [] });
     const [isCreating, setIsCreating] = useState(false);
 
+    const fetchAdmins = async () => {
+        try {
+            if (!isRoot) return;
+            const res = await authFetch('/admins');
+            if (res.ok) {
+                const data = await res.json();
+                setAdmins(data);
+            }
+        } catch (error) {
+            console.error('Error fetching admins:', error);
+        }
+    };
+
     useEffect(() => {
-        const storedAdmins = JSON.parse(sessionStorage.getItem('ut_admins_db') || '[]');
-        setAdmins(storedAdmins);
-    }, []);
+        fetchAdmins();
+    }, [isRoot]);
 
     const [companies, setCompanies] = useState([]);
     const [totalCompanies, setTotalCompanies] = useState(0);
@@ -427,14 +415,30 @@ export default function AdminDashboard({ onProcessChange }) {
     };
 
     // Crea un nuevo administrador
-    const handleCreateAdmin = (e) => {
+    // Crea un nuevo administrador
+    const handleCreateAdmin = async (e) => {
         e.preventDefault();
         if (!newAdmin.username || !newAdmin.password) return;
-        const updatedAdmins = [...admins, { ...newAdmin, id: Date.now(), assignedCareers: [] }];
-        sessionStorage.setItem('ut_admins_db', JSON.stringify(updatedAdmins));
-        setAdmins(updatedAdmins);
-        setNewAdmin({ username: '', password: '', role: 'ADMIN' });
-        setIsCreating(false);
+        
+        try {
+            const res = await authFetch('/admins', {
+                method: 'POST',
+                body: JSON.stringify(newAdmin)
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setAdmins([...admins, { ...data.admin, assignedCareers: [] }]);
+                showToast({ type: 'success', title: 'Administrador Creado', message: 'El usuario fue creado exitosamente.' });
+                setNewAdmin({ username: '', password: '', role: 'ADMIN', assignedCareers: [] });
+                setIsCreating(false);
+            } else {
+                const err = await res.json();
+                showToast({ type: 'error', title: 'Error', message: err.message || 'Error al crear administrador' });
+            }
+        } catch (error) {
+            console.error('Error al crear admin', error);
+            showToast({ type: 'error', title: 'Error de Red', message: 'No se pudo conectar con el servidor.' });
+        }
     };
 
     const handleDeleteAdmin = (username) => {
@@ -453,12 +457,24 @@ export default function AdminDashboard({ onProcessChange }) {
             footer: (
                 <>
                     <button onClick={() => setModalConfig(prev => ({ ...prev, isOpen: false }))} className="btn" style={{ background: '#f3f4f6', color: '#374151' }}>Cancelar</button>
-                    <button onClick={() => {
-                        const updated = admins.filter(a => a.username !== username);
-                        setAdmins(updated);
-                        sessionStorage.setItem('ut_admins_db', JSON.stringify(updated));
-                        setModalConfig(prev => ({ ...prev, isOpen: false }));
-                        showToast({ type: 'success', title: 'Administrador eliminado', message: `El usuario "${username}" fue eliminado.` });
+                    <button onClick={async () => {
+                        try {
+                            const adminToDelete = admins.find(a => a.username === username);
+                            if (!adminToDelete) return;
+                            
+                            const res = await authFetch(`/admins/${adminToDelete.id}`, { method: 'DELETE' });
+                            if (res.ok) {
+                                const updated = admins.filter(a => a.username !== username);
+                                setAdmins(updated);
+                                setModalConfig(prev => ({ ...prev, isOpen: false }));
+                                showToast({ type: 'success', title: 'Administrador eliminado', message: `El usuario "${username}" fue eliminado.` });
+                            } else {
+                                const err = await res.json();
+                                showToast({ type: 'error', title: 'Error', message: err.message || 'Error al eliminar administrador' });
+                            }
+                        } catch (error) {
+                            showToast({ type: 'error', title: 'Error de Red', message: 'No se pudo conectar con el servidor.' });
+                        }
                     }} className="btn" style={{ background: '#DC2626', color: 'white' }}>Eliminar</button>
                 </>
             )
@@ -480,16 +496,32 @@ export default function AdminDashboard({ onProcessChange }) {
         );
     };
 
-    const saveAssignments = () => {
-        const updatedAdmins = admins.map(a =>
-            a.username === selectedAdminForAssign.username
-                ? { ...a, assignedCareers: tempAssignedCareers }
-                : a
-        );
-        setAdmins(updatedAdmins);
-        sessionStorage.setItem('ut_admins_db', JSON.stringify(updatedAdmins));
-        setAssignModalOpen(false);
-        setSelectedAdminForAssign(null);
+    const saveAssignments = async () => {
+        try {
+            const adminToUpdate = admins.find(a => a.username === selectedAdminForAssign.username);
+            
+            const res = await authFetch(`/admins/${adminToUpdate.id}`, {
+                method: 'PUT',
+                body: JSON.stringify({ assignedCareers: tempAssignedCareers })
+            });
+            
+            if (res.ok) {
+                const updatedAdmins = admins.map(a =>
+                    a.username === selectedAdminForAssign.username
+                        ? { ...a, assignedCareers: tempAssignedCareers }
+                        : a
+                );
+                setAdmins(updatedAdmins);
+                setAssignModalOpen(false);
+                setSelectedAdminForAssign(null);
+                showToast({ type: 'success', title: 'Asignaciones guardadas', message: 'Las carreras asignadas se han actualizado correctamente.' });
+            } else {
+                 const err = await res.json();
+                 showToast({ type: 'error', title: 'Error', message: err.message || 'No se pudieron guardar las asignaciones' });
+            }
+        } catch (error) {
+             showToast({ type: 'error', title: 'Error', message: 'No se pudo conectar al servidor.' });
+        }
     };
 
     // Calcular progreso de un admin (usa careerCounts que se llenan al navegar carreras)
@@ -1264,6 +1296,112 @@ export default function AdminDashboard({ onProcessChange }) {
 
     };
 
+    const renderCareersConfig = () => {
+        const [isCreatingCareer, setIsCreatingCareer] = useState(false);
+        const [nCareer, setNCareer] = useState({ id: '', name: '', type: 'TSU' });
+
+        const handleAddCareer = async (e) => {
+            e.preventDefault();
+            if (!nCareer.id || !nCareer.name) return;
+            try {
+                const res = await authFetch('/careers', {
+                    method: 'POST',
+                    body: JSON.stringify(nCareer)
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    setCAREERS([...CAREERS, data]);
+                    showToast({ type: 'success', title: 'Éxito', message: 'Carrera creada correctamente' });
+                    setNCareer({ id: '', name: '', type: 'TSU' });
+                    setIsCreatingCareer(false);
+                } else {
+                    const err = await res.json();
+                    showToast({ type: 'error', title: 'Error', message: err.message || 'Error al crear carrera' });
+                }
+            } catch (error) {
+                showToast({ type: 'error', title: 'Error', message: 'Error de red' });
+            }
+        };
+
+        const confirmDeleteCareer = (id) => {
+            setModalConfig({
+                isOpen: true,
+                title: 'Eliminar Carrera',
+                type: 'danger',
+                content: <p>¿Seguro que deseas eliminar esta carrera? Podría afectar usuarios asignados.</p>,
+                footer: (
+                    <>
+                        <button onClick={() => setModalConfig(m => ({ ...m, isOpen: false }))} className="btn" style={{ background: '#f3f4f6', color: '#1f2937' }}>Cancelar</button>
+                        <button onClick={async () => {
+                            setModalConfig(m => ({ ...m, isOpen: false }));
+                            try {
+                                const res = await authFetch(`/careers/${id}`, { method: 'DELETE' });
+                                if (res.ok) {
+                                    setCAREERS(CAREERS.filter(c => c.id !== id));
+                                    showToast({ type: 'success', title: 'Eliminado', message: 'Carrera eliminada' });
+                                } else {
+                                    showToast({ type: 'error', title: 'Error', message: 'Error al eliminar' });
+                                }
+                            } catch {
+                                showToast({ type: 'error', title: 'Error', message: 'Error de conexión' });
+                            }
+                        }} className="btn btn-primary" style={{ background: '#DC2626' }}>Eliminar</button>
+                    </>
+                )
+            });
+        };
+
+        return (
+            <div style={{ maxWidth: 1000, margin: '0 auto' }}>
+                <div className="flex-between mb-6">
+                    <div>
+                        <h2 style={{ fontSize: '1.5rem', fontWeight: 700 }}>Gestión de Carreras</h2>
+                        <p style={{ color: '#6b7280' }}>Visualiza, agrega o elimina las carreras disponibles</p>
+                    </div>
+                    <button onClick={() => setIsCreatingCareer(!isCreatingCareer)} className="btn btn-primary">
+                        {isCreatingCareer ? 'Cancelar' : <><Layers size={18} /> Agregar Carrera</>}
+                    </button>
+                </div>
+
+                {isCreatingCareer && (
+                    <div className="process-card mb-6" style={{ background: '#f9fafb', border: '1px solid #e5e7eb' }}>
+                        <h3 style={{ marginBottom: '1rem', fontWeight: 600 }}>Nueva Carrera</h3>
+                        <form onSubmit={handleAddCareer} style={{ display: 'grid', gap: '1rem', gridTemplateColumns: '1fr 2fr 1fr auto' }}>
+                            <input className="input" placeholder="ID Corto (ej. tsu-ds)" value={nCareer.id} onChange={e => setNCareer({...nCareer, id: e.target.value})} required />
+                            <input className="input" placeholder="Nombre completo" value={nCareer.name} onChange={e => setNCareer({...nCareer, name: e.target.value})} required />
+                            <select className="input" value={nCareer.type} onChange={e => setNCareer({...nCareer, type: e.target.value})}>
+                                <option value="TSU">TSU</option>
+                                <option value="Ingeniería">Ingeniería</option>
+                                <option value="Licenciatura">Licenciatura</option>
+                            </select>
+                            <button className="btn btn-primary" type="submit">Guardar</button>
+                        </form>
+                    </div>
+                )}
+
+                <div className="card-grid" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem' }}>
+                    {CAREERS.map(c => (
+                        <div key={c.id} className="process-card flex-between" style={{ marginTop: 0, padding: '1rem 1.5rem' }}>
+                            <div>
+                                <h4 style={{ fontWeight: 600, color: '#1f2937' }}>{c.name}</h4>
+                                <div style={{ display: 'flex', gap: '1rem', marginTop: '0.25rem', fontSize: '0.875rem', color: '#6b7280' }}>
+                                    <span><strong>ID:</strong> {c.id}</span>
+                                    <span><strong>Tipo:</strong> {c.type}</span>
+                                </div>
+                            </div>
+                            <button className="btn" style={{ padding: '0.5rem', background: '#FEF2F2', color: '#DC2626' }} onClick={() => confirmDeleteCareer(c.id)}>
+                                <Trash2 size={18} />
+                            </button>
+                        </div>
+                    ))}
+                    {CAREERS.length === 0 && (
+                        <p style={{ textAlign: 'center', padding: '2rem', color: '#9ca3af' }}>No hay carreras registradas.</p>
+                    )}
+                </div>
+            </div>
+        );
+    };
+
     return (
         <div className="admin-main-layout">
 
@@ -1308,13 +1446,15 @@ export default function AdminDashboard({ onProcessChange }) {
                         <Building size={18} /> Empresas
                     </button>
 
-                    <button
-                        onClick={() => { setActiveTab('database'); closeAdminSidebar(); }}
-                        className={`nav-item ${activeTab === 'database' ? 'active' : ''}`}
-                        style={{ border: 'none', background: activeTab === 'database' ? undefined : 'transparent', width: '100%', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
-                    >
-                        <Database size={18} /> Base de Datos
-                    </button>
+                    {!isEncargado && (
+                        <button
+                            onClick={() => { setActiveTab('database'); closeAdminSidebar(); }}
+                            className={`nav-item ${activeTab === 'database' ? 'active' : ''}`}
+                            style={{ border: 'none', background: activeTab === 'database' ? undefined : 'transparent', width: '100%', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
+                        >
+                            <Database size={18} /> Base de Datos
+                        </button>
+                    )}
 
                     <button
                         onClick={() => { setActiveTab('statistics'); closeAdminSidebar(); }}
@@ -1340,6 +1480,14 @@ export default function AdminDashboard({ onProcessChange }) {
                                 style={{ border: 'none', background: activeTab === 'admins' ? undefined : 'transparent', width: '100%', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
                             >
                                 <Users size={18} /> Administradores
+                            </button>
+
+                            <button
+                                onClick={() => { setActiveTab('careers'); closeAdminSidebar(); }}
+                                className={`nav-item ${activeTab === 'careers' ? 'active' : ''}`}
+                                style={{ border: 'none', background: activeTab === 'careers' ? undefined : 'transparent', width: '100%', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
+                            >
+                                <Briefcase size={18} /> Carreras
                             </button>
 
                             <button
@@ -1380,6 +1528,7 @@ export default function AdminDashboard({ onProcessChange }) {
             {/* Main Content */}
             <main className="admin-main-content">
                 {activeTab === 'procesos' && isRoot && renderProcessConfig()}
+                {activeTab === 'careers' && isRoot && renderCareersConfig()}
                 {activeTab === 'supervision' && renderSupervisionView()}
 
                 {activeTab === 'database' && (
@@ -2215,9 +2364,19 @@ export default function AdminDashboard({ onProcessChange }) {
                             {isCreating && (
                                 <div className="process-card mb-6" style={{ background: '#f9fafb', border: '1px solid #e5e7eb' }}>
                                     <h3 style={{ marginBottom: '1rem', fontWeight: 600 }}>Crear Nuevo Administrador</h3>
-                                    <form onSubmit={handleCreateAdmin} style={{ display: 'grid', gap: '1rem', gridTemplateColumns: '1fr 1fr auto' }}>
+                                    <form onSubmit={handleCreateAdmin} style={{ display: 'grid', gap: '1rem', gridTemplateColumns: newAdmin.role === 'ENCARGADO_CARRERA' ? '1fr 1fr 1fr 1fr auto' : '1fr 1fr 1fr auto' }}>
                                         <input type="text" placeholder="Usuario" className="input" value={newAdmin.username} onChange={(e) => setNewAdmin({ ...newAdmin, username: e.target.value })} />
                                         <input type="password" placeholder="Contraseña" className="input" value={newAdmin.password} onChange={(e) => setNewAdmin({ ...newAdmin, password: e.target.value })} />
+                                        <select className="input" value={newAdmin.role || 'ADMIN'} onChange={(e) => setNewAdmin({ ...newAdmin, role: e.target.value, assignedCareers: [] })}>
+                                            <option value="ADMIN">Administrador</option>
+                                            <option value="ENCARGADO_CARRERA">Encargado de Carrera</option>
+                                        </select>
+                                        {newAdmin.role === 'ENCARGADO_CARRERA' && (
+                                            <select className="input" required value={newAdmin.assignedCareers[0] || ''} onChange={(e) => setNewAdmin({ ...newAdmin, assignedCareers: [e.target.value] })}>
+                                                <option value="" disabled>-- Selecciona una Carrera --</option>
+                                                {CAREERS.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                            </select>
+                                        )}
                                         <button type="submit" className="btn btn-primary">Guardar</button>
                                     </form>
                                 </div>
@@ -2244,7 +2403,7 @@ export default function AdminDashboard({ onProcessChange }) {
                                                 <Users size={20} color="#3B82F6" />
                                                 <h4 style={{ fontWeight: 600 }}>{admin.username}</h4>
                                             </div>
-                                            <span className="tag" style={{ background: '#EFF6FF', color: '#2563EB' }}>ADMIN</span>
+                                            <span className="tag" style={{ background: admin.role === 'ENCARGADO_CARRERA' ? '#F3E8FF' : '#EFF6FF', color: admin.role === 'ENCARGADO_CARRERA' ? '#9333EA' : '#2563EB' }}>{admin.role === 'ENCARGADO_CARRERA' ? 'ENCARGADO' : admin.role}</span>
                                         </div>
                                         <p style={{ fontSize: '0.875rem', color: '#6b7280', marginTop: '0.5rem' }}>
                                             {admin.assignedCareers?.length > 0 ? `Asignado a ${admin.assignedCareers.length} carrera(s).` : 'Sin tareas asignadas.'}
