@@ -217,6 +217,8 @@ export default function AdminDashboard({ onProcessChange }) {
     const [admins, setAdmins] = useState([]);
     const [newAdmin, setNewAdmin] = useState({ username: '', password: '', role: 'ADMIN', assignedCareers: [] });
     const [isCreating, setIsCreating] = useState(false);
+    const [isCreatingCareer, setIsCreatingCareer] = useState(false);
+    const [nCareer, setNCareer] = useState({ id: '', name: '', type: 'TSU' });
 
     const fetchAdmins = async () => {
         try {
@@ -1297,8 +1299,6 @@ export default function AdminDashboard({ onProcessChange }) {
     };
 
     const renderCareersConfig = () => {
-        const [isCreatingCareer, setIsCreatingCareer] = useState(false);
-        const [nCareer, setNCareer] = useState({ id: '', name: '', type: 'TSU' });
 
         const handleAddCareer = async (e) => {
             e.preventDefault();
