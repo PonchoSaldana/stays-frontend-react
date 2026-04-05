@@ -533,19 +533,34 @@ export default function LoginView({ onLogin, onAdminLogin }) {
                                     <p style={{ fontSize: '0.75rem', fontWeight: 600, color: '#374151', marginBottom: '0.5rem' }}>Tu contraseña debe contener:</p>
                                     <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                                         <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: password.length >= 8 ? '#16a34a' : '#6b7280' }}>
-                                            {password.length >= 8 ? <ShieldCheck size={14} /> : <div style={{width: 14, height: 14, border: '1px solid currentColor', borderRadius: '50%'}}/>} Mínimo 8 caracteres
+                                            <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 14, height: 14 }}>
+                                                {password.length >= 8 ? <ShieldCheck size={14} /> : <div style={{width: 14, height: 14, border: '1px solid currentColor', borderRadius: '50%'}}/>}
+                                            </span>
+                                            <span>Mínimo 8 caracteres</span>
                                         </li>
                                         <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: /[A-Z]/.test(password || '') ? '#16a34a' : '#6b7280' }}>
-                                            {/[A-Z]/.test(password || '') ? <ShieldCheck size={14} /> : <div style={{width: 14, height: 14, border: '1px solid currentColor', borderRadius: '50%'}}/>} Al menos una mayúscula
+                                            <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 14, height: 14 }}>
+                                                {/[A-Z]/.test(password || '') ? <ShieldCheck size={14} /> : <div style={{width: 14, height: 14, border: '1px solid currentColor', borderRadius: '50%'}}/>}
+                                            </span>
+                                            <span>Al menos una mayúscula</span>
                                         </li>
                                         <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: /[a-z]/.test(password || '') ? '#16a34a' : '#6b7280' }}>
-                                            {/[a-z]/.test(password || '') ? <ShieldCheck size={14} /> : <div style={{width: 14, height: 14, border: '1px solid currentColor', borderRadius: '50%'}}/>} Al menos una minúscula
+                                            <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 14, height: 14 }}>
+                                                {/[a-z]/.test(password || '') ? <ShieldCheck size={14} /> : <div style={{width: 14, height: 14, border: '1px solid currentColor', borderRadius: '50%'}}/>}
+                                            </span>
+                                            <span>Al menos una minúscula</span>
                                         </li>
                                         <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: /[0-9]/.test(password || '') ? '#16a34a' : '#6b7280' }}>
-                                            {/[0-9]/.test(password || '') ? <ShieldCheck size={14} /> : <div style={{width: 14, height: 14, border: '1px solid currentColor', borderRadius: '50%'}}/>} Al menos un número
+                                            <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 14, height: 14 }}>
+                                                {/[0-9]/.test(password || '') ? <ShieldCheck size={14} /> : <div style={{width: 14, height: 14, border: '1px solid currentColor', borderRadius: '50%'}}/>}
+                                            </span>
+                                            <span>Al menos un número</span>
                                         </li>
                                         <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: /[!@#$%^&*(),.?":{}|<>]/.test(password || '') ? '#16a34a' : '#6b7280' }}>
-                                            {/[!@#$%^&*(),.?":{}|<>]/.test(password || '') ? <ShieldCheck size={14} /> : <div style={{width: 14, height: 14, border: '1px solid currentColor', borderRadius: '50%'}}/>} Un carácter especial (!@#$%...)
+                                            <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 14, height: 14 }}>
+                                                {/[!@#$%^&*(),.?":{}|<>]/.test(password || '') ? <ShieldCheck size={14} /> : <div style={{width: 14, height: 14, border: '1px solid currentColor', borderRadius: '50%'}}/>}
+                                            </span>
+                                            <span>Un carácter especial (!@#$%...)</span>
                                         </li>
                                     </ul>
                                 </div>
