@@ -554,7 +554,7 @@ export default function LoginView({ onLogin, onAdminLogin }) {
                                         className="input" style={{ paddingLeft: '3rem', paddingRight: '3rem' }}
                                         placeholder="Repite la contraseña" />
                                 </div>
-                                {password && confirmPassword && password !== confirmPassword && (
+                                {password !== '' && confirmPassword !== '' && password !== confirmPassword && (
                                     <p style={{ color: 'red', fontSize: '0.75rem', marginTop: '0.25rem' }}>Las contraseñas no coinciden</p>
                                 )}
                             </div>
