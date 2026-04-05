@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ArrowRight, GraduationCap, Mail, Lock, ShieldCheck, ArrowLeft, Key, Eye, EyeOff } from 'lucide-react';
 import logoUt from '../assets/logo-ut.png';
 import { API_URL } from '../config';
+import ErrorBoundary from '../components/ErrorBoundary';
 
 export default function LoginView({ onLogin, onAdminLogin }) {
     const [matricula, setMatricula] = useState('');
@@ -424,40 +425,42 @@ export default function LoginView({ onLogin, onAdminLogin }) {
 
                     {/* ── PASO LOGIN: CONTRASEÑA NORMAL ── */}
                     {!adminMode && flow === 'onboarding_password' && (
-                        <form onSubmit={handlePasswordLogin}>
-                            <div style={{ marginBottom: '1.5rem' }}>
-                                <label className="form-label">
-                                    Contraseña
-                                </label>
-                                <div style={{ position: 'relative' }}>
-                                    <Lock size={20} style={{ position: 'absolute', top: '50%', left: '1rem', transform: 'translateY(-50%)', color: '#9ca3af' }} />
-                                    <input type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)}
-                                        className="input" style={{ paddingLeft: '3rem', paddingRight: '3rem' }}
-                                        autoComplete="current-password"
-                                        placeholder="Tu contraseña" autoFocus />
-                                    <button 
-                                        type="button"
-                                        onClick={() => setShowPassword(!showPassword)}
-                                        style={{ position: 'absolute', top: '50%', right: '1rem', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#9ca3af', cursor: 'pointer', padding: 0 }}
-                                    >
-                                        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                                    </button>
+                        <ErrorBoundary>
+                            <form onSubmit={handlePasswordLogin}>
+                                <div style={{ marginBottom: '1.5rem' }}>
+                                    <label className="form-label">
+                                        Contraseña
+                                    </label>
+                                    <div style={{ position: 'relative' }}>
+                                        <Lock size={20} style={{ position: 'absolute', top: '50%', left: '1rem', transform: 'translateY(-50%)', color: '#9ca3af' }} />
+                                        <input type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)}
+                                            className="input" style={{ paddingLeft: '3rem', paddingRight: '3rem' }}
+                                            autoComplete="current-password"
+                                            placeholder="Tu contraseña" />
+                                        <button 
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            style={{ position: 'absolute', top: '50%', right: '1rem', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#9ca3af', cursor: 'pointer', padding: 0 }}
+                                        >
+                                            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                        </button>
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.65rem' }}>
+                                        <button 
+                                            type="button" 
+                                            onClick={handleForgotPassword}
+                                            className="forgot-password-btn-bottom"
+                                        >
+                                            ¿Olvidaste tu contraseña?
+                                        </button>
+                                    </div>
                                 </div>
-                                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.65rem' }}>
-                                    <button 
-                                        type="button" 
-                                        onClick={handleForgotPassword}
-                                        className="forgot-password-btn-bottom"
-                                    >
-                                        ¿Olvidaste tu contraseña?
-                                    </button>
-                                </div>
-                            </div>
-                            <button type="submit" disabled={!password || loading} className="btn btn-primary"
-                                style={{ width: '100%', fontSize: '1.125rem' }}>
-                                {loading ? 'Entrando...' : <><span>Entrar</span><ArrowRight size={20} /></>}
-                            </button>
-                        </form>
+                                <button type="submit" disabled={!password || loading} className="btn btn-primary"
+                                    style={{ width: '100%', fontSize: '1.125rem' }}>
+                                    {loading ? 'Entrando...' : <><span>Entrar</span><ArrowRight size={20} /></>}
+                                </button>
+                            </form>
+                        </ErrorBoundary>
                     )}
 
                     {/* ── ONBOARDING PASO 2: EMAIL ── */}
@@ -506,70 +509,72 @@ export default function LoginView({ onLogin, onAdminLogin }) {
 
                     {/* ── ONBOARDING PASO 4: CONTRASEÑA NUEVA ── */}
                     {!adminMode && flow === 'password' && (
-                        <form onSubmit={handleSetPassword}>
-                            <div style={{ marginBottom: '1rem' }}>
-                                <label className="form-label">Nueva Contraseña</label>
-                                <div style={{ position: 'relative' }}>
-                                    <Lock size={20} style={{ position: 'absolute', top: '50%', left: '1rem', transform: 'translateY(-50%)', color: '#9ca3af' }} />
-                                    <input type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)}
-                                        className="input" style={{ paddingLeft: '3rem', paddingRight: '3rem' }}
-                                        placeholder="Mínimo 8 caracteres" autoComplete="new-password" />
-                                    <button 
-                                        type="button"
-                                        onClick={() => setShowPassword(!showPassword)}
-                                        style={{ position: 'absolute', top: '50%', right: '1rem', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#9ca3af', cursor: 'pointer', padding: 0 }}
-                                    >
-                                        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                                    </button>
+                        <ErrorBoundary>
+                            <form onSubmit={handleSetPassword}>
+                                <div style={{ marginBottom: '1rem' }}>
+                                    <label className="form-label">Nueva Contraseña</label>
+                                    <div style={{ position: 'relative' }}>
+                                        <Lock size={20} style={{ position: 'absolute', top: '50%', left: '1rem', transform: 'translateY(-50%)', color: '#9ca3af' }} />
+                                        <input type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)}
+                                            className="input" style={{ paddingLeft: '3rem', paddingRight: '3rem' }}
+                                            placeholder="Mínimo 8 caracteres" autoComplete="new-password" />
+                                        <button 
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            style={{ position: 'absolute', top: '50%', right: '1rem', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#9ca3af', cursor: 'pointer', padding: 0 }}
+                                        >
+                                            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
-                            
-                            {/* REQUISITOS DE CONTRASEÑA */}
-                            <div style={{ marginBottom: '1.5rem', background: '#f9fafb', padding: '1rem', borderRadius: '0.5rem', border: '1px solid #e5e7eb' }}>
-                                <p style={{ fontSize: '0.75rem', fontWeight: 600, color: '#374151', marginBottom: '0.5rem' }}>Tu contraseña debe contener:</p>
-                                <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                                    <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: password.length >= 8 ? '#16a34a' : '#6b7280' }}>
-                                        {password.length >= 8 ? <ShieldCheck size={14} /> : <div style={{width: 14, height: 14, border: '1px solid currentColor', borderRadius: '50%'}}/>} Mínimo 8 caracteres
-                                    </li>
-                                    <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: /[A-Z]/.test(password) ? '#16a34a' : '#6b7280' }}>
-                                        {/[A-Z]/.test(password) ? <ShieldCheck size={14} /> : <div style={{width: 14, height: 14, border: '1px solid currentColor', borderRadius: '50%'}}/>} Al menos una mayúscula
-                                    </li>
-                                    <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: /[a-z]/.test(password) ? '#16a34a' : '#6b7280' }}>
-                                        {/[a-z]/.test(password) ? <ShieldCheck size={14} /> : <div style={{width: 14, height: 14, border: '1px solid currentColor', borderRadius: '50%'}}/>} Al menos una minúscula
-                                    </li>
-                                    <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: /[0-9]/.test(password) ? '#16a34a' : '#6b7280' }}>
-                                        {/[0-9]/.test(password) ? <ShieldCheck size={14} /> : <div style={{width: 14, height: 14, border: '1px solid currentColor', borderRadius: '50%'}}/>} Al menos un número
-                                    </li>
-                                    <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: /[!@#$%^&*(),.?":{}|<>]/.test(password) ? '#16a34a' : '#6b7280' }}>
-                                        {/[!@#$%^&*(),.?":{}|<>]/.test(password) ? <ShieldCheck size={14} /> : <div style={{width: 14, height: 14, border: '1px solid currentColor', borderRadius: '50%'}}/>} Un carácter especial (!@#$%...)
-                                    </li>
-                                </ul>
-                            </div>
+                                
+                                {/* REQUISITOS DE CONTRASEÑA */}
+                                <div style={{ marginBottom: '1.5rem', background: '#f9fafb', padding: '1rem', borderRadius: '0.5rem', border: '1px solid #e5e7eb' }}>
+                                    <p style={{ fontSize: '0.75rem', fontWeight: 600, color: '#374151', marginBottom: '0.5rem' }}>Tu contraseña debe contener:</p>
+                                    <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                        <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: password.length >= 8 ? '#16a34a' : '#6b7280' }}>
+                                            {password.length >= 8 ? <ShieldCheck size={14} /> : <div style={{width: 14, height: 14, border: '1px solid currentColor', borderRadius: '50%'}}/>} Mínimo 8 caracteres
+                                        </li>
+                                        <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: /[A-Z]/.test(password || '') ? '#16a34a' : '#6b7280' }}>
+                                            {/[A-Z]/.test(password || '') ? <ShieldCheck size={14} /> : <div style={{width: 14, height: 14, border: '1px solid currentColor', borderRadius: '50%'}}/>} Al menos una mayúscula
+                                        </li>
+                                        <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: /[a-z]/.test(password || '') ? '#16a34a' : '#6b7280' }}>
+                                            {/[a-z]/.test(password || '') ? <ShieldCheck size={14} /> : <div style={{width: 14, height: 14, border: '1px solid currentColor', borderRadius: '50%'}}/>} Al menos una minúscula
+                                        </li>
+                                        <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: /[0-9]/.test(password || '') ? '#16a34a' : '#6b7280' }}>
+                                            {/[0-9]/.test(password || '') ? <ShieldCheck size={14} /> : <div style={{width: 14, height: 14, border: '1px solid currentColor', borderRadius: '50%'}}/>} Al menos un número
+                                        </li>
+                                        <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: /[!@#$%^&*(),.?":{}|<>]/.test(password || '') ? '#16a34a' : '#6b7280' }}>
+                                            {/[!@#$%^&*(),.?":{}|<>]/.test(password || '') ? <ShieldCheck size={14} /> : <div style={{width: 14, height: 14, border: '1px solid currentColor', borderRadius: '50%'}}/>} Un carácter especial (!@#$%...)
+                                        </li>
+                                    </ul>
+                                </div>
 
-                            <div style={{ marginBottom: '1.5rem' }}>
-                                <label className="form-label">Confirmar Contraseña</label>
-                                <div style={{ position: 'relative' }}>
-                                    <Key size={20} style={{ position: 'absolute', top: '50%', left: '1rem', transform: 'translateY(-50%)', color: '#9ca3af' }} />
-                                    <input type={showPassword ? "text" : "password"} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)}
-                                        className="input" style={{ paddingLeft: '3rem', paddingRight: '3rem' }}
-                                        placeholder="Repite la contraseña" autoComplete="new-password" />
+                                <div style={{ marginBottom: '1.5rem' }}>
+                                    <label className="form-label">Confirmar Contraseña</label>
+                                    <div style={{ position: 'relative' }}>
+                                        <Key size={20} style={{ position: 'absolute', top: '50%', left: '1rem', transform: 'translateY(-50%)', color: '#9ca3af' }} />
+                                        <input type={showPassword ? "text" : "password"} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)}
+                                            className="input" style={{ paddingLeft: '3rem', paddingRight: '3rem' }}
+                                            placeholder="Repite la contraseña" autoComplete="new-password" />
+                                    </div>
+                                    {Boolean(password !== '' && confirmPassword !== '' && password !== confirmPassword) && (
+                                        <p style={{ color: 'red', fontSize: '0.75rem', marginTop: '0.25rem' }}>Las contraseñas no coinciden</p>
+                                    )}
                                 </div>
-                                {password !== '' && confirmPassword !== '' && password !== confirmPassword && (
-                                    <p style={{ color: 'red', fontSize: '0.75rem', marginTop: '0.25rem' }}>Las contraseñas no coinciden</p>
-                                )}
-                            </div>
-                            <button type="submit"
-                                disabled={
-                                    !password || 
-                                    !confirmPassword || 
-                                    password !== confirmPassword || 
-                                    loading ||
-                                    !(password.length >= 8 && /[A-Z]/.test(password) && /[a-z]/.test(password) && /[0-9]/.test(password) && /[!@#$%^&*(),.?":{}|<>]/.test(password))
-                                }
-                                className="btn btn-primary" style={{ width: '100%', fontSize: '1.125rem' }}>
-                                {loading ? 'Guardando...' : 'Finalizar Registro'}
-                            </button>
-                        </form>
+                                <button type="submit"
+                                    disabled={
+                                        Boolean(!password || 
+                                        !confirmPassword || 
+                                        password !== confirmPassword || 
+                                        loading ||
+                                        !(password.length >= 8 && /[A-Z]/.test(password || '') && /[a-z]/.test(password || '') && /[0-9]/.test(password || '') && /[!@#$%^&*(),.?":{}|<>]/.test(password || '')))
+                                    }
+                                    className="btn btn-primary" style={{ width: '100%', fontSize: '1.125rem' }}>
+                                    {loading ? 'Guardando...' : 'Finalizar Registro'}
+                                </button>
+                            </form>
+                        </ErrorBoundary>
                     )}
 
                     <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid #f3f4f6' }}>
