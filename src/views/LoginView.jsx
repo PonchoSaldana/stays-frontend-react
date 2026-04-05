@@ -22,6 +22,8 @@ export default function LoginView({ onLogin, onAdminLogin }) {
     const [email, setEmail] = useState('');
     const [verificationCode, setVerificationCode] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    // true = flujo de recuperación, false = onboarding inicial
+    const [isForgotFlow, setIsForgotFlow] = useState(false);
 
     // Live recognition
     const [recognizedName, setRecognizedName] = useState(null);
@@ -172,8 +174,9 @@ export default function LoginView({ onLogin, onAdminLogin }) {
                 return;
             }
 
-            // Si se envió el código con éxito, pasamos al flujo de verificación
-            setEmail(data.email || 'tu correo registrado'); // Guardamos el email (enmascarado usualmente) para mostrarlo
+            // Marcar que es flujo de recuperación (no onboarding)
+            setIsForgotFlow(true);
+            setEmail(data.email || 'tu correo registrado');
             setFlow('verify');
         } catch {
             setError('Error de conexión al solicitar recuperación.');
@@ -202,7 +205,7 @@ export default function LoginView({ onLogin, onAdminLogin }) {
         setLoading(false);
     };
 
-    // ─── ONBOARDING PASO 3: Verificar código ──────────────────────────────────
+    // ─── PASO 3: Verificar código (onboarding y recuperación) ─────────────────
     const handleVerifySubmit = async (e) => {
         e.preventDefault();
         setError('');
@@ -216,6 +219,7 @@ export default function LoginView({ onLogin, onAdminLogin }) {
             });
             const data = await res.json();
             if (!res.ok) { setError(data.message); setLoading(false); return; }
+            // Tanto onboarding como recuperación van al paso de crear contraseña
             setFlow('password');
         } catch {
             setError('Error al verificar el código');
@@ -223,7 +227,7 @@ export default function LoginView({ onLogin, onAdminLogin }) {
         setLoading(false);
     };
 
-    // ─── ONBOARDING PASO 4: Guardar contraseña ────────────────────────────────
+    // ─── PASO 4: Guardar contraseña (onboarding y recuperación) ──────────────
     const handleSetPassword = async (e) => {
         e.preventDefault();
         setError('');
@@ -249,12 +253,31 @@ export default function LoginView({ onLogin, onAdminLogin }) {
                 body: JSON.stringify({ matricula: String(matricula).trim(), password })
             });
             const data = await res.json();
-            if (!res.ok) { setError(data.message); setLoading(false); return; }
+            if (!res.ok) {
+                setError(data.message || 'Error al guardar la contraseña');
+                setLoading(false);
+                return;
+            }
+
+            if (!data.token || !data.user) {
+                setError('Respuesta inesperada del servidor. Intenta iniciar sesión.');
+                setLoading(false);
+                setFlow('login');
+                setIsForgotFlow(false);
+                return;
+            }
 
             sessionStorage.setItem('ut_token', data.token);
-            onLogin(data.user.matricula, data.user);
+            setIsForgotFlow(false);
+            try {
+                onLogin(data.user.matricula, data.user);
+            } catch (loginErr) {
+                console.error('Error al redirigir tras login:', loginErr);
+                setError('Contraseña guardada. Por favor inicia sesión normalmente.');
+                setFlow('login');
+            }
         } catch {
-            setError('Error al guardar la contraseña');
+            setError('Error de conexión. Verifica tu internet e intenta de nuevo.');
         }
         setLoading(false);
     };
@@ -466,7 +489,7 @@ export default function LoginView({ onLogin, onAdminLogin }) {
                                     <ShieldCheck size={20} style={{ position: 'absolute', top: '50%', left: '1rem', transform: 'translateY(-50%)', color: '#9ca3af' }} />
                                     <input type="text" value={verificationCode} onChange={e => setVerificationCode(e.target.value)}
                                         className="input" style={{ paddingLeft: '3rem', letterSpacing: '0.25rem', fontWeight: 'bold' }}
-                                        placeholder="123456" maxLength={6} autoFocus />
+                                        placeholder="······" maxLength={6} autoFocus />
                                 </div>
                             </div>
                             <button type="submit" disabled={!verificationCode || loading} className="btn btn-primary"
