@@ -343,35 +343,45 @@ export default function AdminDashboard({ onProcessChange }) {
 
 
 
-    const handleCreateCompany = (e) => {
+    const handleCreateCompany = async (e) => {
         e.preventDefault();
         if (!newCompany.name) return;
 
-        let updated;
-        if (isEditingCompany) {
-            updated = companies.map(c => c.id === currentCompanyId ? { ...newCompany, id: currentCompanyId } : c);
-            showToast({
-                type: 'success',
-                title: 'Empresa Actualizada',
-                message: `La empresa ${newCompany.name} se ha actualizado correctamente.`,
-            });
-        } else {
-            updated = [...companies, { ...newCompany, id: Date.now() }];
-            showToast({
-                type: 'success',
-                title: 'Empresa Registrada',
-                message: `La empresa ${newCompany.name} se ha registrado correctamente en el catálogo.`,
-            });
+        try {
+            if (isEditingCompany) {
+                const res = await authFetch(`/companies/${currentCompanyId}`, {
+                    method: 'PUT',
+                    body: JSON.stringify(newCompany)
+                });
+                if (res.ok) {
+                    showToast({ type: 'success', title: 'Empresa Actualizada', message: `La empresa ${newCompany.name} se ha actualizado correctamente.` });
+                } else {
+                    throw new Error('Error al actualizar');
+                }
+            } else {
+                const res = await authFetch('/companies', {
+                    method: 'POST',
+                    body: JSON.stringify(newCompany)
+                });
+                if (res.ok) {
+                    showToast({ type: 'success', title: 'Empresa Registrada', message: `La empresa ${newCompany.name} se ha registrado correctamente en el catálogo.` });
+                } else {
+                    throw new Error('Error al registrar');
+                }
+            }
+
+            // Recargar empresas desde el backend
+            fetchCompanies('');
+
+            // Reset form
+            setNewCompany({ name: '', address: '', contact: '', email: '', fileName: '', careerId: '', spots: 0, hasFinancialSupport: false });
+            setIsCreatingCompany(false);
+            setIsEditingCompany(false);
+            setCurrentCompanyId(null);
+        } catch (error) {
+            console.error(error);
+            showToast({ type: 'error', title: 'Error', message: 'No se pudo guardar la información de la empresa en la base de datos.' });
         }
-
-        setCompanies(updated);
-        sessionStorage.setItem('ut_companies_db', JSON.stringify(updated));
-
-        // Reset form
-        setNewCompany({ name: '', address: '', contact: '', email: '', fileName: '', careerId: '', spots: 0, hasFinancialSupport: false });
-        setIsCreatingCompany(false);
-        setIsEditingCompany(false);
-        setCurrentCompanyId(null);
     };
 
     const handleEditCompany = (company) => {
@@ -404,12 +414,20 @@ export default function AdminDashboard({ onProcessChange }) {
             footer: (
                 <>
                     <button onClick={() => setModalConfig(prev => ({ ...prev, isOpen: false }))} className="btn" style={{ background: '#f3f4f6', color: '#374151' }}>Cancelar</button>
-                    <button onClick={() => {
-                        const updated = companies.filter(c => c.id !== id);
-                        setCompanies(updated);
-                        sessionStorage.setItem('ut_companies_db', JSON.stringify(updated));
-                        setModalConfig(prev => ({ ...prev, isOpen: false }));
-                        showToast({ type: 'success', title: 'Empresa eliminada', message: 'La empresa fue eliminada del catálogo.' });
+                    <button onClick={async () => {
+                        try {
+                            const res = await authFetch(`/companies/${id}`, { method: 'DELETE' });
+                            if (res.ok) {
+                                fetchCompanies('');
+                                setModalConfig(prev => ({ ...prev, isOpen: false }));
+                                showToast({ type: 'success', title: 'Empresa eliminada', message: 'La empresa fue eliminada de la base de datos.' });
+                            } else {
+                                const err = await res.json();
+                                showToast({ type: 'error', title: 'Error', message: err.message || 'Error al eliminar empresa. Puede que tenga alumnos asignados.' });
+                            }
+                        } catch (error) {
+                            showToast({ type: 'error', title: 'Error de Red', message: 'No se pudo conectar con el servidor.' });
+                        }
                     }} className="btn" style={{ background: '#DC2626', color: 'white' }}>Eliminar</button>
                 </>
             )
@@ -640,28 +658,33 @@ export default function AdminDashboard({ onProcessChange }) {
         }
     };
 
-    // Exporta la base de datos a Excel (descarga todos los alumnos del servidor)
+    // Exporta la base de datos a Excel (descarga todos los alumnos y empresas fusionadas del servidor)
     const handleExportExcel = async () => {
         try {
-            const res = await authFetch('/students?page=1&limit=99999');
+            showToast({ type: 'info', title: 'Generando Excel', message: 'Preparando el archivo, por favor espera...' });
+            
+            const res = await authFetch('/import/export/excel');
             if (!res.ok) {
-                showToast({ type: 'error', title: 'Error', message: 'No se pudieron obtener los datos del servidor.' });
+                const err = await res.json();
+                showToast({ type: 'error', title: 'Error', message: err.message || 'No se pudo generar el archivo Excel.' });
                 return;
             }
-            const data = await res.json();
-            const allStudents = data.students || data || [];
-            if (allStudents.length === 0) {
-                showToast({ type: 'warning', title: 'Sin registros', message: 'No hay alumnos registrados para exportar.' });
-                return;
-            }
-            const ws = utils.json_to_sheet(allStudents);
-            const wb = utils.book_new();
-            utils.book_append_sheet(wb, ws, 'Base de Datos Completa');
-            writeFile(wb, `BD_Alumnos_UT_${new Date().toISOString().slice(0, 10)}.xlsx`);
-            showToast({ type: 'success', title: 'Exportado', message: `${allStudents.length} registros exportados exitosamente.` });
+            
+            // Convertir respuesta a blob y descargar
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Listado_Alumnos_Empresas_${new Date().toISOString().slice(0, 10)}.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            
+            showToast({ type: 'success', title: 'Exportado', message: `Base de datos exportada exitosamente.` });
         } catch (err) {
             console.error(err);
-            showToast({ type: 'error', title: 'Error al exportar', message: 'Ocurrió un problema al generar el archivo Excel.' });
+            showToast({ type: 'error', title: 'Error al exportar', message: 'Ocurrió un problema al generar o descargar el archivo Excel.' });
         }
     };
 
