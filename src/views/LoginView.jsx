@@ -487,9 +487,9 @@ export default function LoginView({ onLogin, onAdminLogin }) {
                                 <label className="form-label">Código de Verificación</label>
                                 <div style={{ position: 'relative' }}>
                                     <ShieldCheck size={20} style={{ position: 'absolute', top: '50%', left: '1rem', transform: 'translateY(-50%)', color: '#9ca3af' }} />
-                                    <input type="text" value={verificationCode} onChange={e => setVerificationCode(e.target.value)}
+                                    <input type="text" inputMode="numeric" pattern="[0-9]*" value={verificationCode} onChange={e => setVerificationCode(e.target.value.replace(/\D/g, ''))}
                                         className="input" style={{ paddingLeft: '3rem', letterSpacing: '0.25rem', fontWeight: 'bold' }}
-                                        placeholder="······" maxLength={6} autoFocus />
+                                        placeholder="······" maxLength={6} autoFocus autoComplete="one-time-code" />
                                 </div>
                             </div>
                             <button type="submit" disabled={!verificationCode || loading} className="btn btn-primary"
@@ -513,7 +513,7 @@ export default function LoginView({ onLogin, onAdminLogin }) {
                                     <Lock size={20} style={{ position: 'absolute', top: '50%', left: '1rem', transform: 'translateY(-50%)', color: '#9ca3af' }} />
                                     <input type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)}
                                         className="input" style={{ paddingLeft: '3rem', paddingRight: '3rem' }}
-                                        placeholder="Mínimo 8 caracteres" autoFocus />
+                                        placeholder="Mínimo 8 caracteres" autoComplete="new-password" />
                                     <button 
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
@@ -552,7 +552,7 @@ export default function LoginView({ onLogin, onAdminLogin }) {
                                     <Key size={20} style={{ position: 'absolute', top: '50%', left: '1rem', transform: 'translateY(-50%)', color: '#9ca3af' }} />
                                     <input type={showPassword ? "text" : "password"} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)}
                                         className="input" style={{ paddingLeft: '3rem', paddingRight: '3rem' }}
-                                        placeholder="Repite la contraseña" />
+                                        placeholder="Repite la contraseña" autoComplete="new-password" />
                                 </div>
                                 {password !== '' && confirmPassword !== '' && password !== confirmPassword && (
                                     <p style={{ color: 'red', fontSize: '0.75rem', marginTop: '0.25rem' }}>Las contraseñas no coinciden</p>

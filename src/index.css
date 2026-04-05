@@ -588,19 +588,29 @@ body {
   }
 }
 
-/* Móvil: ocultar panel visual */
+/* Móvil: ocultar panel visual, corregir overflow para teclado */
 @media (max-width: 480px) {
+  .login-page-wrapper {
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow-y: auto;
+  }
+
   .login-card {
     margin: 0;
     border-radius: 0;
     min-height: 100vh;
+    min-height: 100dvh;
     box-shadow: none;
     border: none;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .login-form-section {
     padding: 2rem 1.5rem;
     justify-content: flex-start;
+    flex-shrink: 0;
   }
 
   .login-visual-section {
