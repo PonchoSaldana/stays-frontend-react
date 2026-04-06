@@ -42,11 +42,26 @@ export default function AdminDashboard({ onProcessChange }) {
 
     // Inicialización de datos (Backend API)
     useEffect(() => {
-        fetch(`${API_URL}/careers`)
-            .then(res => res.json())
-            .then(data => setCAREERS(data || []))
-            .catch(err => console.error('Error fetching careers:', err));
+        const getInitialData = async () => {
+            try {
+                const res = await fetch(`${API_URL}/careers`);
+                const careersList = await res.json() || [];
+                setCAREERS(careersList);
 
+                // Auto-seleccionar carrera para el Encargado al iniciar sesión
+                if (isEncargado && currentUser.assignedCareers?.length > 0) {
+                    const assignedId = currentUser.assignedCareers[0];
+                    const career = careersList.find(c => c.id === assignedId);
+                    if (career) {
+                        setSelectedCareer(career);
+                    }
+                }
+            } catch (err) {
+                console.error('Error fetching careers:', err);
+            }
+        };
+
+        getInitialData();
         fetchStudentCounts();
         fetchCompanies();
     }, []);
