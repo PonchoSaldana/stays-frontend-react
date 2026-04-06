@@ -256,6 +256,31 @@ export default function AdminDashboard({ onProcessChange }) {
     // --- State para Reasignación (Estadías) ---
     const [reasignSearch, setReasignSearch] = useState('');
     const [testMatricula, setTestMatricula] = useState(''); // Estado para verificador de datos
+    const [testStudentResult, setTestStudentResult] = useState(null);
+    const [testingStudentLoading, setTestingStudentLoading] = useState(false);
+
+    useEffect(() => {
+        if (!testMatricula || testMatricula.length < 3) {
+            setTestStudentResult(null);
+            return;
+        }
+        const timer = setTimeout(async () => {
+            setTestingStudentLoading(true);
+            try {
+                const res = await authFetch(`/students/${testMatricula.trim().toLowerCase()}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    setTestStudentResult(data);
+                } else {
+                    setTestStudentResult('NOT_FOUND');
+                }
+            } catch {
+                setTestStudentResult('ERROR');
+            }
+            setTestingStudentLoading(false);
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [testMatricula]);
 
     // --- State para Asignación de Tareas (Root) ---
     const [assignModalOpen, setAssignModalOpen] = useState(false);
@@ -1971,23 +1996,22 @@ export default function AdminDashboard({ onProcessChange }) {
 
                             {testMatricula && (
                                 <div style={{ marginTop: '1rem', background: '#F3F4F6', padding: '1rem', borderRadius: '0.5rem', fontSize: '0.875rem' }}>
-                                    {(() => {
-                                        const found = careerStudents.find(s => String(s.matricula).includes(testMatricula));
-                                        if (!found) return <span style={{ color: '#DC2626' }}>No se encontró ningún estudiante con esa matrícula. Asegúrate de haber cargado el Excel.</span>;
-                                        return (
-                                            <div>
-                                                <p style={{ color: '#059669', fontWeight: 600, marginBottom: '0.5rem' }}> Alumno encontrado:</p>
-                                                <div className="grid-3" style={{ gap: '0.5rem' }}>
-                                                    {Object.entries(found).map(([key, val]) => (
-                                                        <div key={key} style={{ background: 'white', padding: '0.5rem', borderRadius: '0.25rem', border: '1px solid #E5E7EB' }}>
-                                                            <strong style={{ display: 'block', fontSize: '0.75rem', color: '#9CA3AF', textTransform: 'uppercase' }}>{key}</strong>
-                                                            <span style={{ wordBreak: 'break-all' }}>{String(val)}</span>
-                                                        </div>
-                                                    ))}
-                                                </div>
+                                    {testingStudentLoading && <span style={{ color: '#6B7280' }}>Buscando en la base de datos de RDS...</span>}
+                                    {!testingStudentLoading && testStudentResult === 'NOT_FOUND' && <span style={{ color: '#DC2626' }}>No se encontró ningún estudiante con esa matrícula. Asegúrate de haber cargado el Excel.</span>}
+                                    {!testingStudentLoading && testStudentResult === 'ERROR' && <span style={{ color: '#DC2626' }}>Ocurrió un error al conectar con la base de datos.</span>}
+                                    {!testingStudentLoading && testStudentResult && testStudentResult !== 'NOT_FOUND' && testStudentResult !== 'ERROR' && (
+                                        <div>
+                                            <p style={{ color: '#059669', fontWeight: 600, marginBottom: '0.5rem' }}> Alumno encontrado en BD Autónoma:</p>
+                                            <div className="grid-3" style={{ gap: '0.5rem' }}>
+                                                {Object.entries(testStudentResult).map(([key, val]) => (
+                                                    <div key={key} style={{ background: 'white', padding: '0.5rem', borderRadius: '0.25rem', border: '1px solid #E5E7EB' }}>
+                                                        <strong style={{ display: 'block', fontSize: '0.75rem', color: '#9CA3AF', textTransform: 'uppercase' }}>{key}</strong>
+                                                        <span style={{ wordBreak: 'break-all' }}>{String(val)}</span>
+                                                    </div>
+                                                ))}
                                             </div>
-                                        );
-                                    })()}
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>
