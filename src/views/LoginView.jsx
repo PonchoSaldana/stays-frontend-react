@@ -390,8 +390,19 @@ export default function LoginView({ onLogin, onAdminLogin }) {
                             </div>
                             <div style={{ marginBottom: '1.5rem' }}>
                                 <label className="form-label">Contraseña</label>
-                                <input type="password" value={adminPass} onChange={e => setAdminPass(e.target.value)}
-                                    className="input" placeholder="••••••••" />
+                                <div style={{ position: 'relative' }}>
+                                    <Lock size={20} style={{ position: 'absolute', top: '50%', left: '1rem', transform: 'translateY(-50%)', color: '#9ca3af' }} />
+                                    <input type={showPassword ? "text" : "password"} value={adminPass} onChange={e => setAdminPass(e.target.value)}
+                                        className="input" style={{ paddingLeft: '3rem', paddingRight: '3rem' }}
+                                        placeholder="••••••••" />
+                                    <button 
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        style={{ position: 'absolute', top: '50%', right: '1rem', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#9ca3af', cursor: 'pointer', padding: 0 }}
+                                    >
+                                        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                    </button>
+                                </div>
                             </div>
                             <button type="submit" disabled={!adminUser || !adminPass || loading} className="btn"
                                 style={{ width: '100%', fontSize: '1.125rem', background: '#374151', color: 'white' }}>

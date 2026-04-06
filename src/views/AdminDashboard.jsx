@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Search, FolderOpen, ArrowLeft, FileText, CheckCircle, Clock, Settings, Shield, UserPlus, UserX, UserCheck, LogOut, Database, Upload, XCircle, Send, MessageSquare, Building, File, Trash2, Download, PieChart as PieChartIcon, RefreshCw, Edit, GraduationCap, Briefcase, CloudUpload, Menu, X, AlertTriangle, ToggleLeft, ToggleRight, Layers } from 'lucide-react';
+import { Eye, EyeOff, Users, Search, FolderOpen, ArrowLeft, FileText, CheckCircle, Clock, Settings, Shield, UserPlus, UserX, UserCheck, LogOut, Database, Upload, XCircle, Send, MessageSquare, Building, File, Trash2, Download, PieChart as PieChartIcon, RefreshCw, Edit, GraduationCap, Briefcase, CloudUpload, Menu, X, AlertTriangle, ToggleLeft, ToggleRight, Layers } from 'lucide-react';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { read, utils, writeFile } from 'xlsx';
 import logoUt from '../assets/logo-ut.png';
@@ -982,6 +982,7 @@ export default function AdminDashboard({ onProcessChange }) {
 
     // --- State para Perfil ---
     const [newPassword, setNewPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
 
     const handleUpdateProfile = (e) => {
         e.preventDefault();
@@ -2413,7 +2414,35 @@ export default function AdminDashboard({ onProcessChange }) {
                                     <h3 style={{ marginBottom: '1rem', fontWeight: 600 }}>Crear Nuevo Administrador</h3>
                                     <form onSubmit={handleCreateAdmin} style={{ display: 'grid', gap: '1rem', gridTemplateColumns: newAdmin.role === 'ENCARGADO_CARRERA' ? '1fr 1fr 1fr 1fr auto' : '1fr 1fr 1fr auto' }}>
                                         <input type="text" placeholder="Usuario" className="input" value={newAdmin.username} onChange={(e) => setNewAdmin({ ...newAdmin, username: e.target.value })} />
-                                        <input type="password" placeholder="Contraseña" className="input" value={newAdmin.password} onChange={(e) => setNewAdmin({ ...newAdmin, password: e.target.value })} />
+                                        <div style={{ position: 'relative' }}>
+                                            <input 
+                                                type={showPassword ? "text" : "password"} 
+                                                placeholder="Contraseña" 
+                                                className="input" 
+                                                style={{ paddingRight: '2.5rem' }}
+                                                value={newAdmin.password} 
+                                                onChange={(e) => setNewAdmin({ ...newAdmin, password: e.target.value })} 
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowPassword(!showPassword)}
+                                                style={{
+                                                    position: 'absolute',
+                                                    right: '10px',
+                                                    top: '50%',
+                                                    transform: 'translateY(-50%)',
+                                                    background: 'none',
+                                                    border: 'none',
+                                                    cursor: 'pointer',
+                                                    color: '#6b7280',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    padding: '4px'
+                                                }}
+                                            >
+                                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                            </button>
+                                        </div>
                                         <select className="input" value={newAdmin.role || 'ADMIN'} onChange={(e) => setNewAdmin({ ...newAdmin, role: e.target.value, assignedCareers: [] })}>
                                             <option value="ADMIN">Administrador</option>
                                             <option value="ENCARGADO_CARRERA">Encargado de Carrera</option>
@@ -2509,13 +2538,35 @@ export default function AdminDashboard({ onProcessChange }) {
                                     </div>
                                     <div style={{ marginBottom: '1.5rem' }}>
                                         <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#374151', marginBottom: '0.5rem' }}>Nueva Contraseña</label>
-                                        <input
-                                            type="password"
-                                            className="input"
-                                            placeholder="Ingresa nueva contraseña"
-                                            value={newPassword}
-                                            onChange={(e) => setNewPassword(e.target.value)}
-                                        />
+                                        <div style={{ position: 'relative' }}>
+                                            <input
+                                                type={showPassword ? "text" : "password"}
+                                                className="input"
+                                                placeholder="Ingresa nueva contraseña"
+                                                style={{ paddingRight: '2.5rem' }}
+                                                value={newPassword}
+                                                onChange={(e) => setNewPassword(e.target.value)}
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowPassword(!showPassword)}
+                                                style={{
+                                                    position: 'absolute',
+                                                    right: '10px',
+                                                    top: '50%',
+                                                    transform: 'translateY(-50%)',
+                                                    background: 'none',
+                                                    border: 'none',
+                                                    cursor: 'pointer',
+                                                    color: '#6b7280',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    padding: '4px'
+                                                }}
+                                            >
+                                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                            </button>
+                                        </div>
                                         <p style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.5rem' }}>La contraseña debe tener al menos 8 caracteres.</p>
                                     </div>
                                     <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
