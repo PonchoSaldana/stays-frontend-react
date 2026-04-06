@@ -1549,13 +1549,16 @@ export default function AdminDashboard({ onProcessChange }) {
                         </>
                     )}
 
-                    <button
-                        onClick={() => { setActiveTab('profile'); closeAdminSidebar(); }}
-                        className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`}
-                        style={{ border: 'none', background: activeTab === 'profile' ? undefined : 'transparent', width: '100%', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
-                    >
-                        <Settings size={18} /> Configuración
-                    </button>
+                    {/* Configuración solo para ROOT */}
+                    {isRoot && (
+                        <button
+                            onClick={() => { setActiveTab('profile'); closeAdminSidebar(); }}
+                            className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`}
+                            style={{ border: 'none', background: activeTab === 'profile' ? undefined : 'transparent', width: '100%', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
+                        >
+                            <Settings size={18} /> Configuración
+                        </button>
+                    )}
                 </nav>
 
                 <div style={{ paddingTop: '1rem', borderTop: '1px solid #f3f4f6' }}>
@@ -2108,10 +2111,12 @@ export default function AdminDashboard({ onProcessChange }) {
                         <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
                             <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '2rem' }}>Estadísticas de Procesos</h2>
 
-                            <div className="card-grid">
-                                {/* Gráfica de Estatus Global */}
-                                <div className="process-card" style={{ marginTop: 0 }}>
-                                    <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '0.25rem', textAlign: 'center' }}>Estatus de Estudiantes</h3>
+                            <div className={isEncargado ? "" : "card-grid"}>
+                                {/* Gráfica de Estatus Global / Entregados */}
+                                <div className="process-card" style={{ marginTop: 0, maxWidth: isEncargado ? '600px' : 'none', margin: isEncargado ? '0 auto' : '0' }}>
+                                    <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '0.25rem', textAlign: 'center' }}>
+                                        {isEncargado ? 'Estado de Entrega de Expedientes' : 'Estatus de Estudiantes'}
+                                    </h3>
                                     <p style={{ color: '#9ca3af', fontSize: '0.75rem', textAlign: 'center', marginBottom: '1rem' }}>
                                         {selectedCareer ? `Carrera: ${selectedCareer.name.split(' ').slice(0, 3).join(' ')}...` : 'Selecciona una carrera en "Documentos" para ver datos'}
                                     </p>
@@ -2126,7 +2131,10 @@ export default function AdminDashboard({ onProcessChange }) {
                                             <ResponsiveContainer width="100%" height="100%">
                                                 <PieChart>
                                                     <Pie
-                                                        data={[
+                                                        data={isEncargado ? [
+                                                            { name: 'Han Entregado', value: careerStudents.filter(s => s.status !== 'Pendiente').length },
+                                                            { name: 'No han Entregado', value: careerStudents.filter(s => s.status === 'Pendiente').length },
+                                                        ].filter(d => d.value > 0) : [
                                                             { name: 'Aprobado', value: careerStudents.filter(s => s.status === 'Aprobado').length },
                                                             { name: 'En Revisión', value: careerStudents.filter(s => s.status === 'En Revisión').length },
                                                             { name: 'Pendiente', value: careerStudents.filter(s => s.status === 'Pendiente').length },
@@ -2140,7 +2148,12 @@ export default function AdminDashboard({ onProcessChange }) {
                                                         fill="#8884d8"
                                                         dataKey="value"
                                                     >
-                                                        {[
+                                                        {isEncargado ? [
+                                                            { name: 'Han Entregado', color: '#00C49F' },
+                                                            { name: 'No han Entregado', color: '#9CA3AF' },
+                                                        ].map((entry, index) => (
+                                                            <Cell key={`cell-${index}`} fill={entry.color} />
+                                                        )) : [
                                                             { name: 'Aprobado', color: '#00C49F' },
                                                             { name: 'En Revisión', color: '#FFBB28' },
                                                             { name: 'Pendiente', color: '#9CA3AF' },
@@ -2157,40 +2170,42 @@ export default function AdminDashboard({ onProcessChange }) {
                                     )}
                                 </div>
 
-                                {/* Gráfica de Distribución por Carrera (Top 5) */}
-                                <div className="process-card" style={{ marginTop: 0 }}>
-                                    <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '1rem', textAlign: 'center' }}>Top Carreras con Estudiantes</h3>
-                                    <div style={{ height: '300px' }}>
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <PieChart>
-                                                <Pie
-                                                    data={Object.entries(careerCounts)
-                                                        .map(([id, value]) => ({
-                                                            name: CAREERS.find(c => c.id === id)?.name?.split(' ').slice(0, 3).join(' ') || id,
-                                                            value
-                                                        }))
-                                                        .filter(d => d.value > 0)
-                                                        .sort((a, b) => b.value - a.value)
-                                                        .slice(0, 5)}
-                                                    cx="50%"
-                                                    cy="50%"
-                                                    innerRadius={60}
-                                                    outerRadius={100}
-                                                    paddingAngle={5}
-                                                    dataKey="value"
-                                                >
-                                                    {[
-                                                        '#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#A28CDA'
-                                                    ].map((color, index) => (
-                                                        <Cell key={`cell-${index}`} fill={color} />
-                                                    ))}
-                                                </Pie>
-                                                <Tooltip />
-                                                <Legend layout="vertical" align="right" verticalAlign="middle" />
-                                            </PieChart>
-                                        </ResponsiveContainer>
+                                {/* Gráfica de Distribución por Carrera (Top 5) - OCULTA PARA ENCARGADO */}
+                                {!isEncargado && (
+                                    <div className="process-card" style={{ marginTop: 0 }}>
+                                        <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '1rem', textAlign: 'center' }}>Top Carreras con Estudiantes</h3>
+                                        <div style={{ height: '300px' }}>
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <PieChart>
+                                                    <Pie
+                                                        data={Object.entries(careerCounts)
+                                                            .map(([id, value]) => ({
+                                                                name: CAREERS.find(c => c.id === id)?.name?.split(' ').slice(0, 3).join(' ') || id,
+                                                                value
+                                                            }))
+                                                            .filter(d => d.value > 0)
+                                                            .sort((a, b) => b.value - a.value)
+                                                            .slice(0, 5)}
+                                                        cx="50%"
+                                                        cy="50%"
+                                                        innerRadius={60}
+                                                        outerRadius={100}
+                                                        paddingAngle={5}
+                                                        dataKey="value"
+                                                    >
+                                                        {[
+                                                            '#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#A28CDA'
+                                                        ].map((color, index) => (
+                                                            <Cell key={`cell-${index}`} fill={color} />
+                                                        ))}
+                                                    </Pie>
+                                                    <Tooltip />
+                                                    <Legend layout="vertical" align="right" verticalAlign="middle" />
+                                                </PieChart>
+                                            </ResponsiveContainer>
+                                        </div>
                                     </div>
-                                </div>
+                                )}
                             </div>
                         </div>
                     )
@@ -2488,14 +2503,17 @@ export default function AdminDashboard({ onProcessChange }) {
                                             <button onClick={() => handleDeleteAdmin(admin.username)} className="btn" style={{ padding: '0.5rem', color: '#EF4444', background: '#FEF2F2' }}>
                                                 <Trash2 size={18} />
                                             </button>
-                                            <button
-                                                onClick={() => openAssignModal(admin)}
-                                                className="btn"
-                                                title="Asignar Carreras"
-                                                style={{ padding: '0.5rem', color: '#3B82F6', background: '#EFF6FF', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-                                            >
-                                                <FolderOpen size={18} /> Asignar Tarea
-                                            </button>
+                                            {/* El botón de asignar tarea solo aparece para administradores genéricos, no para los coordinadores directos */}
+                                            {admin.role !== 'ENCARGADO_CARRERA' && (
+                                                <button
+                                                    onClick={() => openAssignModal(admin)}
+                                                    className="btn"
+                                                    title="Asignar Carreras"
+                                                    style={{ padding: '0.5rem', color: '#3B82F6', background: '#EFF6FF', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                                                >
+                                                    <FolderOpen size={18} /> Asignar Tarea
+                                                </button>
+                                            )}
                                         </div>
                                         {/* Barra de Progreso del Admin */}
                                         {(() => {
