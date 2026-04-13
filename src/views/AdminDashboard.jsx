@@ -387,26 +387,33 @@ export default function AdminDashboard({ onProcessChange }) {
         e.preventDefault();
         if (!newCompany.name) return;
 
+        // Limpiar campos que no pertenecen al modelo antes de enviar
+        const { fileName, ...companyPayload } = newCompany;
+
         try {
             if (isEditingCompany) {
                 const res = await authFetch(`/companies/${currentCompanyId}`, {
                     method: 'PUT',
-                    body: JSON.stringify(newCompany)
+                    body: JSON.stringify(companyPayload)
                 });
                 if (res.ok) {
                     showToast({ type: 'success', title: 'Empresa Actualizada', message: `La empresa ${newCompany.name} se ha actualizado correctamente.` });
                 } else {
-                    throw new Error('Error al actualizar');
+                    const errData = await res.json().catch(() => ({}));
+                    const errMsg = errData?.errors?.[0]?.message || errData?.message || `Error ${res.status} al actualizar`;
+                    throw new Error(errMsg);
                 }
             } else {
                 const res = await authFetch('/companies', {
                     method: 'POST',
-                    body: JSON.stringify(newCompany)
+                    body: JSON.stringify(companyPayload)
                 });
                 if (res.ok) {
                     showToast({ type: 'success', title: 'Empresa Registrada', message: `La empresa ${newCompany.name} se ha registrado correctamente en el catálogo.` });
                 } else {
-                    throw new Error('Error al registrar');
+                    const errData = await res.json().catch(() => ({}));
+                    const errMsg = errData?.errors?.[0]?.message || errData?.message || `Error ${res.status} al registrar empresa`;
+                    throw new Error(errMsg);
                 }
             }
 
@@ -420,7 +427,7 @@ export default function AdminDashboard({ onProcessChange }) {
             setCurrentCompanyId(null);
         } catch (error) {
             console.error(error);
-            showToast({ type: 'error', title: 'Error', message: 'No se pudo guardar la información de la empresa en la base de datos.' });
+            showToast({ type: 'error', title: 'Error al guardar empresa', message: error.message || 'No se pudo guardar la información de la empresa.' });
         }
     };
 
