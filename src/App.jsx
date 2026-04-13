@@ -64,8 +64,12 @@ function App() {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchActiveProcess();
-    // refresca cada 5 segundos para reflejar cambios de proceso casi en tiempo real
-    const interval = setInterval(fetchActiveProcess, 5000);
+    // refresca cada 30 segundos — el proceso activo cambia raramente,
+    // no hay necesidad de polling tan frecuente (5s generaba 429 en redes compartidas)
+    const interval = setInterval(() => {
+      // pausar el polling si la pestaña está en segundo plano (Page Visibility API)
+      if (!document.hidden) fetchActiveProcess();
+    }, 30000);
     return () => clearInterval(interval);
   }, []);
 
