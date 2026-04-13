@@ -432,7 +432,17 @@ export default function AdminDashboard({ onProcessChange }) {
     };
 
     const handleEditCompany = (company) => {
-        setNewCompany(company);
+        // Normalizar campos de la BD al formato que espera el form
+        setNewCompany({
+            name: company.name || '',
+            address: company.address || '',
+            contact: company.contact || '',
+            email: company.email || '',
+            fileName: company.fileName || '',
+            careerId: company.careerId || '',
+            spots: company.maxStudents ?? company.spots ?? 0,
+            hasFinancialSupport: company.economicSupport === 'Sí' || company.hasFinancialSupport === true
+        });
         setCurrentCompanyId(company.id);
         setIsEditingCompany(true);
         setIsCreatingCompany(true); // Reusamos el formulario
@@ -2393,11 +2403,11 @@ export default function AdminDashboard({ onProcessChange }) {
                                             <div className="flex-between" style={{ marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px dashed #e5e7eb' }}>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                                     <span style={{ fontWeight: 600 }}>Cupos:</span>
-                                                    <span className="tag" style={{ background: '#f3f4f6' }}>{company.spots || '0'}</span>
+                                                    <span className="tag" style={{ background: '#f3f4f6' }}>{company.maxStudents ?? company.spots ?? 0}</span>
                                                 </div>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                                     <span style={{ fontWeight: 600 }}>Apoyo:</span>
-                                                    {company.hasFinancialSupport ? (
+                                                    {(company.economicSupport === 'Sí' || company.hasFinancialSupport === true) ? (
                                                         <span className="tag" style={{ background: '#DCFCE7', color: '#166534', fontSize: '0.75rem' }}>Sí</span>
                                                     ) : (
                                                         <span className="tag" style={{ background: '#FEE2E2', color: '#991B1B', fontSize: '0.75rem' }}>No</span>
