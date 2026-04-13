@@ -59,11 +59,13 @@ export default function AdminDashboard({ onProcessChange }) {
             } catch (err) {
                 console.error('Error fetching careers:', err);
             }
+            // Cargar empresas DESPUÉS de carreras para que el lookup de carrera
+            // en las cards ya tenga el array CAREERS poblado al primer render
+            fetchCompanies();
         };
 
         getInitialData();
         fetchStudentCounts();
-        fetchCompanies();
     }, []);
 
     // Cuando se abre una carrera, cargamos página 1
