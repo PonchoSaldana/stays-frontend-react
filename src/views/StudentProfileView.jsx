@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Lock, Upload, Save, FileText, CheckCircle, ArrowLeft } from 'lucide-react';
+import { User, Lock, Upload, Save, FileText, CheckCircle, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Modal from '../components/Modal';
 import { authFetch } from '../auth';
@@ -12,6 +12,7 @@ export default function StudentProfileView({ userMatricula }) {
     const [passwordData, setPasswordData] = useState({ current: '', new: '', confirm: '' });
     const [cvFile, setCvFile] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
     const [studentData, setStudentData] = useState(null);
 
     React.useEffect(() => {
@@ -123,42 +124,6 @@ export default function StudentProfileView({ userMatricula }) {
 
             {/* Security + CV */}
             <div className="spv-bottom-grid">
-                {/* Cambio de contraseña */}
-                <div className="spv-section-card">
-                    <div className="spv-section-header">
-                        <Lock size={18} style={{ color: '#6b7280' }} />
-                        <span>Seguridad</span>
-                    </div>
-                    <form onSubmit={handlePasswordChange} className="spv-form">
-                        <div>
-                            <label className="spv-label">Contraseña Actual</label>
-                            <input type="password" className="input" value={passwordData.current}
-                                onChange={e => setPasswordData({ ...passwordData, current: e.target.value })} />
-                        </div>
-                        <div>
-                            <label className="spv-label">Nueva Contraseña</label>
-                            <input type="password" className="input" value={passwordData.new}
-                                onChange={e => setPasswordData({ ...passwordData, new: e.target.value })} />
-                        </div>
-                        <div>
-                            <label className="spv-label">Confirmar Contraseña</label>
-                            <input type="password" className="input" value={passwordData.confirm}
-                                onChange={e => setPasswordData({ ...passwordData, confirm: e.target.value })} />
-                            {passwordData.new && passwordData.confirm && passwordData.new !== passwordData.confirm && (
-                                <p style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.25rem' }}>Las contraseñas no coinciden</p>
-                            )}
-                        </div>
-                        <button
-                            type="submit"
-                            disabled={!passwordData.current || !passwordData.new || loading}
-                            className="btn btn-primary"
-                            style={{ width: '100%' }}
-                        >
-                            {loading ? 'Actualizando...' : 'Cambiar Contraseña'}
-                        </button>
-                    </form>
-                </div>
-
                 {/* CV Upload */}
                 <div className="spv-section-card">
                     <div className="spv-section-header">
@@ -197,6 +162,57 @@ export default function StudentProfileView({ userMatricula }) {
                         <Save size={16} />
                         {loading ? 'Subiendo...' : 'Guardar CV'}
                     </button>
+                </div>
+
+                {/* Cambio de contraseña */}
+                <div className="spv-section-card">
+                    <div className="spv-section-header">
+                        <Lock size={18} style={{ color: '#6b7280' }} />
+                        <span>Seguridad</span>
+                    </div>
+                    <form onSubmit={handlePasswordChange} className="spv-form">
+                        <div>
+                            <label className="spv-label">Contraseña Actual</label>
+                            <div style={{ position: 'relative' }}>
+                                <input type={showPassword ? 'text' : 'password'} className="input" style={{ paddingRight: '2.5rem' }} value={passwordData.current}
+                                    onChange={e => setPasswordData({ ...passwordData, current: e.target.value })} />
+                                <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af' }}>
+                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </button>
+                            </div>
+                        </div>
+                        <div>
+                            <label className="spv-label">Nueva Contraseña</label>
+                            <div style={{ position: 'relative' }}>
+                                <input type={showPassword ? 'text' : 'password'} className="input" style={{ paddingRight: '2.5rem' }} value={passwordData.new}
+                                    onChange={e => setPasswordData({ ...passwordData, new: e.target.value })} />
+                                <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af' }}>
+                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </button>
+                            </div>
+                        </div>
+                        <div>
+                            <label className="spv-label">Confirmar Contraseña</label>
+                            <div style={{ position: 'relative' }}>
+                                <input type={showPassword ? 'text' : 'password'} className="input" style={{ paddingRight: '2.5rem' }} value={passwordData.confirm}
+                                    onChange={e => setPasswordData({ ...passwordData, confirm: e.target.value })} />
+                                <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af' }}>
+                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </button>
+                            </div>
+                            {passwordData.new && passwordData.confirm && passwordData.new !== passwordData.confirm && (
+                                <p style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.25rem' }}>Las contraseñas no coinciden</p>
+                            )}
+                        </div>
+                        <button
+                            type="submit"
+                            disabled={!passwordData.current || !passwordData.new || !passwordData.confirm || passwordData.new !== passwordData.confirm || loading}
+                            className="btn btn-primary"
+                            style={{ width: '100%' }}
+                        >
+                            {loading ? 'Actualizando...' : 'Cambiar Contraseña'}
+                        </button>
+                    </form>
                 </div>
             </div>
 
