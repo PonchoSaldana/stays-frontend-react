@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Building, Search, MapPin, Phone, Mail, FileText, CheckCircle, Filter, Users, User, Code, Factory, Briefcase, Calculator, Leaf, FlaskConical, Wifi } from 'lucide-react';
+import { Building, Search, MapPin, Phone, Mail, FileText, CheckCircle, Filter, Users, User, Code, Factory, Briefcase, Calculator, Leaf, FlaskConical, Wifi, Apple } from 'lucide-react';
 import Modal from '../components/Modal';
 import ToastContainer from '../components/Toast';
 import { useToast } from '../hooks/useToast';
@@ -18,8 +18,10 @@ const getCareerIcon = (careerText) => {
     if (text.includes('soft') || text.includes('ti ')) return Code;
     // Química / Tecnología Ambiental
     if (text.includes('quí') || text.includes('qui') || text.includes('amb')) return FlaskConical;
-    // Bio / Agricultura / Alimentarios
-    if (text.includes('bio') || text.includes('agr') || text.includes('ali')) return Leaf;
+    // Alimentos
+    if (text.includes('ali') || text.includes('alimento')) return Apple;
+    // Bio / Agricultura
+    if (text.includes('bio') || text.includes('agr')) return Leaf;
     // Contaduría / Finanzas
     if (text.includes('con') || text.includes('fin') || text.includes('fisc')) return Calculator;
     // Negocios / Administración / Proyectos / Mercadotecnia / Capital
