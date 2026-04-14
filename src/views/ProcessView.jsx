@@ -12,11 +12,19 @@ import { useToast } from '../hooks/useToast';
 import { authFetch } from '../auth';
 
 // LISTA DE DOCUMENTOS PARA ESTADÍAS
+// LISTA DE DOCUMENTOS OFICIALES PARA ASIGNACIÓN A ESTADÍA (Según Control de Expediente SV)
 const INITIAL_DOCS = [
-    "Solicitud de Estadía", "Carta de Presentación", "Carta de Aceptación",
-    "Cronograma de Actividades", "Seguro Facultativo", "Vigencia de Derechos IMSS",
-    "Comprobante de Domicilio", "Identificación Oficial (INE)",
-    "Constancia de Situación Fiscal", "Historial Académico"
+    "Ficha de Registro (Control de Expediente)",
+    "Asignación del Programa Educativo",
+    "Carnet del IMSS (Sellado/Actualizado)",
+    "Vigencia de Derechos",
+    "Comprobante de Pago Seguro Anual",
+    "Hoja de No Adeudo",
+    "Autorización de Tutor (Formato B)",
+    "Copia de INE (Alumno y Tutores)",
+    "Certificado de Vacunación",
+    "Comprobante: Plática de Inducción",
+    "Comprobante: Reforzamiento a la Estadía"
 ];
 
 const GENERATED_DOCS = [
