@@ -104,9 +104,10 @@ export default function StudentProfileView({ userMatricula }) {
         setLoading(true);
         try {
             const mat = String(userMatricula).trim().toLowerCase();
-            const docNameBase = encodeURIComponent('Curriculum Vitae');
-            const res = await authFetch(`/documents?matricula=${mat}&documentName=${docNameBase}&stage=perfil`, {
-                method: 'DELETE'
+            const res = await authFetch('/documents/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ matricula: mat, documentName: 'Curriculum Vitae', stage: 'perfil' })
             });
             if (res.ok) {
                 showToast({ type: 'success', title: 'CV Eliminado', message: 'Tu archivo se ha borrado correctamente.' });

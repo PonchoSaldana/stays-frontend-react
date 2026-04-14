@@ -150,9 +150,10 @@ export default function ProcessView({ userMatricula, stageName }) {
         if (!window.confirm(`¿Seguro que quieres borrar "${docLabel}"?`)) return;
         setUploads(prev => ({ ...prev, [docLabel]: 'uploading' })); // Mostrar spinner temporalmente
         try {
-            const docNameBase = encodeURIComponent(docLabel);
-            const res = await authFetch(`/documents?matricula=${userMatricula}&documentName=${docNameBase}&stage=${stage}`, {
-                method: 'DELETE'
+            const res = await authFetch('/documents/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ matricula: userMatricula, documentName: docLabel, stage: stage })
             });
             if (res.ok) {
                 setUploads(prev => {
