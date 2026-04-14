@@ -442,9 +442,9 @@ export default function AdminDashboard({ onProcessChange }) {
 
         // Normalizar economicSupport: acepta múltiples formas ('Sí', 'Si', 'si', cantidades positivas, etc.)
         const sup = company.economicSupport || '';
-        const hasSupport = sup === 'Sí' || sup === 'Si' || sup === 'si' || sup === 'SI' || sup === 'sí' ||
+        const hasSupport = Boolean(sup === 'Sí' || sup === 'Si' || sup === 'si' || sup === 'SI' || sup === 'sí' ||
             company.hasFinancialSupport === true ||
-            (sup && sup !== 'No' && sup !== 'no' && sup !== '' && sup !== '0');
+            (sup && sup !== 'No' && sup !== 'no' && sup !== '' && sup !== '0'));
 
         setNewCompany({
             name: company.name || '',
