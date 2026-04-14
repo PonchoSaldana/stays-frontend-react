@@ -8,6 +8,14 @@ import { API_URL } from '../config';
 
 // Careers se cargarán dinámicamente
 
+// Custom Icon for Food Science (Matraz + Manzana)
+const FoodScienceIcon = ({ size = 22, className, ...props }) => (
+    <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', width: size, height: size }} className={className}>
+        <FlaskConical size={size} style={{ position: 'absolute', left: '-2px' }} {...props} />
+        <Apple size={size * 0.6} style={{ position: 'absolute', bottom: '-4px', right: '-4px', fill: 'currentColor' }} {...props} />
+    </div>
+);
+
 const getCareerIcon = (careerText) => {
     if (!careerText) return Building;
     const text = String(careerText).toLowerCase();
@@ -18,8 +26,8 @@ const getCareerIcon = (careerText) => {
     if (text.includes('soft') || text.includes('ti ')) return Code;
     // Química / Tecnología Ambiental
     if (text.includes('quí') || text.includes('qui') || text.includes('amb')) return FlaskConical;
-    // Alimentos
-    if (text.includes('ali') || text.includes('alimento')) return FlaskConical;
+    // Alimentos (Custom Icon: Matraz + Manzana)
+    if (text.includes('ali') || text.includes('alimento')) return FoodScienceIcon;
     // Bio / Agricultura
     if (text.includes('bio') || text.includes('agr')) return Leaf;
     // Contaduría / Finanzas
