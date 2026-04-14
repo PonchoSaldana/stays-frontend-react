@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Eye, EyeOff, Users, Search, FolderOpen, ArrowLeft, FileText, CheckCircle, Clock, Settings, Shield, UserPlus, UserX, UserCheck, LogOut, Database, Upload, XCircle, Send, MessageSquare, Building, File, Trash2, Download, PieChart as PieChartIcon, RefreshCw, Edit, GraduationCap, Briefcase, CloudUpload, Menu, X, AlertTriangle, ToggleLeft, ToggleRight, Layers } from 'lucide-react';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { read, utils, writeFile } from 'xlsx';
@@ -391,6 +391,9 @@ export default function AdminDashboard({ onProcessChange }) {
 
         // Limpiar campos que no pertenecen al modelo antes de enviar
         const { fileName, ...companyPayload } = newCompany;
+
+        // DEBUG: ver qué se envía exactamente
+        console.log('[DEBUG] Payload a enviar:', JSON.stringify(companyPayload, null, 2));
 
         try {
             if (isEditingCompany) {
@@ -2284,32 +2287,32 @@ export default function AdminDashboard({ onProcessChange }) {
                                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
                                             <div>
                                                 <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>Nombre de la Empresa</label>
-                                                <input required type="text" className="input" placeholder="Ej. Volkswagen de México" value={newCompany.name} onChange={e => setNewCompany({ ...newCompany, name: e.target.value })} />
+                                                <input required type="text" className="input" placeholder="Ej. Volkswagen de México" value={newCompany.name} onChange={e => { const v = e.target.value; setNewCompany(prev => ({ ...prev, name: v })); }} />
                                             </div>
                                             <div>
                                                 <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>Dirección</label>
-                                                <input type="text" className="input" placeholder="Calle, Número, Colonia, Ciudad" value={newCompany.address} onChange={e => setNewCompany({ ...newCompany, address: e.target.value })} />
+                                                <input type="text" className="input" placeholder="Calle, Número, Colonia, Ciudad" value={newCompany.address} onChange={e => { const v = e.target.value; setNewCompany(prev => ({ ...prev, address: v })); }} />
                                             </div>
                                             <div>
                                                 <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>Nombre del Contacto / RRHH</label>
-                                                <input type="text" className="input" placeholder="Lic. Juan Pérez" value={newCompany.contact} onChange={e => setNewCompany({ ...newCompany, contact: e.target.value })} />
+                                                <input type="text" className="input" placeholder="Lic. Juan Pérez" value={newCompany.contact} onChange={e => { const v = e.target.value; setNewCompany(prev => ({ ...prev, contact: v })); }} />
                                             </div>
                                             <div>
                                                 <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>Correo / Teléfono</label>
-                                                <input type="text" className="input" placeholder="contacto@empresa.com" value={newCompany.email} onChange={e => setNewCompany({ ...newCompany, email: e.target.value })} />
+                                                <input type="text" className="input" placeholder="contacto@empresa.com" value={newCompany.email} onChange={e => { const v = e.target.value; setNewCompany(prev => ({ ...prev, email: v })); }} />
                                             </div>
 
                                             {/* Nuevos campos */}
                                             <div>
                                                 <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>Cupos Disponibles</label>
-                                                <input type="number" min="0" className="input" placeholder="Ej. 5" value={newCompany.spots} onChange={e => setNewCompany({ ...newCompany, spots: parseInt(e.target.value) || 0 })} />
+                                                <input type="number" min="0" className="input" placeholder="Ej. 5" value={newCompany.spots} onChange={e => { const v = parseInt(e.target.value) || 0; setNewCompany(prev => ({ ...prev, spots: v })); }} />
                                             </div>
                                             <div style={{ display: 'flex', alignItems: 'center', marginTop: '1.5rem' }}>
                                                 <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 500 }}>
                                                     <input
                                                         type="checkbox"
                                                         checked={newCompany.hasFinancialSupport}
-                                                        onChange={e => setNewCompany({ ...newCompany, hasFinancialSupport: e.target.checked })}
+                                                        onChange={e => { const v = e.target.checked; setNewCompany(prev => ({ ...prev, hasFinancialSupport: v })); }}
                                                         style={{ width: '1.25rem', height: '1.25rem' }}
                                                     />
                                                     Ofrece Apoyo Económico
@@ -2322,7 +2325,7 @@ export default function AdminDashboard({ onProcessChange }) {
                                             <select
                                                 className="input"
                                                 value={newCompany.careerId}
-                                                onChange={e => setNewCompany({ ...newCompany, careerId: e.target.value })}
+                                                onChange={e => { const v = e.target.value; setNewCompany(prev => ({ ...prev, careerId: v })); }}
                                             >
                                                 <option value="">-- Todas / General --</option>
                                                 {CAREERS.map(c => (
