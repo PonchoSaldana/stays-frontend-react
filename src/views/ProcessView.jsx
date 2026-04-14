@@ -146,6 +146,35 @@ export default function ProcessView({ userMatricula, stageName }) {
     const handleUpload1 = (docLabel, file) => handleUpload(docLabel, file, 'upload_1', setUploads1);
     const handleUpload2 = (docLabel, file) => handleUpload(docLabel, file, 'upload_2', setUploads2);
 
+    const handleDelete = async (docLabel, stage, setUploads) => {
+        if (!window.confirm(`¿Seguro que quieres borrar "${docLabel}"?`)) return;
+        setUploads(prev => ({ ...prev, [docLabel]: 'uploading' })); // Mostrar spinner temporalmente
+        try {
+            const docNameBase = encodeURIComponent(docLabel);
+            const res = await authFetch(`/documents?matricula=${userMatricula}&documentName=${docNameBase}&stage=${stage}`, {
+                method: 'DELETE'
+            });
+            if (res.ok) {
+                setUploads(prev => {
+                    const newUp = { ...prev };
+                    delete newUp[docLabel];
+                    return newUp;
+                });
+                showToast({ type: 'success', title: 'Documento Eliminado', message: `"${docLabel}" fue borrado correctamente.` });
+            } else {
+                const data = await res.json();
+                setUploads(prev => ({ ...prev, [docLabel]: 'success' })); // Revertir estado visual
+                showToast({ type: 'error', title: 'Error', message: data.message || 'No se pudo borrar el archivo.' });
+            }
+        } catch (err) {
+            setUploads(prev => ({ ...prev, [docLabel]: 'success' }));
+            showToast({ type: 'error', title: 'Error de red', message: 'No se pudo conectar con el servidor.' });
+        }
+    };
+
+    const handleDelete1 = (docLabel) => handleDelete(docLabel, 'upload_1', setUploads1);
+    const handleDelete2 = (docLabel) => handleDelete(docLabel, 'upload_2', setUploads2);
+
     const handleOpenPreview = (docName) => {
         setEditingDoc(docName);
         setModalMode('preview');
@@ -218,6 +247,7 @@ export default function ProcessView({ userMatricula, stageName }) {
                                         label={doc}
                                         status={uploads1[doc]}
                                         onUpload={handleUpload1}
+                                        onDelete={handleDelete1}
                                     />
                                 ))}
                             </div>
@@ -337,6 +367,7 @@ export default function ProcessView({ userMatricula, stageName }) {
                                         label={doc}
                                         status={uploads2[doc]}
                                         onUpload={handleUpload2}
+                                        onDelete={handleDelete2}
                                     />
                                 ))}
                             </div>

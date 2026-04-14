@@ -1,9 +1,9 @@
 import React from 'react';
-import { UploadCloud, CheckCircle, XCircle, File, Loader2 } from 'lucide-react';
+import { UploadCloud, CheckCircle, XCircle, File, Loader2, Trash2 } from 'lucide-react';
 
 // componente de carga de archivos individual para cada documento requerido
 // muestra el estado actual: pendiente, subiendo, correcto o error
-export default function FileUploader({ id, label, status, onUpload, disabled }) {
+export default function FileUploader({ id, label, status, onUpload, onDelete, disabled }) {
 
     // maneja la selección real de archivo desde el input
     const handleFileChange = (e) => {
@@ -45,6 +45,19 @@ export default function FileUploader({ id, label, status, onUpload, disabled }) 
                         <UploadCloud size={18} />
                     </div>
                 </label>
+            )}
+
+            {/* botón para borrar archivo si ya se cargó exitosamente */}
+            {status === 'success' && onDelete && (
+                <button
+                    onClick={(e) => { e.stopPropagation(); onDelete(id); }}
+                    disabled={disabled}
+                    className="delete-btn"
+                    style={{ background: 'none', border: 'none', color: '#ef4444', cursor: disabled ? 'default' : 'pointer' }}
+                    title="Eliminar documento"
+                >
+                    <Trash2 size={18} />
+                </button>
             )}
         </div>
     );

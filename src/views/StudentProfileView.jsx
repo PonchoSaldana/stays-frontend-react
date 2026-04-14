@@ -104,7 +104,8 @@ export default function StudentProfileView({ userMatricula }) {
         setLoading(true);
         try {
             const mat = String(userMatricula).trim().toLowerCase();
-            const res = await authFetch(`/documents?matricula=${mat}&documentName=Curriculum Vitae&stage=perfil`, {
+            const docNameBase = encodeURIComponent('Curriculum Vitae');
+            const res = await authFetch(`/documents?matricula=${mat}&documentName=${docNameBase}&stage=perfil`, {
                 method: 'DELETE'
             });
             if (res.ok) {
