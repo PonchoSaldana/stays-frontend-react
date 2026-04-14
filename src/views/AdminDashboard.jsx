@@ -437,16 +437,24 @@ export default function AdminDashboard({ onProcessChange }) {
     };
 
     const handleEditCompany = (company) => {
-        // Normalizar campos de la BD al formato que espera el form
+        // Normalizar careerId: solo usarlo si coincide con una carrera registrada en el catálogo
+        const validCareerId = CAREERS.find(c => c.id === company.careerId) ? company.careerId : '';
+
+        // Normalizar economicSupport: acepta múltiples formas ('Sí', 'Si', 'si', cantidades positivas, etc.)
+        const sup = company.economicSupport || '';
+        const hasSupport = sup === 'Sí' || sup === 'Si' || sup === 'si' || sup === 'SI' || sup === 'sí' ||
+            company.hasFinancialSupport === true ||
+            (sup && sup !== 'No' && sup !== 'no' && sup !== '' && sup !== '0');
+
         setNewCompany({
             name: company.name || '',
             address: company.address || '',
             contact: company.contact || '',
             email: company.email || '',
             fileName: company.fileName || '',
-            careerId: company.careerId || '',
+            careerId: validCareerId,
             spots: company.maxStudents ?? company.spots ?? 0,
-            hasFinancialSupport: company.economicSupport === 'Sí' || company.hasFinancialSupport === true
+            hasFinancialSupport: hasSupport
         });
         setCurrentCompanyId(company.id);
         setIsEditingCompany(true);
@@ -2390,7 +2398,12 @@ export default function AdminDashboard({ onProcessChange }) {
                                             <div style={{ display: 'flex', gap: '0.5rem' }}>
                                                 <span style={{ fontWeight: 500, minWidth: '70px' }}>Carrera:</span>
                                                 <span className="tag" style={{ fontSize: '0.75rem', background: '#f3f4f6' }}>
-                                                    {CAREERS.find(c => c.id === company.careerId)?.name || 'General / Todas'}
+                                                    {(() => {
+                                                        const match = CAREERS.find(c => c.id === company.careerId);
+                                                        if (match) return match.name;
+                                                        if (company.careerId && company.careerId.trim()) return company.careerId.trim();
+                                                        return 'General / Todas';
+                                                    })()}
                                                 </span>
                                             </div>
                                             <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -2412,11 +2425,15 @@ export default function AdminDashboard({ onProcessChange }) {
                                                 </div>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                                     <span style={{ fontWeight: 600 }}>Apoyo:</span>
-                                                    {(company.economicSupport === 'Sí' || company.hasFinancialSupport === true) ? (
-                                                        <span className="tag" style={{ background: '#DCFCE7', color: '#166534', fontSize: '0.75rem' }}>Sí</span>
-                                                    ) : (
-                                                        <span className="tag" style={{ background: '#FEE2E2', color: '#991B1B', fontSize: '0.75rem' }}>No</span>
-                                                    )}
+                                                    {(() => {
+                                                        const sup = company.economicSupport;
+                                                        const hasSupport = sup === 'Sí' || sup === 'Si' || sup === 'si' || sup === 'SI' || sup === 'sí' || company.hasFinancialSupport === true || (sup && sup !== 'No' && sup !== 'no' && sup !== '' && sup !== '0');
+                                                        return hasSupport ? (
+                                                            <span className="tag" style={{ background: '#DCFCE7', color: '#166534', fontSize: '0.75rem' }}>Sí</span>
+                                                        ) : (
+                                                            <span className="tag" style={{ background: '#FEE2E2', color: '#991B1B', fontSize: '0.75rem' }}>No</span>
+                                                        );
+                                                    })()}
                                                 </div>
                                             </div>
                                         </div>
