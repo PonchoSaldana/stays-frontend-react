@@ -78,7 +78,7 @@ function App() {
     setUserMatricula(matricula);
     sessionStorage.setItem('ut_user', matricula);
     if (userData) sessionStorage.setItem('ut_user_data', JSON.stringify(userData));
-    navigate('/estadia/inicio');
+    navigate('/estadia/inicio', { replace: true });
   };
 
   // guarda la sesión del administrador tras el login
@@ -87,7 +87,7 @@ function App() {
     setAdminUser(session);
     sessionStorage.setItem('ut_admin_session', JSON.stringify(session));
     if (token) sessionStorage.setItem('ut_token', token);
-    navigate('/admin/dashboard');
+    navigate('/admin/dashboard', { replace: true });
   };
 
   // limpia toda la sesión y redirige al login
@@ -98,14 +98,18 @@ function App() {
     sessionStorage.removeItem('ut_user_data');
     sessionStorage.removeItem('ut_admin_session');
     sessionStorage.removeItem('ut_token');
-    navigate('/login');
+    navigate('/login', { replace: true });
   };
 
   return (
     <Layout onLogout={handleLogout} user={userMatricula || adminUser} isAdmin={!!adminUser} activeProcess={activeProcess}>
       <Routes>
         {/* pantalla de login compartida para alumnos y admins */}
-        <Route path="/login" element={<LoginView onLogin={handleLogin} onAdminLogin={handleAdminLogin} />} />
+        <Route path="/login" element={
+          userMatricula ? <Navigate to="/estadia/inicio" replace /> : 
+          adminUser ? <Navigate to="/admin/dashboard" replace /> :
+          <LoginView onLogin={handleLogin} onAdminLogin={handleAdminLogin} />
+        } />
         {/* redirección raíz según tipo de sesión */}
         <Route path="/" element={<Navigate to={userMatricula ? "/estadia/inicio" : (adminUser ? "/admin/dashboard" : "/login")} replace />} />
 
