@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Building, Search, MapPin, Phone, Mail, FileText, CheckCircle, Filter, Users, Code, Factory, Briefcase, Calculator, Leaf, FlaskConical, Wifi } from 'lucide-react';
+import { Building, Search, MapPin, Phone, Mail, FileText, CheckCircle, Filter, Users, User, Code, Factory, Briefcase, Calculator, Leaf, FlaskConical, Wifi } from 'lucide-react';
 import Modal from '../components/Modal';
 import ToastContainer from '../components/Toast';
 import { useToast } from '../hooks/useToast';
@@ -254,7 +254,7 @@ export default function StudentCompanyView({ mode = 'catalog', onSelect, userMat
                                         <span>{company.address || 'Sin dirección'}</span>
                                     </div>
                                     <div className="scv-info-row">
-                                        <Phone size={15} className="scv-info-icon" />
+                                        <User size={15} className="scv-info-icon" />
                                         <span>{company.contact || 'Sin contacto'}</span>
                                     </div>
                                     <div className="scv-info-row">
