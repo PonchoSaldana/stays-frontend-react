@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Lock, Upload, Save, FileText, CheckCircle, ArrowLeft, Eye, EyeOff } from 'lucide-react';
+import { User, Lock, Upload, Save, FileText, CheckCircle, ArrowLeft, Eye, EyeOff, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Modal from '../components/Modal';
 import { authFetch } from '../auth';
@@ -11,9 +11,21 @@ export default function StudentProfileView({ userMatricula }) {
     const { toasts, showToast, removeToast } = useToast();
     const [passwordData, setPasswordData] = useState({ current: '', new: '', confirm: '' });
     const [cvFile, setCvFile] = useState(null);
+    const [cvDetails, setCvDetails] = useState(null); // Document info from DB
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [studentData, setStudentData] = useState(null);
+
+    const fetchCvStatus = async (mat) => {
+        try {
+            const res = await authFetch(`/documents/student/${mat}?stage=perfil`);
+            if (res.ok) {
+                const docs = await res.json();
+                const cv = docs.find(d => d.documentName === 'Curriculum Vitae');
+                setCvDetails(cv || null);
+            }
+        } catch (err) { }
+    };
 
     React.useEffect(() => {
         if (userMatricula) {
@@ -22,6 +34,8 @@ export default function StudentProfileView({ userMatricula }) {
                 .then(res => res.ok ? res.json() : null)
                 .then(student => { if (student) setStudentData(student); })
                 .catch(() => { });
+            
+            fetchCvStatus(mat);
         }
     }, [userMatricula]);
 
@@ -73,9 +87,32 @@ export default function StudentProfileView({ userMatricula }) {
 
             if (res.ok) {
                 showToast({ type: 'success', title: 'CV Actualizado', message: 'Tu CV se guardó correctamente en tu perfil.' });
+                setCvFile(null);
+                fetchCvStatus(String(userMatricula).trim().toLowerCase());
             } else {
                 const data = await res.json();
                 showToast({ type: 'error', title: 'Error', message: data.message || 'No se pudo subir el CV.' });
+            }
+        } catch (err) {
+            showToast({ type: 'error', title: 'Error de red', message: 'No se pudo conectar con el servidor.' });
+        }
+        setLoading(false);
+    };
+
+    const handleDeleteCv = async () => {
+        if (!window.confirm('¿Seguro que quieres borrar tu CV?')) return;
+        setLoading(true);
+        try {
+            const mat = String(userMatricula).trim().toLowerCase();
+            const res = await authFetch(`/documents?matricula=${mat}&documentName=Curriculum Vitae&stage=perfil`, {
+                method: 'DELETE'
+            });
+            if (res.ok) {
+                showToast({ type: 'success', title: 'CV Eliminado', message: 'Tu archivo se ha borrado correctamente.' });
+                setCvDetails(null);
+            } else {
+                const data = await res.json();
+                showToast({ type: 'error', title: 'Error', message: data.message || 'No se pudo borrar el archivo.' });
             }
         } catch (err) {
             showToast({ type: 'error', title: 'Error de red', message: 'No se pudo conectar con el servidor.' });
@@ -156,31 +193,50 @@ export default function StudentProfileView({ userMatricula }) {
                         <input type="file" accept=".pdf" style={{ display: 'none' }}
                             onChange={e => { if (e.target.files[0]) setCvFile(e.target.files[0]); }} />
                         <div className="spv-cv-drop-icon">
-                            {cvFile
+                            {cvFile || cvDetails
                                 ? <CheckCircle size={38} style={{ color: 'var(--ut-green)' }} />
                                 : <Upload size={38} style={{ color: '#d1d5db' }} />}
                         </div>
                         <p className="spv-cv-drop-text">
-                            {cvFile ? cvFile.name : 'Haz clic o arrastra tu archivo aquí'}
+                            {cvFile ? cvFile.name : (cvDetails ? cvDetails.filename : 'Haz clic o arrastra tu archivo aquí')}
                         </p>
-                        <p className="spv-cv-drop-sub">PDF (Max. 5MB)</p>
+                        <p className="spv-cv-drop-sub">
+                            {cvDetails ? 'Archivo guardado (Haz clic para reemplazar)' : 'PDF (Max. 5MB)'}
+                        </p>
                     </label>
-                    <button
-                        onClick={handleSaveCv}
-                        disabled={!cvFile || loading}
-                        className="btn"
-                        style={{
-                            width: '100%',
-                            marginTop: '1rem',
-                            background: cvFile ? 'var(--ut-green)' : '#f3f4f6',
-                            color: cvFile ? 'white' : '#9ca3af',
-                            cursor: cvFile ? 'pointer' : 'not-allowed',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem'
-                        }}
-                    >
-                        <Save size={16} />
-                        {loading ? 'Subiendo...' : 'Guardar CV'}
-                    </button>
+                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
+                        <button
+                            onClick={handleSaveCv}
+                            disabled={!cvFile || loading}
+                            className="btn"
+                            style={{
+                                flex: 1,
+                                background: cvFile ? 'var(--ut-green)' : '#f3f4f6',
+                                color: cvFile ? 'white' : '#9ca3af',
+                                cursor: cvFile ? 'pointer' : 'not-allowed',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem'
+                            }}
+                        >
+                            <Save size={16} />
+                            {loading && cvFile ? 'Subiendo...' : 'Guardar CV'}
+                        </button>
+
+                        {cvDetails && !cvFile && (
+                            <button
+                                onClick={handleDeleteCv}
+                                disabled={loading}
+                                className="btn"
+                                style={{
+                                    background: '#fee2e2',
+                                    color: '#ef4444',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center', px: '0.75rem'
+                                }}
+                                title="Eliminar CV actual"
+                            >
+                                <Trash2 size={18} />
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 {/* Cambio de contraseña */}
