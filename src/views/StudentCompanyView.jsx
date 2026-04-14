@@ -217,6 +217,8 @@ export default function StudentCompanyView({ mode = 'catalog', onSelect, userMat
                         const isSelected = selectedCompanyId === company.id;
                         const careerText = CAREERS.find(c => c.id === company.careerId)?.name || company.careerId;
                         const CareerIcon = getCareerIcon(careerText);
+                        const sup = company.economicSupport;
+                        const hasSupport = sup === 'Sí' || sup === 'Si' || sup === 'si' || sup === 'SI' || sup === 'sí' || company.hasFinancialSupport === true || (sup && sup !== 'No' && sup !== 'no' && sup !== '' && sup !== '0');
                         
                         return (
                             <div
@@ -260,17 +262,15 @@ export default function StudentCompanyView({ mode = 'catalog', onSelect, userMat
                                 </div>
 
                                 {/* Card Footer */}
-                                {mode === 'selection' && (
-                                    <div className="scv-card-footer">
-                                        <div className="scv-footer-item">
-                                            <Users size={14} />
-                                            <span>Vacantes: <strong>{company.spots ?? 0}</strong></span>
-                                        </div>
-                                        <span className={`scv-apoyo-tag ${company.hasFinancialSupport ? 'scv-apoyo-tag--si' : 'scv-apoyo-tag--no'}`}>
-                                            Apoyo: {company.hasFinancialSupport ? 'Sí' : 'No'}
-                                        </span>
+                                <div className="scv-card-footer">
+                                    <div className="scv-footer-item">
+                                        <Users size={14} />
+                                        <span>Vacantes: <strong>{company.maxStudents ?? company.spots ?? 0}</strong></span>
                                     </div>
-                                )}
+                                    <span className={`scv-apoyo-tag ${hasSupport ? 'scv-apoyo-tag--si' : 'scv-apoyo-tag--no'}`}>
+                                        Apoyo: {hasSupport ? 'Sí' : 'No'}
+                                    </span>
+                                </div>
 
                                 {company.fileName && (
                                     <div className="scv-convenio">

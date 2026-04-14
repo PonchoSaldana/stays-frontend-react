@@ -2286,11 +2286,9 @@ export default function AdminDashboard({ onProcessChange }) {
                                 </div>
                             </div>
 
-                            {isCreatingCompany && (
+                            {isCreatingCompany && !isEditingCompany && (
                                 <div className="process-card mb-6" style={{ background: '#f9fafb', border: '1px solid #e5e7eb' }}>
-                                    <h3 style={{ marginBottom: '1.5rem', fontWeight: 600 }}>
-                                        {isEditingCompany ? 'Editar Empresa' : 'Registrar Nueva Empresa'}
-                                    </h3>
+                                    <h3 style={{ marginBottom: '1.5rem', fontWeight: 600 }}>Registrar Nueva Empresa</h3>
                                     <form onSubmit={handleCreateCompany}>
                                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
                                             <div>
@@ -2358,14 +2356,66 @@ export default function AdminDashboard({ onProcessChange }) {
 
                                         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
                                             <button type="button" onClick={handleCancelCompanyForm} className="btn" style={{ background: '#f3f4f6' }}>Cancelar</button>
-                                            <button type="submit" className="btn btn-primary">{isEditingCompany ? 'Actualizar' : 'Guardar Empresa'}</button>
+                                            <button type="submit" className="btn btn-primary">Guardar Empresa</button>
                                         </div>
                                     </form>
                                 </div>
                             )}
 
                             <div className="card-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '1.5rem' }}>
-                                {companies.map(company => (
+                                {companies.map(company => isEditingCompany && currentCompanyId === company.id ? (
+                                    <div key={company.id} className="process-card" style={{ gridColumn: '1 / -1', background: '#f9fafb', border: '1px solid #e5e7eb', marginTop: 0 }}>
+                                        <h3 style={{ marginBottom: '1.5rem', fontWeight: 600 }}>Editar Empresa</h3>
+                                        <form onSubmit={handleCreateCompany}>
+                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                                                <div>
+                                                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>Nombre de la Empresa</label>
+                                                    <input required type="text" className="input" placeholder="Ej. Volkswagen de México" value={newCompany.name} onChange={e => { const v = e.target.value; setNewCompany(prev => ({ ...prev, name: v })); }} />
+                                                </div>
+                                                <div>
+                                                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>Dirección</label>
+                                                    <input type="text" className="input" placeholder="Calle, Número, Colonia, Ciudad" value={newCompany.address} onChange={e => { const v = e.target.value; setNewCompany(prev => ({ ...prev, address: v })); }} />
+                                                </div>
+                                                <div>
+                                                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>Nombre del Contacto / RRHH</label>
+                                                    <input type="text" className="input" placeholder="Lic. Juan Pérez" value={newCompany.contact} onChange={e => { const v = e.target.value; setNewCompany(prev => ({ ...prev, contact: v })); }} />
+                                                </div>
+                                                <div>
+                                                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>Correo / Teléfono</label>
+                                                    <input type="text" className="input" placeholder="contacto@empresa.com" value={newCompany.email} onChange={e => { const v = e.target.value; setNewCompany(prev => ({ ...prev, email: v })); }} />
+                                                </div>
+                                                <div>
+                                                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>Cupos Disponibles</label>
+                                                    <input type="number" min="0" className="input" placeholder="Ej. 5" value={newCompany.spots} onChange={e => { const v = parseInt(e.target.value) || 0; setNewCompany(prev => ({ ...prev, spots: v })); }} />
+                                                </div>
+                                                <div style={{ display: 'flex', alignItems: 'center', marginTop: '1.5rem' }}>
+                                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 500 }}>
+                                                        <input type="checkbox" checked={newCompany.hasFinancialSupport} onChange={e => { const v = e.target.checked; setNewCompany(prev => ({ ...prev, hasFinancialSupport: v })); }} style={{ width: '1.25rem', height: '1.25rem' }} />
+                                                        Ofrece Apoyo Económico
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div style={{ marginBottom: '1rem', gridColumn: '1 / -1' }}>
+                                                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>Carrera de Enfoque (Para filtrado)</label>
+                                                <select className="input" value={newCompany.careerId} onChange={e => { const v = e.target.value; setNewCompany(prev => ({ ...prev, careerId: v })); }}>
+                                                    <option value="">-- Todas / General --</option>
+                                                    {CAREERS.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                                </select>
+                                            </div>
+                                            <div style={{ marginBottom: '1.5rem', gridColumn: '1 / -1' }}>
+                                                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>Documento / Convenio (PDF o Word)</label>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                                    <input type="file" accept=".pdf,.doc,.docx" className="input" style={{ padding: '0.5rem' }} onChange={handleCompanyFileChange} />
+                                                    {newCompany.fileName && <span style={{ color: 'var(--ut-green)', fontSize: '0.875rem' }}><CheckCircle size={14} style={{ display: 'inline', marginRight: 4 }} /> Archivo seleccionado</span>}
+                                                </div>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                                                <button type="button" onClick={handleCancelCompanyForm} className="btn" style={{ background: '#f3f4f6' }}>Cancelar</button>
+                                                <button type="submit" className="btn btn-primary">Actualizar Empresa</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                ) : (
                                     <div key={company.id} className="process-card" style={{ marginTop: 0, position: 'relative' }}>
                                         <div style={{ position: 'absolute', top: '1rem', right: '1rem', display: 'flex', gap: '0.5rem' }}>
                                             <button
