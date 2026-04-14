@@ -19,7 +19,7 @@ const getCareerIcon = (careerText) => {
     // Química / Tecnología Ambiental
     if (text.includes('quí') || text.includes('qui') || text.includes('amb')) return FlaskConical;
     // Alimentos
-    if (text.includes('ali') || text.includes('alimento')) return Apple;
+    if (text.includes('ali') || text.includes('alimento')) return FlaskConical;
     // Bio / Agricultura
     if (text.includes('bio') || text.includes('agr')) return Leaf;
     // Contaduría / Finanzas
