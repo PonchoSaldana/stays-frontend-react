@@ -55,13 +55,32 @@ export default function StudentProfileView({ userMatricula }) {
         setLoading(false);
     };
 
-    const handleSaveCv = () => {
+    const handleSaveCv = async () => {
         if (!cvFile) return;
         setLoading(true);
-        setTimeout(() => {
-            setLoading(false);
-            showToast({ type: 'success', title: 'CV Actualizado', message: 'Tu CV se guardó correctamente.' });
-        }, 1500);
+        
+        const formData = new FormData();
+        formData.append('matricula', userMatricula);
+        formData.append('stage', 'perfil');
+        formData.append('documentName', 'Curriculum Vitae');
+        formData.append('file', cvFile);
+
+        try {
+            const res = await authFetch('/documents/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (res.ok) {
+                showToast({ type: 'success', title: 'CV Actualizado', message: 'Tu CV se guardó correctamente en tu perfil.' });
+            } else {
+                const data = await res.json();
+                showToast({ type: 'error', title: 'Error', message: data.message || 'No se pudo subir el CV.' });
+            }
+        } catch (err) {
+            showToast({ type: 'error', title: 'Error de red', message: 'No se pudo conectar con el servidor.' });
+        }
+        setLoading(false);
     };
 
     const initials = studentData?.name
