@@ -267,7 +267,8 @@ export default function AdminDashboard({ onProcessChange }) {
         fileName: '',
         careerId: '',
         spots: 0,
-        hasFinancialSupport: false
+        hasFinancialSupport: false,
+        careersConfig: {}
     });
 
     // --- State para Reasignación (Estadías) ---
@@ -389,8 +390,19 @@ export default function AdminDashboard({ onProcessChange }) {
         e.preventDefault();
         if (!newCompany.name) return;
 
-        // Limpiar campos que no pertenecen al modelo antes de enviar
-        const { fileName, ...companyPayload } = newCompany;
+        // Limpiar campos auxiliares
+        const { fileName, careersConfig, ...companyPayload } = newCompany;
+
+        // Si se usó carreras múltiples, procesarlas y anular single careerId
+        const activeCareers = Object.entries(careersConfig || {}).filter(([k,v]) => v.checked);
+        if (activeCareers.length > 0) {
+            companyPayload.careerId = activeCareers.map(([k,v]) => k).join(',');
+            const totalSpotsConfig = activeCareers.reduce((acc, [k,v]) => acc + (parseInt(v.spots)||0), 0);
+            if (!companyPayload.spots || companyPayload.spots === 0) {
+                companyPayload.spots = totalSpotsConfig;
+            }
+            companyPayload.aprendientes_requeridos = activeCareers.map(([k,v]) => `${v.spots||0} de ${CAREERS.find(c => c.id === k)?.name || k}`).join(', ');
+        }
 
         // DEBUG: ver qué se envía exactamente
         console.log('[DEBUG] Payload a enviar:', JSON.stringify(companyPayload, null, 2));
@@ -426,7 +438,7 @@ export default function AdminDashboard({ onProcessChange }) {
             fetchCompanies('');
 
             // Reset form
-            setNewCompany({ name: '', address: '', contact: '', email: '', fileName: '', careerId: '', spots: 0, hasFinancialSupport: false });
+            setNewCompany({ name: '', address: '', contact: '', email: '', fileName: '', careerId: '', spots: 0, hasFinancialSupport: false, careersConfig: {} });
             setIsCreatingCompany(false);
             setIsEditingCompany(false);
             setCurrentCompanyId(null);
@@ -437,9 +449,19 @@ export default function AdminDashboard({ onProcessChange }) {
     };
 
     const handleEditCompany = (company) => {
-        // Normalizar careerId: solo usarlo si coincide con una carrera registrada en el catálogo
-        const validCareerId = CAREERS.find(c => c.id === company.careerId) ? company.careerId : '';
+        // Parsear careersConfig
+        const parsedCareersConfig = {};
+        if (company.careerId) {
+            company.careerId.split(',').forEach(id => {
+                const cId = id.trim();
+                if (CAREERS.find(c => c.id === cId)) {
+                    parsedCareersConfig[cId] = { checked: true, spots: 0 };
+                }
+            });
+        }
 
+        const validCareerId = Object.keys(parsedCareersConfig).length === 1 ? Object.keys(parsedCareersConfig)[0] : '';
+        
         // Normalizar economicSupport: acepta múltiples formas ('Sí', 'Si', 'si', cantidades positivas, etc.)
         const sup = company.economicSupport || '';
         const hasSupport = Boolean(sup === 'Sí' || sup === 'Si' || sup === 'si' || sup === 'SI' || sup === 'sí' ||
@@ -448,6 +470,15 @@ export default function AdminDashboard({ onProcessChange }) {
 
         setNewCompany({
             name: company.name || '',
+            address: company.address || '',
+            contact: company.contact || '',
+            email: company.email || '',
+            spots: company.maxStudents ?? company.spots ?? 0,
+            hasFinancialSupport: hasSupport,
+            careerId: validCareerId,
+            fileName: company.fileName || '',
+            careersConfig: parsedCareersConfig
+        });
             address: company.address || '',
             contact: company.contact || '',
             email: company.email || '',
@@ -2325,17 +2356,40 @@ export default function AdminDashboard({ onProcessChange }) {
                                         </div>
 
                                         <div style={{ marginBottom: '1rem', gridColumn: '1 / -1' }}>
-                                            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>Carrera de Enfoque (Para filtrado)</label>
-                                            <select
-                                                className="input"
-                                                value={newCompany.careerId}
-                                                onChange={e => { const v = e.target.value; setNewCompany(prev => ({ ...prev, careerId: v })); }}
-                                            >
-                                                <option value="">-- Todas / General --</option>
-                                                {CAREERS.map(c => (
-                                                    <option key={c.id} value={c.id}>{c.name}</option>
-                                                ))}
-                                            </select>
+                                            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>Carreras Solicitadas y Distribución de Vacantes</label>
+                                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '0.75rem', background: 'white', padding: '1rem', borderRadius: '8px', border: '1px dashed #d1d5db', maxHeight: '200px', overflowY: 'auto' }}>
+                                                {CAREERS.map(c => {
+                                                    const config = newCompany.careersConfig?.[c.id] || { checked: false, spots: 0 };
+                                                    return (
+                                                        <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', background: config.checked ? '#f0fdf4' : '#f9fafb', padding: '0.5rem', borderRadius: '6px', border: `1px solid ${config.checked ? '#bbf7d0' : '#e5e7eb'}` }}>
+                                                            <input 
+                                                                type="checkbox" 
+                                                                checked={config.checked} 
+                                                                onChange={(e) => {
+                                                                    const checked = e.target.checked;
+                                                                    setNewCompany(prev => ({...prev, careersConfig: {...(prev.careersConfig||{}), [c.id]: { checked, spots: config.spots || 0 }}}));
+                                                                }}
+                                                                style={{ width: '1rem', height: '1rem' }}
+                                                            />
+                                                            <div style={{ flex: 1, fontSize: '0.75rem', fontWeight: config.checked ? 600 : 400, color: '#374151' }}>{c.name}</div>
+                                                            {config.checked && (
+                                                                <input 
+                                                                    type="number" 
+                                                                    min="0"
+                                                                    placeholder="Cupos..."
+                                                                    value={config.spots}
+                                                                    onChange={(e) => {
+                                                                        const spots = parseInt(e.target.value) || 0;
+                                                                        setNewCompany(prev => ({...prev, careersConfig: {...(prev.careersConfig||{}), [c.id]: { checked: true, spots }}}));
+                                                                    }}
+                                                                    style={{ width: '50px', padding: '0.2rem', fontSize: '0.75rem', border: '1px solid #d1d5db', borderRadius: '4px', textAlign: 'center' }}
+                                                                />
+                                                            )}
+                                                        </div>
+                                                    )
+                                                })}
+                                            </div>
+                                            <p style={{ fontSize: '0.7rem', color: '#6b7280', marginTop: '0.25rem' }}>Selecciona una o más carreras e indica cuántas vacantes pide la empresa para cada una (ej. "2 Mecatrónica, 1 TI"). Opcional: si la empresa no especificó y agarran cualquiera, marca la casilla con 0 cupos seleccionados o déjalo vacío.</p>
                                         </div>
 
                                         <div style={{ marginBottom: '1.5rem', gridColumn: '1 / -1' }}>
@@ -2394,11 +2448,39 @@ export default function AdminDashboard({ onProcessChange }) {
                                                 </div>
                                             </div>
                                             <div style={{ marginBottom: '1rem', gridColumn: '1 / -1' }}>
-                                                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>Carrera de Enfoque (Para filtrado)</label>
-                                                <select className="input" value={newCompany.careerId} onChange={e => { const v = e.target.value; setNewCompany(prev => ({ ...prev, careerId: v })); }}>
-                                                    <option value="">-- Todas / General --</option>
-                                                    {CAREERS.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                                                </select>
+                                                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>Carreras Solicitadas y Vacantes</label>
+                                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '0.75rem', background: 'white', padding: '1rem', borderRadius: '8px', border: '1px dashed #d1d5db', maxHeight: '200px', overflowY: 'auto' }}>
+                                                    {CAREERS.map(c => {
+                                                        const config = newCompany.careersConfig?.[c.id] || { checked: false, spots: 0 };
+                                                        return (
+                                                            <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', background: config.checked ? '#f0fdf4' : '#f9fafb', padding: '0.5rem', borderRadius: '6px', border: `1px solid ${config.checked ? '#bbf7d0' : '#e5e7eb'}` }}>
+                                                                <input 
+                                                                    type="checkbox" 
+                                                                    checked={config.checked} 
+                                                                    onChange={(e) => {
+                                                                        const checked = e.target.checked;
+                                                                        setNewCompany(prev => ({...prev, careersConfig: {...(prev.careersConfig||{}), [c.id]: { checked, spots: config.spots || 0 }}}));
+                                                                    }}
+                                                                    style={{ width: '1rem', height: '1rem' }}
+                                                                />
+                                                                <div style={{ flex: 1, fontSize: '0.75rem', fontWeight: config.checked ? 600 : 400, color: '#374151' }}>{c.name}</div>
+                                                                {config.checked && (
+                                                                    <input 
+                                                                        type="number" 
+                                                                        min="0"
+                                                                        placeholder="Cupos..."
+                                                                        value={config.spots}
+                                                                        onChange={(e) => {
+                                                                            const spots = parseInt(e.target.value) || 0;
+                                                                            setNewCompany(prev => ({...prev, careersConfig: {...(prev.careersConfig||{}), [c.id]: { checked: true, spots }}}));
+                                                                        }}
+                                                                        style={{ width: '50px', padding: '0.2rem', fontSize: '0.75rem', border: '1px solid #d1d5db', borderRadius: '4px', textAlign: 'center' }}
+                                                                    />
+                                                                )}
+                                                            </div>
+                                                        )
+                                                    })}
+                                                </div>
                                             </div>
                                             <div style={{ marginBottom: '1.5rem', gridColumn: '1 / -1' }}>
                                                 <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>Documento / Convenio (PDF o Word)</label>
@@ -2728,7 +2810,7 @@ export default function AdminDashboard({ onProcessChange }) {
                     ) : studentDocs.length === 0 ? (
                         <div style={{ textAlign: 'center', padding: '2rem', border: '1px dashed #e5e7eb', borderRadius: '0.5rem' }}>
                             <FileText size={40} style={{ color: '#d1d5db', marginBottom: '0.75rem' }} />
-                            <p style={{ fontSize: '0.875rem', color: '#9ca3af' }}>No hay documentos registrados para este alumno.</p>
+                            <p style={{ fontSize: '0.875rem', color: '#9ca3af' }}>Aún no hay documentos.</p>
                         </div>
                     ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '400px', overflowY: 'auto', paddingRight: '0.5rem' }}>
