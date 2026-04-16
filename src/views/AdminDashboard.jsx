@@ -391,46 +391,72 @@ export default function AdminDashboard({ onProcessChange }) {
         if (!newCompany.name) return;
 
         // Limpiar campos auxiliares
-        const { fileName, careersConfig, ...companyPayload } = newCompany;
-
-        // Si se usó carreras múltiples, procesarlas y anular single careerId
+        const { fileName, careersConfig, ...companyBase } = newCompany;
         const activeCareers = Object.entries(careersConfig || {}).filter(([k,v]) => v.checked);
-        if (activeCareers.length > 0) {
-            companyPayload.careerId = activeCareers.map(([k,v]) => k).join(',');
-            const totalSpotsConfig = activeCareers.reduce((acc, [k,v]) => acc + (parseInt(v.spots)||0), 0);
-            if (!companyPayload.spots || companyPayload.spots === 0) {
-                companyPayload.spots = totalSpotsConfig;
-            }
-            companyPayload.aprendientes_requeridos = activeCareers.map(([k,v]) => `${v.spots||0} de ${CAREERS.find(c => c.id === k)?.name || k}`).join(', ');
-        }
-
-        // DEBUG: ver qué se envía exactamente
-        console.log('[DEBUG] Payload a enviar:', JSON.stringify(companyPayload, null, 2));
 
         try {
             if (isEditingCompany) {
-                const res = await authFetch(`/companies/${currentCompanyId}`, {
-                    method: 'PUT',
-                    body: JSON.stringify(companyPayload)
-                });
-                if (res.ok) {
-                    showToast({ type: 'success', title: 'Empresa Actualizada', message: `La empresa ${newCompany.name} se ha actualizado correctamente.` });
+                // EDITANDO: Actualiza la original a la primera carrera seleccionada, y crea nuevas para el resto
+                if (activeCareers.length > 0) {
+                    const firstCareer = activeCareers[0];
+                    const firstPayload = {
+                        ...companyBase,
+                        careerId: firstCareer[0],
+                        spots: parseInt(firstCareer[1].spots) || 0,
+                    };
+                    firstPayload.aprendientes_requeridos = `${firstPayload.spots} de ${CAREERS.find(c => c.id === firstCareer[0])?.name || firstCareer[0]}`;
+
+                    const res = await authFetch(`/companies/${currentCompanyId}`, {
+                        method: 'PUT',
+                        body: JSON.stringify(firstPayload)
+                    });
+                    if (!res.ok) throw new Error("Error al actualizar la empresa base.");
+
+                    // Crear el resto si hay más de una carrera
+                    const restCareers = activeCareers.slice(1);
+                    for (const [cId, config] of restCareers) {
+                        const payload = {
+                            ...companyBase,
+                            careerId: cId,
+                            spots: parseInt(config.spots) || 0,
+                        };
+                        payload.aprendientes_requeridos = `${payload.spots} de ${CAREERS.find(c => c.id === cId)?.name || cId}`;
+                        await authFetch('/companies', {
+                            method: 'POST',
+                            body: JSON.stringify(payload)
+                        });
+                    }
+                    showToast({ type: 'success', title: 'Empresas Actualizadas', message: `Múltiples tarjetas procesadas para ${newCompany.name}.` });
                 } else {
-                    const errData = await res.json().catch(() => ({}));
-                    const errMsg = errData?.errors?.[0]?.message || errData?.message || `Error ${res.status} al actualizar`;
-                    throw new Error(errMsg);
+                    // Actualizar como General (Sin especificar)
+                    const payload = { ...companyBase, careerId: '', spots: companyBase.spots || 0 };
+                    const res = await authFetch(`/companies/${currentCompanyId}`, { method: 'PUT', body: JSON.stringify(payload) });
+                    if (!res.ok) throw new Error("Error al actualizar empresa.");
+                    showToast({ type: 'success', title: 'Empresa Actualizada', message: `Se actualizó como General.` });
                 }
             } else {
-                const res = await authFetch('/companies', {
-                    method: 'POST',
-                    body: JSON.stringify(companyPayload)
-                });
-                if (res.ok) {
-                    showToast({ type: 'success', title: 'Empresa Registrada', message: `La empresa ${newCompany.name} se ha registrado correctamente en el catálogo.` });
+                // CREANDO: Genera múltiples tarjetas si se seleccionaron múltiples carreras
+                if (activeCareers.length > 0) {
+                    for (const [cId, config] of activeCareers) {
+                        const payload = {
+                            ...companyBase,
+                            careerId: cId,
+                            spots: parseInt(config.spots) || 0,
+                        };
+                        payload.aprendientes_requeridos = `${payload.spots} de ${CAREERS.find(c => c.id === cId)?.name || cId}`;
+                        
+                        const res = await authFetch('/companies', {
+                            method: 'POST',
+                            body: JSON.stringify(payload)
+                        });
+                        if (!res.ok) throw new Error(`Error al registrar para la carrera ${cId}`);
+                    }
+                    showToast({ type: 'success', title: 'Empresas Registradas', message: `Se crearon ${activeCareers.length} tarjetas para ${newCompany.name}.` });
                 } else {
-                    const errData = await res.json().catch(() => ({}));
-                    const errMsg = errData?.errors?.[0]?.message || errData?.message || `Error ${res.status} al registrar empresa`;
-                    throw new Error(errMsg);
+                    const payload = { ...companyBase, careerId: '', spots: companyBase.spots || 0 };
+                    const res = await authFetch('/companies', { method: 'POST', body: JSON.stringify(payload) });
+                    if (!res.ok) throw new Error("Error al registrar empresa");
+                    showToast({ type: 'success', title: 'Empresa Registrada', message: `Se creó y registró como General.` });
                 }
             }
 
