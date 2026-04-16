@@ -2357,10 +2357,7 @@ export default function AdminDashboard({ onProcessChange }) {
                                             </div>
 
                                             {/* Nuevos campos */}
-                                            <div>
-                                                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>Cupos Disponibles</label>
-                                                <input type="number" min="0" className="input" placeholder="Ej. 5" value={newCompany.spots} onChange={e => { const v = parseInt(e.target.value) || 0; setNewCompany(prev => ({ ...prev, spots: v })); }} />
-                                            </div>
+
                                             <div style={{ display: 'flex', alignItems: 'center', marginTop: '1.5rem' }}>
                                                 <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 500 }}>
                                                     <input
@@ -2455,10 +2452,7 @@ export default function AdminDashboard({ onProcessChange }) {
                                                     <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>Correo / Teléfono</label>
                                                     <input type="text" className="input" placeholder="contacto@empresa.com" value={newCompany.email} onChange={e => { const v = e.target.value; setNewCompany(prev => ({ ...prev, email: v })); }} />
                                                 </div>
-                                                <div>
-                                                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>Cupos Disponibles</label>
-                                                    <input type="number" min="0" className="input" placeholder="Ej. 5" value={newCompany.spots} onChange={e => { const v = parseInt(e.target.value) || 0; setNewCompany(prev => ({ ...prev, spots: v })); }} />
-                                                </div>
+
                                                 <div style={{ display: 'flex', alignItems: 'center', marginTop: '1.5rem' }}>
                                                     <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 500 }}>
                                                         <input type="checkbox" checked={newCompany.hasFinancialSupport} onChange={e => { const v = e.target.checked; setNewCompany(prev => ({ ...prev, hasFinancialSupport: v })); }} style={{ width: '1.25rem', height: '1.25rem' }} />
