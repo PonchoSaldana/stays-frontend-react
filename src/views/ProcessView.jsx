@@ -24,7 +24,8 @@ const INITIAL_DOCS = [
     "Copia de INE (Alumno y Tutores)",
     "Certificado de Vacunación",
     "Comprobante: Plática de Inducción",
-    "Comprobante: Reforzamiento a la Estadía"
+    "Comprobante: Reforzamiento a la Estadía",
+    "Curriculum Vitae"
 ];
 
 const GENERATED_DOCS = [
@@ -77,7 +78,7 @@ export default function ProcessView({ userMatricula, stageName }) {
                     const up2 = {};
                     docs.forEach(d => {
                         const status = d.status === 'Rechazado' ? 'error' : 'success';
-                        if (d.stage === 'upload_1') up1[d.documentName] = status;
+                        if (d.stage === 'upload_1' || d.documentName === 'Curriculum Vitae') up1[d.documentName] = status;
                         if (d.stage === 'upload_2') up2[d.documentName] = status;
                     });
                     setUploads1(up1);
@@ -143,7 +144,7 @@ export default function ProcessView({ userMatricula, stageName }) {
         }
     };
 
-    const handleUpload1 = (docLabel, file) => handleUpload(docLabel, file, 'upload_1', setUploads1);
+    const handleUpload1 = (docLabel, file) => handleUpload(docLabel, file, docLabel === 'Curriculum Vitae' ? 'perfil' : 'upload_1', setUploads1);
     const handleUpload2 = (docLabel, file) => handleUpload(docLabel, file, 'upload_2', setUploads2);
 
     const handleDelete = async (docLabel, stage, setUploads) => {
@@ -173,7 +174,7 @@ export default function ProcessView({ userMatricula, stageName }) {
         }
     };
 
-    const handleDelete1 = (docLabel) => handleDelete(docLabel, 'upload_1', setUploads1);
+    const handleDelete1 = (docLabel) => handleDelete(docLabel, docLabel === 'Curriculum Vitae' ? 'perfil' : 'upload_1', setUploads1);
     const handleDelete2 = (docLabel) => handleDelete(docLabel, 'upload_2', setUploads2);
 
     const handleOpenPreview = (docName) => {

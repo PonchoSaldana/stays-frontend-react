@@ -1229,6 +1229,7 @@ export default function AdminDashboard({ onProcessChange }) {
                                             <th style={{ padding: '1rem', color: '#374151' }}>Estudiante</th>
                                             <th style={{ padding: '1rem', color: '#374151' }}>Estado</th>
                                             <th style={{ padding: '1rem', color: '#374151' }}>Documentos</th>
+                                            <th style={{ padding: '1rem', color: '#374151' }}>Empresa</th>
                                             <th style={{ padding: '1rem', color: '#374151' }}>Acciones</th>
                                         </tr>
                                     </thead>
@@ -1237,7 +1238,14 @@ export default function AdminDashboard({ onProcessChange }) {
                                             <tr key={student.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
                                                 <td style={{ padding: '1rem', fontFamily: 'monospace', fontWeight: 500 }}>{student.matricula}</td>
                                                 <td style={{ padding: '1rem' }}>
-                                                    <div style={{ fontWeight: 500 }}>{student.name}</div>
+                                                    <div style={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                                        {student.name}
+                                                        {student.isFirstLogin === false ? (
+                                                            <span style={{ fontSize: '0.65rem', background: '#dcfce7', color: '#166534', padding: '0.1rem 0.4rem', borderRadius: '1rem', whiteSpace: 'nowrap' }}>✔️ Registrado</span>
+                                                        ) : (
+                                                            <span style={{ fontSize: '0.65rem', background: '#f3f4f6', color: '#9ca3af', padding: '0.1rem 0.4rem', borderRadius: '1rem', whiteSpace: 'nowrap' }}>Pendiente Registro</span>
+                                                        )}
+                                                    </div>
                                                     {student.comment && (
                                                         <div style={{ fontSize: '0.75rem', color: '#DC2626', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
                                                             <MessageSquare size={12} /> {student.comment}
@@ -1255,10 +1263,20 @@ export default function AdminDashboard({ onProcessChange }) {
                                                     </span>
                                                 </td>
                                                 <td style={{ padding: '1rem' }}>
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#6b7280' }}>
-                                                        <FileText size={16} />
-                                                        <span>{student.docsCount} archivos</span>
+                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#4b5563', fontWeight: 500 }}>
+                                                            <FileText size={16} />
+                                                            <span>{student.docsCount} archivos</span>
+                                                        </div>
+                                                        <span style={{ fontSize: '0.75rem', fontWeight: 600, color: student.docsCount >= 11 ? '#166534' : student.docsCount > 0 ? '#b45309' : '#dc2626' }}>
+                                                            {student.docsCount >= 11 ? 'Entregados' : student.docsCount > 0 ? 'Parcialmente entregados' : 'Sin entregar'}
+                                                        </span>
                                                     </div>
+                                                </td>
+                                                <td style={{ padding: '1rem' }}>
+                                                    <span style={{ fontSize: '0.875rem', fontWeight: 500, color: '#374151' }}>
+                                                        {companies.find(c => String(c.id) === String(student.companyId))?.name || <span style={{ color: '#9ca3af', fontStyle: 'italic' }}>Sin empresa asignada</span>}
+                                                    </span>
                                                 </td>
                                                 <td style={{ padding: '1rem' }}>
                                                     {rejectAction.id === student.id ? (
@@ -2751,9 +2769,9 @@ export default function AdminDashboard({ onProcessChange }) {
                                         rel="noopener noreferrer"
                                         className="btn"
                                         style={{ padding: '0.4rem 0.6rem', fontSize: '0.75rem', background: '#f3f4f6', color: '#374151', minWidth: 'auto' }}
-                                        title="Descargar archivo"
+                                        title="Ver archivo"
                                     >
-                                        <Download size={14} />
+                                        <Eye size={14} />
                                     </a>
                                 </div>
                             ))}
