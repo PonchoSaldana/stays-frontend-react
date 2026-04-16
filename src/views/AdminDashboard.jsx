@@ -1221,129 +1221,109 @@ export default function AdminDashboard({ onProcessChange }) {
                                 </div>
                             </div>
 
-                            <div className="table-container">
-                                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                                    <thead>
-                                        <tr style={{ borderBottom: '2px solid #f3f4f6' }}>
-                                            <th style={{ padding: '1rem', color: '#374151' }}>Matrícula</th>
-                                            <th style={{ padding: '1rem', color: '#374151' }}>Estudiante</th>
-                                            <th style={{ padding: '1rem', color: '#374151' }}>Estado</th>
-                                            <th style={{ padding: '1rem', color: '#374151' }}>Documentos</th>
-                                            <th style={{ padding: '1rem', color: '#374151' }}>Empresa</th>
-                                            <th style={{ padding: '1rem', color: '#374151' }}>Acciones</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {filteredStudents.map(student => (
-                                            <tr key={student.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
-                                                <td style={{ padding: '1rem', fontFamily: 'monospace', fontWeight: 500 }}>{student.matricula}</td>
-                                                <td style={{ padding: '1rem' }}>
-                                                    <div style={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                                                        {student.name}
-                                                        {student.isFirstLogin === false ? (
-                                                            <span style={{ fontSize: '0.65rem', background: '#dcfce7', color: '#166534', padding: '0.1rem 0.4rem', borderRadius: '1rem', whiteSpace: 'nowrap' }}>✔️ Registrado</span>
-                                                        ) : (
-                                                            <span style={{ fontSize: '0.65rem', background: '#f3f4f6', color: '#9ca3af', padding: '0.1rem 0.4rem', borderRadius: '1rem', whiteSpace: 'nowrap' }}>Pendiente Registro</span>
-                                                        )}
-                                                    </div>
-                                                    {student.comment && (
-                                                        <div style={{ fontSize: '0.75rem', color: '#DC2626', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                                            <MessageSquare size={12} /> {student.comment}
-                                                        </div>
-                                                    )}
-                                                </td>
-                                                <td style={{ padding: '1rem' }}>
-                                                    <span className="tag" style={{
-                                                        background: student.status === 'Aprobado' ? '#DEF7EC' : student.status === 'Corrección Solicitada' ? '#FEF2F2' : '#FEF3C7',
-                                                        color: student.status === 'Aprobado' ? '#03543F' : student.status === 'Corrección Solicitada' ? '#991B1B' : '#92400E',
-                                                        display: 'inline-flex', alignItems: 'center', gap: 4
-                                                    }}>
-                                                        {student.status === 'Aprobado' ? <CheckCircle size={12} /> : student.status === 'Corrección Solicitada' ? <XCircle size={12} /> : <Clock size={12} />}
-                                                        {student.status}
-                                                    </span>
-                                                </td>
-                                                <td style={{ padding: '1rem' }}>
-                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#4b5563', fontWeight: 500 }}>
-                                                            <FileText size={16} />
-                                                            <span>{student.docsCount} archivos</span>
-                                                        </div>
-                                                        <span style={{ fontSize: '0.75rem', fontWeight: 600, color: student.docsCount >= 11 ? '#166534' : student.docsCount > 0 ? '#b45309' : '#dc2626' }}>
-                                                            {student.docsCount >= 11 ? 'Entregados' : student.docsCount > 0 ? 'Parcialmente entregados' : 'Sin entregar'}
-                                                        </span>
-                                                    </div>
-                                                </td>
-                                                <td style={{ padding: '1rem' }}>
-                                                    <span style={{ fontSize: '0.875rem', fontWeight: 500, color: '#374151' }}>
-                                                        {companies.find(c => String(c.id) === String(student.companyId))?.name || <span style={{ color: '#9ca3af', fontStyle: 'italic' }}>Sin empresa asignada</span>}
-                                                    </span>
-                                                </td>
-                                                <td style={{ padding: '1rem' }}>
-                                                    {rejectAction.id === student.id ? (
-                                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                                            <textarea
-                                                                className="input"
-                                                                placeholder="Describe la corrección..."
-                                                                value={rejectAction.comment}
-                                                                onChange={e => setRejectAction({ ...rejectAction, comment: e.target.value })}
-                                                                style={{ fontSize: '0.8rem', padding: '0.5rem', minHeight: '60px' }}
-                                                                autoFocus
-                                                            />
-                                                            <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                                                <button
-                                                                    onClick={confirmReject}
-                                                                    className="btn btn-primary"
-                                                                    disabled={!rejectAction.comment}
-                                                                    style={{ padding: '0.25rem 0.75rem', fontSize: '0.75rem', background: '#DC2626' }}>
-                                                                    Enviar Corrección
-                                                                </button>
-                                                                <button
-                                                                    onClick={cancelReject}
-                                                                    className="btn"
-                                                                    style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', background: '#f3f4f6', color: '#374151' }}>
-                                                                    Cancelar
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    ) : (
-                                                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                                            <button
-                                                                onClick={() => handleApprove(student)}
-                                                                title="Aprobar"
-                                                                className="btn"
-                                                                style={{ padding: '0.5rem', background: '#DEF7EC', color: '#03543F', border: '1px solid #BDF4C8' }}
-                                                            >
-                                                                <CheckCircle size={18} />
-                                                            </button>
-                                                            <button
-                                                                onClick={() => initReject(student)}
-                                                                title="Regresar / Corregir"
-                                                                className="btn"
-                                                                style={{ padding: '0.5rem', background: '#FEF2F2', color: '#991B1B', border: '1px solid #FECACA' }}
-                                                            >
-                                                                <XCircle size={18} />
-                                                            </button>
-                                                            <button
-                                                                onClick={() => handleViewExp(student)}
-                                                                className="btn"
-                                                                style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', background: '#F3F4F6', color: '#374151' }}
-                                                            >
-                                                                Ver Exp.
-                                                            </button>
-                                                        </div>
-                                                    )}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                        {filteredStudents.length === 0 && (
-                                            <tr>
-                                                <td colSpan="5" style={{ padding: '3rem', textAlign: 'center', color: '#9ca3af' }}>
-                                                    No se encontraron estudiantes con esos criterios.
-                                                </td>
-                                            </tr>
+                            <div style={{ 
+                                display: 'grid', 
+                                gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', 
+                                gap: '1.5rem', 
+                                marginTop: '1rem' 
+                            }}>
+                                {filteredStudents.map(student => (
+                                    <div key={student.id} className="card" style={{ 
+                                        display: 'flex', flexDirection: 'column', padding: '1.25rem', gap: '1rem', 
+                                        border: '1px solid #e5e7eb', borderRadius: '12px', background: '#fff', 
+                                        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', position: 'relative'
+                                    }}>
+                                        {/* Estado */}
+                                        <div style={{ position: 'absolute', top: '1rem', right: '1rem' }}>
+                                            <span className="tag" style={{
+                                                background: student.status === 'Aprobado' ? '#DEF7EC' : student.status === 'Corrección Solicitada' ? '#FEF2F2' : '#FEF3C7',
+                                                color: student.status === 'Aprobado' ? '#03543F' : student.status === 'Corrección Solicitada' ? '#991B1B' : '#92400E',
+                                                display: 'flex', alignItems: 'center', gap: 4, padding: '0.25rem 0.5rem', borderRadius: '1rem', fontSize: '0.65rem', fontWeight: 600
+                                            }}>
+                                                {student.status === 'Aprobado' ? <CheckCircle size={10} /> : student.status === 'Corrección Solicitada' ? <XCircle size={10} /> : <Clock size={10} />}
+                                                {student.status}
+                                            </span>
+                                        </div>
+
+                                        {/* Icono de Carpeta y Nombre */}
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                            <div style={{ flexShrink: 0, width: 48, height: 48, background: '#f0fdf4', color: '#16a34a', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                <Folder size={24} />
+                                            </div>
+                                            <div style={{ display: 'flex', flexDirection: 'column', flexGrow: 1, paddingRight: '4rem' }}>
+                                                <strong style={{ fontSize: '1rem', color: '#111827', lineHeight: 1.2, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{student.name}</strong>
+                                                <span style={{ fontSize: '0.75rem', color: '#6b7280', fontFamily: 'monospace', marginTop: '0.2rem' }}>{student.matricula}</span>
+                                            </div>
+                                        </div>
+
+                                        {/* Indicadores de Estudiante */}
+                                        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                            {student.isFirstLogin === false ? (
+                                                <span style={{ fontSize: '0.65rem', background: '#dcfce7', color: '#166534', padding: '0.1rem 0.4rem', borderRadius: '1rem', border: '1px solid #bbf7d0' }}>✔️ Registrado</span>
+                                            ) : (
+                                                <span style={{ fontSize: '0.65rem', background: '#f3f4f6', color: '#9ca3af', padding: '0.1rem 0.4rem', borderRadius: '1rem', border: '1px solid #e5e7eb' }}>⏱ Pendiente</span>
+                                            )}
+                                            <span style={{ fontSize: '0.65rem', background: student.docsCount >= 11 ? '#dcfce7' : student.docsCount > 0 ? '#fef3c7' : '#fee2e2', color: student.docsCount >= 11 ? '#166534' : student.docsCount > 0 ? '#92400e' : '#991b1b', padding: '0.1rem 0.4rem', borderRadius: '1rem', display: 'flex', alignItems: 'center', gap: '0.2rem', border: `1px solid ${student.docsCount > 0 ? (student.docsCount >= 11 ? '#bbf7d0' : '#fde68a') : '#fecaca'}` }}>
+                                                <FileText size={10} /> {student.docsCount} docs
+                                            </span>
+                                        </div>
+
+                                        {student.comment && (
+                                            <div style={{ fontSize: '0.75rem', color: '#7f1d1d', marginTop: '0.25rem', padding: '0.5rem', background: '#fef2f2', borderRadius: '6px', borderLeft: '3px solid #ef4444' }}>
+                                                <strong>Corrección:</strong> {student.comment}
+                                            </div>
                                         )}
-                                    </tbody>
-                                </table>
+
+                                        <div style={{ fontSize: '0.75rem', color: '#4b5563', padding: '0.5rem', background: '#f9fafb', borderRadius: '8px', border: '1px dashed #d1d5db' }}>
+                                            <div style={{ marginBottom: '2px', color: '#9ca3af' }}>Empresa Asignada:</div>
+                                            <strong style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                {companies.find(c => String(c.id) === String(student.companyId))?.name || <span style={{ color: '#9ca3af', fontStyle: 'italic', fontWeight: 'normal' }}>Ninguna</span>}
+                                            </strong>
+                                        </div>
+
+                                        {/* Acciones */}
+                                        {rejectAction.id === student.id ? (
+                                            <div style={{ marginTop: 'auto', paddingTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', borderTop: '1px solid #f3f4f6' }}>
+                                                <textarea
+                                                    className="input"
+                                                    placeholder="Describe la corrección..."
+                                                    value={rejectAction.comment}
+                                                    onChange={e => setRejectAction({ ...rejectAction, comment: e.target.value })}
+                                                    style={{ fontSize: '0.8rem', padding: '0.5rem', minHeight: '60px', width: '100%' }}
+                                                    autoFocus
+                                                />
+                                                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                                    <button onClick={confirmReject} disabled={!rejectAction.comment} className="btn" style={{ flex: 1, padding: '0.4rem', fontSize: '0.75rem', background: '#DC2626', color: 'white', borderRadius: '6px' }}>
+                                                        Enviar
+                                                    </button>
+                                                    <button onClick={cancelReject} className="btn" style={{ flex: 1, padding: '0.4rem', fontSize: '0.75rem', background: '#f3f4f6', color: '#374151', borderRadius: '6px' }}>
+                                                        Cancelar
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div style={{ marginTop: 'auto', paddingTop: '1rem', borderTop: '1px solid #f3f4f6', display: 'flex', justifyContent: 'space-between', gap: '0.5rem' }}>
+                                                <button onClick={() => handleApprove(student)} className="btn hover-scale" style={{ padding: '0.5rem', background: '#DEF7EC', color: '#03543F', borderRadius: '8px', border: 'none' }} title="Aprobar todo">
+                                                    <CheckCircle size={18} />
+                                                </button>
+                                                <button onClick={() => initReject(student)} className="btn hover-scale" style={{ padding: '0.5rem', background: '#FEF2F2', color: '#991B1B', borderRadius: '8px', border: 'none' }} title="Rechazar/Corregir">
+                                                    <XCircle size={18} />
+                                                </button>
+                                                <button onClick={() => handleViewExp(student)} className="btn btn-primary shadow-sm hover-scale" style={{ flex: 1, padding: '0.5rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', borderRadius: '8px' }}>
+                                                    <FolderOpen size={16} />
+                                                    Expediente
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+
+                                {filteredStudents.length === 0 && (
+                                    <div style={{ gridColumn: '1 / -1', padding: '4rem', textAlign: 'center', color: '#6b7280', background: '#f9fafb', borderRadius: '16px', border: '2px dashed #e5e7eb' }}>
+                                        <Folder size={48} style={{ color: '#d1d5db', marginBottom: '1rem', display: 'block', marginLeft: 'auto', marginRight: 'auto' }} />
+                                        Guao, aún no hay estudiantes registrados en esta carrera.
+                                    </div>
+                                )}
                             </div>
 
                             {/* ── Paginación ── */}
