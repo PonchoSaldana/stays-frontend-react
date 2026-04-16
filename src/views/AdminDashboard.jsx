@@ -479,14 +479,7 @@ export default function AdminDashboard({ onProcessChange }) {
             fileName: company.fileName || '',
             careersConfig: parsedCareersConfig
         });
-            address: company.address || '',
-            contact: company.contact || '',
-            email: company.email || '',
-            fileName: company.fileName || '',
-            careerId: validCareerId,
-            spots: company.maxStudents ?? company.spots ?? 0,
-            hasFinancialSupport: hasSupport
-        });
+
         setCurrentCompanyId(company.id);
         setIsEditingCompany(true);
         setIsCreatingCompany(true); // Reusamos el formulario
