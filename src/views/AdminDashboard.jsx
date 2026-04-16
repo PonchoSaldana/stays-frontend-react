@@ -812,10 +812,7 @@ export default function AdminDashboard({ onProcessChange }) {
     const handleDownloadDocuments = async () => {
         try {
             const token = sessionStorage.getItem('ut_admin_token');
-            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
-
-            // Usamos un enlace directo para que el navegador maneje la descarga del stream
-            const downloadUrl = `${apiUrl}/import/download-zip?token=${token}`;
+            const downloadUrl = `${API_URL}/import/download-zip?token=${token}`;
             window.location.href = downloadUrl;
 
             showToast({
@@ -1295,14 +1292,28 @@ export default function AdminDashboard({ onProcessChange }) {
                                             </span>
                                         </div>
 
-                                        {/* Icono de Carpeta y Nombre */}
+                                        {/* Look de Carpeta Física */}
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                            <div style={{ flexShrink: 0, width: 48, height: 48, background: '#f0fdf4', color: '#16a34a', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                <Folder size={24} />
+                                            <div style={{ 
+                                                flexShrink: 0, width: 52, height: 52, 
+                                                background: 'linear-gradient(135deg, #FFD93D 0%, #FBBF24 100%)', 
+                                                color: '#92400E', borderRadius: '14px', 
+                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                boxShadow: '0 4px 12px rgba(251, 191, 36, 0.2)'
+                                            }}>
+                                                <Folder size={28} />
                                             </div>
                                             <div style={{ display: 'flex', flexDirection: 'column', flexGrow: 1, paddingRight: '4rem' }}>
-                                                <strong style={{ fontSize: '1rem', color: '#111827', lineHeight: 1.2, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{student.name}</strong>
-                                                <span style={{ fontSize: '0.75rem', color: '#6b7280', fontFamily: 'monospace', marginTop: '0.2rem' }}>{student.matricula}</span>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                                    <strong style={{ fontSize: '1.05rem', color: '#111827', lineHeight: 1.2, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{student.name}</strong>
+                                                </div>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.2rem' }}>
+                                                    <span style={{ fontSize: '0.75rem', color: '#6b7280', fontFamily: 'monospace' }}>{student.matricula}</span>
+                                                    <span style={{ width: 4, height: 4, background: '#d1d5db', borderRadius: '50%' }} />
+                                                    <span style={{ fontSize: '0.65rem', color: '#10b981', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+                                                        <CloudUpload size={10} /> S3 Cloud
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
 
@@ -1315,6 +1326,10 @@ export default function AdminDashboard({ onProcessChange }) {
                                             )}
                                             <span style={{ fontSize: '0.65rem', background: student.docsCount >= 11 ? '#dcfce7' : student.docsCount > 0 ? '#fef3c7' : '#fee2e2', color: student.docsCount >= 11 ? '#166534' : student.docsCount > 0 ? '#92400e' : '#991b1b', padding: '0.1rem 0.4rem', borderRadius: '1rem', display: 'flex', alignItems: 'center', gap: '0.2rem', border: `1px solid ${student.docsCount > 0 ? (student.docsCount >= 11 ? '#bbf7d0' : '#fde68a') : '#fecaca'}` }}>
                                                 <FileText size={10} /> {student.docsCount} docs
+                                            </span>
+                                            {/* Indicador de CV */}
+                                            <span style={{ fontSize: '0.65rem', background: '#e0f2fe', color: '#0369a1', padding: '0.1rem 0.4rem', borderRadius: '1rem', border: '1px solid #bae6fd', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+                                                <UserCheck size={10} /> CV
                                             </span>
                                         </div>
 
@@ -1371,7 +1386,7 @@ export default function AdminDashboard({ onProcessChange }) {
                                 {filteredStudents.length === 0 && (
                                     <div style={{ gridColumn: '1 / -1', padding: '4rem', textAlign: 'center', color: '#6b7280', background: '#f9fafb', borderRadius: '16px', border: '2px dashed #e5e7eb' }}>
                                         <Folder size={48} style={{ color: '#d1d5db', marginBottom: '1rem', display: 'block', marginLeft: 'auto', marginRight: 'auto' }} />
-                                        Guao, aún no hay estudiantes registrados en esta carrera.
+                                        Aún no hay documentos.
                                     </div>
                                 )}
                             </div>
@@ -2839,7 +2854,7 @@ export default function AdminDashboard({ onProcessChange }) {
                                         </div>
                                     </div>
                                     <a 
-                                        href={`http://localhost:3001/api/documents/${doc.id}/download?token=${sessionStorage.getItem('ut_admin_token') || sessionStorage.getItem('ut_admin_session')}`}
+                                        href={`${API_URL}/documents/${doc.id}/download?token=${sessionStorage.getItem('ut_admin_token') || sessionStorage.getItem('ut_admin_session')}`}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="btn"
