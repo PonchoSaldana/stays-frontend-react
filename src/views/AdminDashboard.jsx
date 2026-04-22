@@ -1585,6 +1585,9 @@ export default function AdminDashboard({ onProcessChange }) {
                     )}
                 </div>
             </div>
+        );
+    };
+
     const handleDeleteStudentAccount = (matricula) => {
         setModalConfig({
             isOpen: true,

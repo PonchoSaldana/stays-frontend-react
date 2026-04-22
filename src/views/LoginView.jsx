@@ -54,7 +54,7 @@ export default function LoginView({ onLogin, onAdminLogin }) {
         }
     };
 
-    // ─── PASO 1: Verificar matrícula ──────────────────────────────────────────
+    // Verificar matrícula
     const handleMatriculaSubmit = async (e) => {
         e.preventDefault();
         setError('');
