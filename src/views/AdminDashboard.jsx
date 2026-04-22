@@ -1591,12 +1591,12 @@ export default function AdminDashboard({ onProcessChange }) {
     const handleDeleteStudentAccount = (matricula) => {
         setModalConfig({
             isOpen: true,
-            title: 'Eliminar Cuenta de Alumno',
+            title: 'Restablecer Cuenta de Alumno',
             type: 'danger',
             content: (
                 <div style={{ textAlign: 'center' }}>
-                    <p>¿Estás seguro de eliminar a <strong>{matricula}</strong>?</p>
-                    <p style={{ color: '#DC2626', fontWeight: 600, marginTop: '0.5rem' }}>Esta acción eliminará todos sus datos y documentos asociados.</p>
+                    <p>¿Estás seguro de restablecer el acceso a <strong>{matricula}</strong>?</p>
+                    <p style={{ color: '#DC2626', fontWeight: 600, marginTop: '0.5rem' }}>Esta acción borrará su correo y contraseña forzándolo a registrarse de nuevo, pero NO borrará su registro de alumno.</p>
                 </div>
             ),
             footer: (
@@ -1684,6 +1684,7 @@ export default function AdminDashboard({ onProcessChange }) {
                                     <tr>
                                         <th style={{ padding: '1rem', borderBottom: '1px solid #e5e7eb' }}>Matrícula</th>
                                         <th style={{ padding: '1rem', borderBottom: '1px solid #e5e7eb' }}>Nombre</th>
+                                        <th style={{ padding: '1rem', borderBottom: '1px solid #e5e7eb' }}>Correo / Cuenta</th>
                                         <th style={{ padding: '1rem', borderBottom: '1px solid #e5e7eb' }}>Carrera</th>
                                         <th style={{ padding: '1rem', borderBottom: '1px solid #e5e7eb' }}>Estado</th>
                                         <th style={{ padding: '1rem', borderBottom: '1px solid #e5e7eb' }}>Acciones</th>
@@ -1694,6 +1695,13 @@ export default function AdminDashboard({ onProcessChange }) {
                                         <tr key={student.matricula} style={{ borderBottom: '1px solid #f3f4f6' }}>
                                             <td style={{ padding: '1rem', fontWeight: 500 }}>{student.matricula}</td>
                                             <td style={{ padding: '1rem' }}>{student.name}</td>
+                                            <td style={{ padding: '1rem', fontSize: '0.875rem' }}>
+                                                {student.email ? (
+                                                    <span style={{ color: '#10B981', fontWeight: 500 }}>{student.email}</span>
+                                                ) : (
+                                                    <span style={{ color: '#9CA3AF', fontStyle: 'italic' }}>Aún sin registro</span>
+                                                )}
+                                            </td>
                                             <td style={{ padding: '1rem', color: '#6b7280', fontSize: '0.875rem' }}>{student.careerName || '-'}</td>
                                             <td style={{ padding: '1rem' }}>
                                                 <span className="tag" style={{
@@ -1709,15 +1717,15 @@ export default function AdminDashboard({ onProcessChange }) {
                                                         <Briefcase size={14} style={{ display: 'inline', marginRight: '4px' }} /> Quitar Empresa
                                                     </button>
                                                 )}
-                                                <button onClick={() => handleDeleteStudentAccount(student.matricula)} className="tag" style={{ border: 'none', background: '#FEF2F2', color: '#DC2626', cursor: 'pointer' }} title="Eliminar Cuenta">
-                                                    <UserX size={14} style={{ display: 'inline', marginRight: '4px' }} /> Eliminar
+                                                <button onClick={() => handleDeleteStudentAccount(student.matricula)} className="tag" style={{ border: 'none', background: '#FEF2F2', color: '#DC2626', cursor: 'pointer' }} title="Restablecer Acceso">
+                                                    <UserX size={14} style={{ display: 'inline', marginRight: '4px' }} /> Restablecer Cuenta
                                                 </button>
                                             </td>
                                         </tr>
                                     ))}
                                     {globalStudents.length === 0 && (
                                         <tr>
-                                            <td colSpan="5" style={{ textAlign: 'center', padding: '2rem', color: '#9ca3af' }}>No se encontraron alumnos.</td>
+                                            <td colSpan="6" style={{ textAlign: 'center', padding: '2rem', color: '#9ca3af' }}>No se encontraron alumnos.</td>
                                         </tr>
                                     )}
                                 </tbody>
