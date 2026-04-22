@@ -1663,15 +1663,46 @@ export default function AdminDashboard({ onProcessChange }) {
                     </div>
                 </div>
 
-                <div className="search-bar mb-6">
-                    <Search className="search-icon" size={18} />
-                    <input
-                        type="text"
-                        placeholder="Buscar por Nombre o Matrícula..."
-                        value={globalSearch}
-                        onChange={(e) => setGlobalSearch(e.target.value)}
-                        className="search-input"
-                    />
+                <div style={{ marginBottom: '1.5rem' }}>
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.75rem',
+                        background: 'white',
+                        border: '2px solid #e5e7eb',
+                        borderRadius: '0.75rem',
+                        padding: '0.6rem 1rem',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                        transition: 'border-color 0.2s, box-shadow 0.2s'
+                    }}
+                    onFocus={(e) => e.currentTarget.style.borderColor = '#10B981'}
+                    onBlur={(e) => e.currentTarget.style.borderColor = '#e5e7eb'}
+                    >
+                        <Search size={18} style={{ color: '#10B981', flexShrink: 0 }} />
+                        <input
+                            type="text"
+                            placeholder="Buscar por nombre o matrícula..."
+                            value={globalSearch}
+                            onChange={(e) => setGlobalSearch(e.target.value)}
+                            style={{
+                                border: 'none',
+                                outline: 'none',
+                                width: '100%',
+                                fontSize: '0.95rem',
+                                color: '#1f2937',
+                                background: 'transparent',
+                                fontFamily: 'inherit'
+                            }}
+                        />
+                        {globalSearch && (
+                            <button onClick={() => setGlobalSearch('')} style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#9ca3af', padding: 0, lineHeight: 1 }}>✕</button>
+                        )}
+                    </div>
+                    {globalSearch && (
+                        <p style={{ marginTop: '0.4rem', fontSize: '0.8rem', color: '#6b7280', paddingLeft: '0.25rem' }}>
+                            Mostrando resultados para: <strong style={{ color: '#10B981' }}>"{globalSearch}"</strong>
+                        </p>
+                    )}
                 </div>
 
                 {loadingGlobalStudents ? (
@@ -1855,13 +1886,7 @@ export default function AdminDashboard({ onProcessChange }) {
                                 <Briefcase size={18} /> Carreras
                             </button>
 
-                            <button
-                                onClick={() => { setActiveTab('reasignment'); closeAdminSidebar(); }}
-                                className={`nav-item ${activeTab === 'reasignment' ? 'active' : ''}`}
-                                style={{ border: 'none', background: activeTab === 'reasignment' ? undefined : 'transparent', width: '100%', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
-                            >
-                                <RefreshCw size={18} /> Reasignar Estadía
-                            </button>
+
                         </>
                     )}
 
