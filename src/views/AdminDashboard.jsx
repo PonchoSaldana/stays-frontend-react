@@ -1655,7 +1655,7 @@ export default function AdminDashboard({ onProcessChange }) {
 
     const renderAllStudents = () => {
         return (
-            <div style={{ maxWidth: 1000, margin: '0 auto' }}>
+            <div style={{ width: '100%' }}>
                 <div className="flex-between mb-6">
                     <div>
                         <h2 style={{ fontSize: '1.5rem', fontWeight: 700 }}>Gestión de Alumnos</h2>
@@ -1710,7 +1710,7 @@ export default function AdminDashboard({ onProcessChange }) {
                 ) : (
                     <div style={{ background: 'white', borderRadius: '1rem', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
                         <div className="table-responsive" style={{ overflowX: 'auto' }}>
-                            <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse', minWidth: 600 }}>
+                            <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse', minWidth: 850 }}>
                                 <thead style={{ background: '#f9fafb', fontSize: '0.875rem', color: '#6b7280' }}>
                                     <tr>
                                         <th style={{ padding: '1rem', borderBottom: '1px solid #e5e7eb' }}>Matrícula</th>
@@ -1724,8 +1724,8 @@ export default function AdminDashboard({ onProcessChange }) {
                                 <tbody>
                                     {globalStudents.map(student => (
                                         <tr key={student.matricula} style={{ borderBottom: '1px solid #f3f4f6' }}>
-                                            <td style={{ padding: '1rem', fontWeight: 500 }}>{student.matricula}</td>
-                                            <td style={{ padding: '1rem' }}>{student.name}</td>
+                                            <td style={{ padding: '0.75rem 1rem', fontWeight: 600, whiteSpace: 'nowrap', color: '#374151' }}>{student.matricula}</td>
+                                            <td style={{ padding: '0.75rem 1rem', whiteSpace: 'nowrap', fontWeight: 500 }}>{student.name}</td>
                                             <td style={{ padding: '1rem', fontSize: '0.875rem' }}>
                                                 {student.email ? (
                                                     <span style={{ color: '#10B981', fontWeight: 500 }}>{student.email}</span>
