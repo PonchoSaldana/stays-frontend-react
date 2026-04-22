@@ -73,6 +73,23 @@ export default function Layout({ children, onLogout, user, isAdmin, activeProces
 
       {/* contenido principal: sin sidebar lateral para alumnos */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        {showHeader && (
+        <div className="demo-nav-bar" style={{ background: 'white', padding: '0.65rem 1.5rem', display: 'flex', gap: '0.5rem', overflowX: 'auto', alignItems: 'center', whiteSpace: 'nowrap', borderBottom: '1px solid #e5e7eb', boxShadow: 'var(--shadow-sm)', zIndex: 40, position: 'relative', WebkitOverflowScrolling: 'touch' }}>
+            <strong style={{ color: 'var(--ut-green)', marginRight: '0.5rem', display: 'flex', alignItems: 'center', fontSize: '0.9rem' }}>
+              Gestía Demo
+            </strong>
+            <button onClick={() => navigate('/estadia/catalogo-empresas')} className="nav-item" style={{ padding: '0.4rem 0.75rem', border: '1px solid #e5e7eb', background: location.pathname.includes('catalogo') ? 'var(--ut-light-green)' : 'white' }}>Catálogo</button>
+            <button onClick={() => navigate('/estadia/seleccion-empresa')} className="nav-item" style={{ padding: '0.4rem 0.75rem', border: '1px solid #e5e7eb', background: location.pathname.includes('seleccion') ? 'var(--ut-light-green)' : 'white' }}>Selección</button>
+            <div style={{ width: '1px', height: '24px', background: '#d1d5db', margin: '0 0.25rem' }}></div>
+            <span style={{ color: '#6b7280', fontSize: '0.85rem', fontWeight: 500, marginRight: '0.25rem' }}>Docs:</span>
+            <button onClick={() => navigate('/estadia/documentos-iniciales')} className="nav-item" style={{ padding: '0.4rem 0.75rem', border: '1px solid #e5e7eb', background: location.pathname.includes('iniciales') ? 'var(--ut-light-green)' : 'white' }}>1. Subir</button>
+            <button onClick={() => navigate('/estadia/revision-inicial')} className="nav-item" style={{ padding: '0.4rem 0.75rem', border: '1px solid #e5e7eb', background: location.pathname === '/estadia/revision-inicial' ? 'var(--ut-light-green)' : 'white' }}>Rev. 1</button>
+            <button onClick={() => navigate('/estadia/generacion-documentos')} className="nav-item" style={{ padding: '0.4rem 0.75rem', border: '1px solid #e5e7eb', background: location.pathname.includes('generacion') ? 'var(--ut-light-green)' : 'white' }}>Generar</button>
+            <button onClick={() => navigate('/estadia/documentos-finales')} className="nav-item" style={{ padding: '0.4rem 0.75rem', border: '1px solid #e5e7eb', background: location.pathname.includes('finales') ? 'var(--ut-light-green)' : 'white' }}>4. Finales</button>
+            <button onClick={() => navigate('/estadia/revision-final')} className="nav-item" style={{ padding: '0.4rem 0.75rem', border: '1px solid #e5e7eb', background: location.pathname === '/estadia/revision-final' ? 'var(--ut-light-green)' : 'white' }}>Rev. 2</button>
+            <button onClick={() => navigate('/estadia/finalizado')} className="nav-item" style={{ padding: '0.4rem 0.75rem', border: '1px solid #e5e7eb', background: location.pathname.includes('finalizado') ? 'var(--ut-light-green)' : 'white' }}>Fin</button>
+        </div>
+        )}
         <main className="main-content">
           {children}
         </main>

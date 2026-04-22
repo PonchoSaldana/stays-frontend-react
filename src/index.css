@@ -2120,3 +2120,6 @@ body {
     font-size: 3rem;
   }
 }
+/* Scroll styling for Demo Nav */
+.demo-nav-bar::-webkit-scrollbar { display: none; }
+.demo-nav-bar { -ms-overflow-style: none; scrollbar-width: none; }

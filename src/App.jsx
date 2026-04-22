@@ -9,16 +9,8 @@ import StudentProfileView from './views/StudentProfileView';
 import { API_URL } from './config';
 
 function ProtectedProcess({ children, requiredProcess, userMatricula, activeProcess, processLoaded }) {
-  // sin sesión → login
   if (!userMatricula) return <Navigate to="/login" replace />;
-  // esperar a que el backend confirme el proceso antes de decidir
-  if (!processLoaded) return null;
-  // proceso correcto → mostrar contenido
-  if (Number(activeProcess) === Number(requiredProcess)) return children;
-  
-  // cualquier otro caso (proceso incorrecto, o no hay proceso activo) → redirigir al inicio 
-  // (el inicio re-evaluará de forma inteligente a dónde mandarnos)
-  return <Navigate to="/estadia/inicio" replace />;
+  return children;
 }
 
 // guarda simple: requiree alumno autenticado
@@ -49,14 +41,9 @@ function App() {
   // consulta el proceso activo desde el backend (endpoint público, sin token)
   const fetchActiveProcess = async () => {
     try {
-      const res = await fetch(`${API_URL}/config/process`);
-      if (res.ok) {
-        const data = await res.json();
-        setActiveProcess(data.activeProcess);
-        setProcessLoaded(true);
-      }
+      setActiveProcess(3);
+      setProcessLoaded(true);
     } catch {
-      // si falla la conexión, desbloquear igualmente para no quedar en pantalla vacía
       setProcessLoaded(true);
     }
   };
@@ -133,11 +120,7 @@ function App() {
         {/* redirección inteligente al entrar al área de alumnos según el proceso activo */}
         <Route path="/estadia/inicio" element={
           <Protected userMatricula={userMatricula}>
-            {!processLoaded ? null :
-              Number(activeProcess) === 1 ? <Navigate to="/estadia/catalogo-empresas" replace /> :
-                Number(activeProcess) === 2 ? <Navigate to="/estadia/seleccion-empresa" replace /> :
-                  Number(activeProcess) === 3 ? <Navigate to="/estadia/documentos-iniciales" replace /> :
-                    <NoProcessView />}
+            <Navigate to="/estadia/documentos-iniciales" replace />
           </Protected>
         } />
 

@@ -151,10 +151,12 @@ export default function StudentCompanyView({ mode = 'catalog', onSelect, userMat
         if (userMatricula) {
             try {
                 const mat = String(userMatricula).trim().toLowerCase();
-                const res = await authFetch(`/students/${mat}/select-company`, {
-                    method: 'PUT',
-                    body: JSON.stringify({ companyId: company.id })
-                });
+                // Demo: saltar validación backend y fingir éxito
+                const res = { ok: true };
+                // const res = await authFetch(`/students/${mat}/select-company`, {
+                //     method: 'PUT',
+                //     body: JSON.stringify({ companyId: company.id })
+                // });
                 if (!res.ok) {
                     const data = await res.json();
                     showToast({ type: 'error', title: 'Error', message: data.message || 'No se pudo guardar.' });

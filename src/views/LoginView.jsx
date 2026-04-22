@@ -61,46 +61,18 @@ export default function LoginView({ onLogin, onAdminLogin }) {
         const mat = String(matricula).trim();
         if (!mat) return;
 
-        // Limpiar estados previos por seguridad (evita que se "quede" el correo o nombre de otro alumno)
-        setStudentName('');
-        setEmail('');
-        setRecognizedName(null);
-        setPassword('');
         setLoading(true);
-
-        try {
-            const res = await fetch(`${API_URL}/auth/check-matricula`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ matricula: mat })
+        // MOCK LOGIN
+        setTimeout(() => {
+            sessionStorage.setItem('ut_token', 'demo_token');
+            onLogin(mat, {
+                matricula: mat,
+                name: recognizedName || 'Usuario Demo',
+                email: 'demo@uttecam.edu.mx',
+                role: 'student'
             });
-            const data = await res.json();
-
-            if (!res.ok) {
-                setError(data.message || 'Matrícula no encontrada');
-                setLoading(false);
-                return;
-            }
-
-            setStudentName(data.name);
-
-            if (data.status === 'onboarding') {
-                // Primer ingreso → flujo de configuración de cuenta
-                if (data.emailAlreadySet && data.email) {
-                    setEmail(data.email);
-                } else {
-                    setEmail(''); // Asegurar que está vacío si el alumno no ha puesto uno
-                }
-                setFlow('email');
-            } else {
-                // Ya tiene cuenta → pedir contraseña
-                setFlow('onboarding_password');
-            }
-
-        } catch {
-            setError('Error de conexión con el servidor');
-        }
-        setLoading(false);
+            setLoading(false);
+        }, 500);
     };
 
     // Función para enmascarar correo (j***e@gmail.com)
@@ -289,21 +261,11 @@ export default function LoginView({ onLogin, onAdminLogin }) {
         setError('');
         if (!adminUser || !adminPass) return;
         setLoading(true);
-        try {
-            const res = await fetch(`${API_URL}/auth/login/admin`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: adminUser, password: adminPass })
-            });
-            const data = await res.json();
-            if (!res.ok) { setError(data.message || 'Credenciales incorrectas'); setLoading(false); return; }
-
-            sessionStorage.setItem('ut_token', data.token);
-            onAdminLogin(adminUser, adminPass, data.token, data.user);
-        } catch {
-            setError('Error de conexión');
-        }
-        setLoading(false);
+        setTimeout(() => {
+            sessionStorage.setItem('ut_token', 'demo_admin_token');
+            onAdminLogin(adminUser, adminPass, 'demo_admin_token', { username: adminUser, role: 'admin' });
+            setLoading(false);
+        }, 500);
     };
 
     // ─── Headers dinámicos ────────────────────────────────────────────────────

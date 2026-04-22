@@ -68,27 +68,8 @@ export default function ProcessView({ userMatricula, stageName }) {
         if (!userMatricula) return;
 
         const fetchExistingDocs = async () => {
-             console.log('Fetching documents for:', userMatricula);
-            try {
-                const res = await authFetch(`/documents/student/${userMatricula}`);
-                if (res.ok) {
-                    const docs = await res.json();
-                    console.log('Documents found:', docs.length);
-                    const up1 = {};
-                    const up2 = {};
-                    docs.forEach(d => {
-                        const status = d.status === 'Rechazado' ? 'error' : 'success';
-                        if (d.stage === 'upload_1' || d.documentName === 'Curriculum Vitae') up1[d.documentName] = status;
-                        if (d.stage === 'upload_2') up2[d.documentName] = status;
-                    });
-                    setUploads1(up1);
-                    setUploads2(up2);
-                }
-            } catch (err) {
-                console.error('Error fetching docs:', err);
-            } finally {
-                setLoading(false);
-            }
+            console.log('Demo mode: Skipping document fetch for', userMatricula);
+            setLoading(false);
         };
         fetchExistingDocs();
     }, [userMatricula, stageName]);
@@ -124,24 +105,11 @@ export default function ProcessView({ userMatricula, stageName }) {
         formData.append('documentName', docLabel);
         formData.append('file', file);
 
-        try {
-            const res = await authFetch('/documents/upload', {
-                method: 'POST',
-                body: formData
-            });
-
-            if (res.ok) {
-                setUploads(prev => ({ ...prev, [docLabel]: 'success' }));
-                showToast({ type: 'success', title: 'Archivo guardado', message: `"${docLabel}" se ha subido correctamente.` });
-            } else {
-                const err = await res.json();
-                setUploads(prev => ({ ...prev, [docLabel]: 'error' }));
-                showToast({ type: 'error', title: 'Error al subir', message: err.message || 'No se pudo guardar el archivo.' });
-            }
-        } catch {
-            setUploads(prev => ({ ...prev, [docLabel]: 'error' }));
-            showToast({ type: 'error', title: 'Error de red', message: 'No se pudo conectar con el servidor.' });
-        }
+        // Demo mode: mock upload
+        setTimeout(() => {
+            setUploads(prev => ({ ...prev, [docLabel]: 'success' }));
+            showToast({ type: 'success', title: 'Archivo guardado', message: `"${docLabel}" se ha subido correctamente (DEMO).` });
+        }, 500);
     };
 
     const handleUpload1 = (docLabel, file) => handleUpload(docLabel, file, docLabel === 'Curriculum Vitae' ? 'perfil' : 'upload_1', setUploads1);
@@ -150,28 +118,15 @@ export default function ProcessView({ userMatricula, stageName }) {
     const handleDelete = async (docLabel, stage, setUploads) => {
         if (!window.confirm(`¿Seguro que quieres borrar "${docLabel}"?`)) return;
         setUploads(prev => ({ ...prev, [docLabel]: 'uploading' })); // Mostrar spinner temporalmente
-        try {
-            const res = await authFetch('/documents/delete', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ matricula: userMatricula, documentName: docLabel, stage: stage })
+        // Demo mode: mock delete
+        setTimeout(() => {
+            setUploads(prev => {
+                const newUp = { ...prev };
+                delete newUp[docLabel];
+                return newUp;
             });
-            if (res.ok) {
-                setUploads(prev => {
-                    const newUp = { ...prev };
-                    delete newUp[docLabel];
-                    return newUp;
-                });
-                showToast({ type: 'success', title: 'Documento Eliminado', message: `"${docLabel}" fue borrado correctamente.` });
-            } else {
-                const data = await res.json();
-                setUploads(prev => ({ ...prev, [docLabel]: 'success' })); // Revertir estado visual
-                showToast({ type: 'error', title: 'Error', message: data.message || 'No se pudo borrar el archivo.' });
-            }
-        } catch (err) {
-            setUploads(prev => ({ ...prev, [docLabel]: 'success' }));
-            showToast({ type: 'error', title: 'Error de red', message: 'No se pudo conectar con el servidor.' });
-        }
+            showToast({ type: 'success', title: 'Documento Eliminado', message: `"${docLabel}" fue borrado correctamente (DEMO).` });
+        }, 500);
     };
 
     const handleDelete1 = (docLabel) => handleDelete(docLabel, docLabel === 'Curriculum Vitae' ? 'perfil' : 'upload_1', setUploads1);
@@ -262,7 +217,6 @@ export default function ProcessView({ userMatricula, stageName }) {
                                 </p>
                                 <button
                                     onClick={() => navigate('/estadia/revision-inicial')}
-                                    disabled={uploadedCount1 < INITIAL_DOCS.length}
                                     className="btn btn-primary pv-submit-btn"
                                 >
                                     Enviar a Validación
@@ -382,7 +336,6 @@ export default function ProcessView({ userMatricula, stageName }) {
                                 </p>
                                 <button
                                     onClick={() => navigate('/estadia/revision-final')}
-                                    disabled={uploadedCount2 < GENERATED_DOCS.length}
                                     className="btn btn-primary pv-submit-btn"
                                 >
                                     Validar Documentos
