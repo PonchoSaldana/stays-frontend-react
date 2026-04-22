@@ -40,6 +40,35 @@ export default function AdminDashboard({ onProcessChange }) {
     // ── Counts por carrera (para el mosaico) ──────────────────────────────────
     const [careerCounts, setCareerCounts] = useState({});  // { [careerId]: number }
 
+    // ── Estado global para Gestión de Alumnos (Root) ──────────────────────────
+    const [globalStudents, setGlobalStudents] = useState([]);
+    const [globalSearch, setGlobalSearch] = useState('');
+    const [globalPagination, setGlobalPagination] = useState({ page: 1, totalPages: 1, total: 0, limit: 20 });
+    const [loadingGlobalStudents, setLoadingGlobalStudents] = useState(false);
+
+    const fetchGlobalStudents = async (page = 1, search = '') => {
+        setLoadingGlobalStudents(true);
+        try {
+            const params = new URLSearchParams({ page, limit: globalPagination.limit, ...(search ? { search } : {}) });
+            const res = await authFetch(`/students?${params.toString()}`);
+            if (res.ok) {
+                const json = await res.json();
+                setGlobalStudents(json.data || []);
+                setGlobalPagination({ page: json.page, totalPages: json.totalPages, total: json.total, limit: json.limit });
+            }
+        } catch (e) { console.error('Error global students', e); }
+        setLoadingGlobalStudents(false);
+    };
+
+    useEffect(() => {
+        if (activeTab === 'alumnos' && isRoot) {
+            const timer = setTimeout(() => {
+                fetchGlobalStudents(1, globalSearch);
+            }, 400);
+            return () => clearTimeout(timer);
+        }
+    }, [globalSearch, activeTab]);
+
     // Inicialización de datos (Backend API)
     useEffect(() => {
         const getInitialData = async () => {
@@ -1556,6 +1585,166 @@ export default function AdminDashboard({ onProcessChange }) {
                     )}
                 </div>
             </div>
+    const handleDeleteStudentAccount = (matricula) => {
+        setModalConfig({
+            isOpen: true,
+            title: 'Eliminar Cuenta de Alumno',
+            type: 'danger',
+            content: (
+                <div style={{ textAlign: 'center' }}>
+                    <p>¿Estás seguro de eliminar a <strong>{matricula}</strong>?</p>
+                    <p style={{ color: '#DC2626', fontWeight: 600, marginTop: '0.5rem' }}>Esta acción eliminará todos sus datos y documentos asociados.</p>
+                </div>
+            ),
+            footer: (
+                <>
+                    <button onClick={() => setModalConfig(prev => ({...prev, isOpen: false}))} className="btn">Cancelar</button>
+                    <button onClick={async () => {
+                        try {
+                            const res = await authFetch(`/students/${matricula}`, { method: 'DELETE' });
+                            if (res.ok) {
+                                showToast({ type: 'success', title: 'Cuenta Eliminada', message: 'El alumno fue eliminado correctamente.' });
+                                fetchGlobalStudents(globalPagination.page, globalSearch);
+                                fetchStudentCounts();
+                            } else {
+                                const err = await res.json();
+                                showToast({ type: 'error', title: 'Error', message: err.message || 'No se pudo eliminar la cuenta.' });
+                            }
+                        } catch (e) { showToast({ type: 'error', title: 'Error', message: 'Fallo de conexión.' }); }
+                        setModalConfig(prev => ({...prev, isOpen: false}));
+                    }} className="btn" style={{ background: '#DC2626', color: 'white' }}>Eliminar</button>
+                </>
+            )
+        });
+    };
+
+    const handleUnlinkCompany = (matricula, studentName) => {
+        setModalConfig({
+            isOpen: true,
+            title: 'Desvincular Empresa',
+            type: 'danger',
+            content: (
+                <div style={{ textAlign: 'center' }}>
+                    <p>¿Deseas desvincular a <strong>{studentName}</strong> de su empresa actual?</p>
+                    <p style={{ marginTop: '0.5rem' }}>Su estado cambiará a <em>Pendiente</em> y podrá elegir otra empresa.</p>
+                </div>
+            ),
+            footer: (
+                <>
+                    <button onClick={() => setModalConfig(prev => ({...prev, isOpen: false}))} className="btn">Cancelar</button>
+                    <button onClick={async () => {
+                        try {
+                            const res = await authFetch(`/students/${matricula}/unlink-company`, { method: 'PUT' });
+                            if (res.ok) {
+                                showToast({ type: 'success', title: 'Empresa Desvinculada', message: 'El alumno ya puede elegir otra empresa.' });
+                                fetchGlobalStudents(globalPagination.page, globalSearch);
+                            } else {
+                                const err = await res.json();
+                                showToast({ type: 'error', title: 'Error', message: err.message || 'No se pudo desvincular la empresa.' });
+                            }
+                        } catch (e) { showToast({ type: 'error', title: 'Error', message: 'Fallo de conexión.' }); }
+                        setModalConfig(prev => ({...prev, isOpen: false}));
+                    }} className="btn" style={{ background: '#DC2626', color: 'white' }}>Desvincular</button>
+                </>
+            )
+        });
+    };
+
+    const renderAllStudents = () => {
+        return (
+            <div style={{ maxWidth: 1000, margin: '0 auto' }}>
+                <div className="flex-between mb-6">
+                    <div>
+                        <h2 style={{ fontSize: '1.5rem', fontWeight: 700 }}>Gestión de Alumnos</h2>
+                        <p style={{ color: '#6b7280' }}>Búsqueda global y acciones administrativas</p>
+                    </div>
+                </div>
+
+                <div className="search-bar mb-6">
+                    <Search className="search-icon" size={18} />
+                    <input
+                        type="text"
+                        placeholder="Buscar por Nombre o Matrícula..."
+                        value={globalSearch}
+                        onChange={(e) => setGlobalSearch(e.target.value)}
+                        className="search-input"
+                    />
+                </div>
+
+                {loadingGlobalStudents ? (
+                    <p style={{ textAlign: 'center', padding: '2rem', color: '#6b7280' }}>Cargando alumnos...</p>
+                ) : (
+                    <div style={{ background: 'white', borderRadius: '1rem', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
+                        <div className="table-responsive" style={{ overflowX: 'auto' }}>
+                            <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse', minWidth: 600 }}>
+                                <thead style={{ background: '#f9fafb', fontSize: '0.875rem', color: '#6b7280' }}>
+                                    <tr>
+                                        <th style={{ padding: '1rem', borderBottom: '1px solid #e5e7eb' }}>Matrícula</th>
+                                        <th style={{ padding: '1rem', borderBottom: '1px solid #e5e7eb' }}>Nombre</th>
+                                        <th style={{ padding: '1rem', borderBottom: '1px solid #e5e7eb' }}>Carrera</th>
+                                        <th style={{ padding: '1rem', borderBottom: '1px solid #e5e7eb' }}>Estado</th>
+                                        <th style={{ padding: '1rem', borderBottom: '1px solid #e5e7eb' }}>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {globalStudents.map(student => (
+                                        <tr key={student.matricula} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                                            <td style={{ padding: '1rem', fontWeight: 500 }}>{student.matricula}</td>
+                                            <td style={{ padding: '1rem' }}>{student.name}</td>
+                                            <td style={{ padding: '1rem', color: '#6b7280', fontSize: '0.875rem' }}>{student.careerName || '-'}</td>
+                                            <td style={{ padding: '1rem' }}>
+                                                <span className="tag" style={{
+                                                    background: student.status === 'Aprobado' ? '#D1FAE5' : '#FEF3C7',
+                                                    color: student.status === 'Aprobado' ? '#065F46' : '#B45309'
+                                                }}>
+                                                    {student.status || 'Pendiente'}
+                                                </span>
+                                            </td>
+                                            <td style={{ padding: '1rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                                {student.companyId && (
+                                                    <button onClick={() => handleUnlinkCompany(student.matricula, student.name)} className="tag" style={{ border: 'none', background: '#FEF2F2', color: '#DC2626', cursor: 'pointer' }} title="Desvincular Empresa">
+                                                        <Briefcase size={14} style={{ display: 'inline', marginRight: '4px' }} /> Quitar Empresa
+                                                    </button>
+                                                )}
+                                                <button onClick={() => handleDeleteStudentAccount(student.matricula)} className="tag" style={{ border: 'none', background: '#FEF2F2', color: '#DC2626', cursor: 'pointer' }} title="Eliminar Cuenta">
+                                                    <UserX size={14} style={{ display: 'inline', marginRight: '4px' }} /> Eliminar
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {globalStudents.length === 0 && (
+                                        <tr>
+                                            <td colSpan="5" style={{ textAlign: 'center', padding: '2rem', color: '#9ca3af' }}>No se encontraron alumnos.</td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                        {/* Paginación */}
+                        {globalPagination.totalPages > 1 && (
+                            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '1rem', borderTop: '1px solid #e5e7eb', gap: '1rem' }}>
+                                <button
+                                    onClick={() => fetchGlobalStudents(globalPagination.page - 1, globalSearch)}
+                                    disabled={globalPagination.page === 1}
+                                    className="btn"
+                                >
+                                    Anterior
+                                </button>
+                                <span style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                                    Página {globalPagination.page} de {globalPagination.totalPages}
+                                </span>
+                                <button
+                                    onClick={() => fetchGlobalStudents(globalPagination.page + 1, globalSearch)}
+                                    disabled={globalPagination.page === globalPagination.totalPages}
+                                    className="btn"
+                                >
+                                    Siguiente
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
         );
     };
 
@@ -1624,6 +1813,14 @@ export default function AdminDashboard({ onProcessChange }) {
                     {isRoot && (
                         <>
                             <button
+                                onClick={() => { setActiveTab('alumnos'); closeAdminSidebar(); }}
+                                className={`nav-item ${activeTab === 'alumnos' ? 'active' : ''}`}
+                                style={{ border: 'none', background: activeTab === 'alumnos' ? undefined : 'transparent', width: '100%', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
+                            >
+                                <GraduationCap size={18} /> Alumnos
+                            </button>
+
+                            <button
                                 onClick={() => { setActiveTab('procesos'); closeAdminSidebar(); }}
                                 className={`nav-item ${activeTab === 'procesos' ? 'active' : ''}`}
                                 style={{ border: 'none', background: activeTab === 'procesos' ? undefined : 'transparent', width: '100%', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
@@ -1687,6 +1884,7 @@ export default function AdminDashboard({ onProcessChange }) {
 
             {/* Main Content */}
             <main className="admin-main-content">
+                {activeTab === 'alumnos' && isRoot && renderAllStudents()}
                 {activeTab === 'procesos' && isRoot && renderProcessConfig()}
                 {activeTab === 'careers' && isRoot && renderCareersConfig()}
                 {activeTab === 'supervision' && renderSupervisionView()}
