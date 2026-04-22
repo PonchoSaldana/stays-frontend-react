@@ -120,7 +120,8 @@ function App() {
         {/* redirección inteligente al entrar al área de alumnos según el proceso activo */}
         <Route path="/estadia/inicio" element={
           <Protected userMatricula={userMatricula}>
-            <Navigate to="/estadia/documentos-iniciales" replace />
+            {/* Demo: Dirigir inmediatamente al catálogo de empresas al iniciar sesión */}
+            <Navigate to="/estadia/catalogo-empresas" replace />
           </Protected>
         } />
 

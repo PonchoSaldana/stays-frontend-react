@@ -32,8 +32,9 @@ export const authFetch = async (endpoint, options = {}) => {
 
     // token expirado o sin permisos: cerrar sesión y redirigir al login
     if (response.status === 401 || response.status === 403) {
-        sessionStorage.clear();
-        window.location.href = '/';
+        // [MODO DEMO]: deshabilitado para evitar cierres de sesión por el token falso
+        // sessionStorage.clear();
+        // window.location.href = '/';
         return response;
     }
 
