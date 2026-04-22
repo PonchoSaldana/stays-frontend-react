@@ -683,7 +683,7 @@ body {
 
   .grid-2,
   .grid-3 {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -761,7 +761,7 @@ body {
 
 @media (max-width: 640px) {
   .card-grid {
-    grid-template-columns: 1fr !important;
+    grid-template-columns: minmax(0, 1fr) !important;
   }
 }
 
@@ -1142,11 +1142,11 @@ body {
   }
 
   /* El nombre del archivo puede truncarse */
-  .uploader-card span {
+  .uploader-card span, .uploader-card p {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    max-width: 140px;
+    max-width: 100%;
   }
 }
 
@@ -1555,11 +1555,11 @@ body {
   }
 
   .pv-docs-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .pv-gen-docs-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .pv-action-row {
