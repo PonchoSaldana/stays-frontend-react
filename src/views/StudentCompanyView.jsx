@@ -153,18 +153,27 @@ export default function StudentCompanyView({ mode = 'catalog', onSelect, userMat
                 const mat = String(userMatricula).trim().toLowerCase();
                 const res = await authFetch(`/students/${mat}/select-company`, {
                     method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ companyId: company.id })
                 });
+                const data = await res.json();
                 if (!res.ok) {
-                    const data = await res.json();
-                    showToast({ type: 'error', title: 'Error', message: data.message || 'No se pudo guardar.' });
+                    showToast({ type: 'error', title: 'Sin vacantes', message: data.message || 'No se pudo guardar.' });
                     setModalConfig(m => ({ ...m, isOpen: false }));
                     return;
                 }
-            } catch {
-                // silent
+            } catch (err) {
+                showToast({ type: 'error', title: 'Error de red', message: 'No se pudo conectar con el servidor.' });
+                setModalConfig(m => ({ ...m, isOpen: false }));
+                return;
             }
         }
+        // Actualizar las vacantes localmente restando 1
+        setCompanies(prev => prev.map(c =>
+            c.id === company.id
+                ? { ...c, maxStudents: Math.max(0, (c.maxStudents ?? c.spots ?? 1) - 1) }
+                : c
+        ));
         setSelectedCompanyId(company.id);
         if (onSelect) onSelect(company);
         setModalConfig(m => ({ ...m, isOpen: false }));
@@ -277,7 +286,16 @@ export default function StudentCompanyView({ mode = 'catalog', onSelect, userMat
                                 <div className="scv-card-footer">
                                     <div className="scv-footer-item">
                                         <Users size={14} />
-                                        <span>Vacantes: <strong>{company.maxStudents ?? company.spots ?? 0}</strong></span>
+                                        {(() => {
+                                            const spots = company.maxStudents ?? company.spots ?? 0;
+                                            const noSpots = spots === 0;
+                                            return (
+                                                <span style={noSpots ? { color: '#ef4444', fontWeight: 600 } : {}}>
+                                                    Vacantes: <strong>{spots}</strong>
+                                                    {noSpots && ' — Lleno'}
+                                                </span>
+                                            );
+                                        })()}
                                     </div>
                                     <span className={`scv-apoyo-tag ${hasSupport ? 'scv-apoyo-tag--si' : 'scv-apoyo-tag--no'}`}>
                                         Apoyo: {hasSupport ? 'Sí' : 'No'}
